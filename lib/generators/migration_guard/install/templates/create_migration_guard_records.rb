@@ -1,0 +1,19 @@
+# frozen_string_literal: true
+
+class CreateMigrationGuardRecords < ActiveRecord::Migration[<%= ActiveRecord::Migration.current_version %>]
+  def change
+    create_table :migration_guard_records do |t|
+      t.string :version, null: false
+      t.string :branch
+      t.string :author
+      t.string :status
+      t.json :metadata
+      t.timestamps
+
+      t.index :version, unique: true
+      t.index :status
+      t.index :created_at
+      t.index [:branch, :status]
+    end
+  end
+end

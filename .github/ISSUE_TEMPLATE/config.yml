@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/tommy2118/rails-migration-guard#readme
+    about: Please read the documentation first
+  - name: Community Support
+    url: https://github.com/tommy2118/rails-migration-guard/discussions
+    about: Please ask and answer questions here
+  - name: Security Issues
+    url: https://github.com/tommy2118/rails-migration-guard/security/policy
+    about: Please report security vulnerabilities here
