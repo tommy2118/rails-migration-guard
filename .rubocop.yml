@@ -53,3 +53,7 @@ Naming/PredicateMethod:
   Exclude:
     - 'lib/migration_guard/configuration.rb'
     - 'lib/migration_guard/rake_tasks.rb'
+
+Rails/ApplicationRecord:
+  Exclude:
+    - 'lib/migration_guard/migration_guard_record.rb'

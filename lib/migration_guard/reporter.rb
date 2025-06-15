@@ -107,7 +107,7 @@ module MigrationGuard
         add_count_line(output, "⚠ Orphaned: ", report[:orphaned_count],
                        " (local only)")
       end
-      if report[:missing_count].positive?
+      if report[:missing_count].positive? # rubocop:disable Style/GuardClause
         add_count_line(output, "✗ Missing:  ", report[:missing_count],
                        " (in trunk, not local)")
       end
