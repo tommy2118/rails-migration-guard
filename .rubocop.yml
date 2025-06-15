@@ -1,5 +1,7 @@
 plugins:
   - rubocop-rails
+  - rubocop-capybara
+  - rubocop-factory_bot
 
 require:
   - rubocop-rspec
