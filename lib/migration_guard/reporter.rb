@@ -107,10 +107,10 @@ module MigrationGuard
         add_count_line(output, "⚠ Orphaned: ", report[:orphaned_count],
                        " (local only)")
       end
-      return unless report[:missing_count].positive?
-
-      add_count_line(output, "✗ Missing:  ", report[:missing_count],
-                     " (in trunk, not local)")
+      if report[:missing_count].positive?
+        add_count_line(output, "✗ Missing:  ", report[:missing_count],
+                       " (in trunk, not local)")
+      end
     end
 
     def add_sync_status(output, report)

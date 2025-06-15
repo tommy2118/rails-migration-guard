@@ -206,7 +206,7 @@ RSpec.describe MigrationGuard::Reporter do
         output = reporter.format_status_output
 
         aggregate_failures do
-          expect(output).to include("⚠ Orphaned:   1 migration")
+          expect(output).to include("⚠ Orphaned:  1 migration (local only)")
           expect(output).to include("Orphaned Migrations:")
           expect(output).to include("20240102000002")
           expect(output).to include("Branch: feature/test")
@@ -222,7 +222,7 @@ RSpec.describe MigrationGuard::Reporter do
         output = reporter.format_status_output
 
         aggregate_failures do
-          expect(output).to include("✗ Missing:    1 migration")
+          expect(output).to include("✗ Missing:   1 migration (in trunk, not local)")
           expect(output).to include("Missing Migrations:")
           expect(output).to include("20240101000001")
           expect(output).to include("Run `rails db:migrate` to apply missing migrations")

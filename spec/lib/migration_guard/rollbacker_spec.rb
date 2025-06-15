@@ -21,7 +21,14 @@ RSpec.describe MigrationGuard::Rollbacker do
   before do
     allow(MigrationGuard::GitIntegration).to receive(:new).and_return(git_integration)
     allow(git_integration).to receive_messages(main_branch: "main", migration_versions_in_trunk: ["20240101000001"])
-    allow(Rails.logger).to receive(:debug) { |msg| io.puts(msg.is_a?(String) ? msg : msg.call) }
+    allow(Rails.logger).to receive(:debug) do |*args, &block|
+      message = if block
+                  block.call
+                else
+                  args.first
+                end
+      io.puts(message) if message
+    end
     allow(Rails.logger).to receive(:info) { |msg| io.puts(msg) }
     allow(Rails.logger).to receive(:error) { |msg| io.puts(msg) }
   end
@@ -129,6 +136,7 @@ RSpec.describe MigrationGuard::Rollbacker do
       before do
         orphaned_migration
         allow(ActiveRecord::Migration).to receive(:execute_down)
+        allow(rollbacker).to receive(:gets)
       end
 
       it "rolls back without confirmation" do
