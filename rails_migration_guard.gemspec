@@ -35,11 +35,11 @@ Gem::Specification.new do |spec|
   spec.add_dependency "activerecord", ">= 6.1", "< 8.0"
   spec.add_dependency "activesupport", ">= 6.1", "< 8.0"
   spec.add_dependency "bigdecimal"
+  spec.add_dependency "drb"
   spec.add_dependency "logger"
   spec.add_dependency "mutex_m"
   spec.add_dependency "rails", ">= 6.1", "< 8.0"
   spec.add_dependency "rainbow", "~> 3.1"
-  spec.add_dependency "drb"
 
   spec.metadata["rubygems_mfa_required"] = "true"
 end
