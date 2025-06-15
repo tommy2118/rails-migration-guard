@@ -7,7 +7,14 @@ class CreateMigrationGuardRecords < ActiveRecord::Migration[<%= ActiveRecord::Mi
       t.string :branch
       t.string :author
       t.string :status
-      t.json :metadata
+      
+      # Use json for PostgreSQL/MySQL 5.7+, text for others
+      if connection.adapter_name.match?(/PostgreSQL|MySQL/)
+        t.json :metadata
+      else
+        t.text :metadata
+      end
+      
       t.timestamps
 
       t.index :version, unique: true
@@ -15,5 +22,9 @@ class CreateMigrationGuardRecords < ActiveRecord::Migration[<%= ActiveRecord::Mi
       t.index :created_at
       t.index [:branch, :status]
     end
+  end
+
+  def down
+    drop_table :migration_guard_records
   end
 end
