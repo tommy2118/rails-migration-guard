@@ -33,11 +33,11 @@ RSpec.describe MigrationGuard::Generators::HooksGenerator do
     context "when git directory exists" do
       it "creates post-checkout hook" do
         generator.invoke_all
-        
+
         hook_file = File.join(destination_root, ".git", "hooks", "post-checkout")
         expect(File.exist?(hook_file)).to be true
         expect(File.executable?(hook_file)).to be true
-        
+
         content = File.read(hook_file)
         expect(content).to include("#!/bin/sh")
         expect(content).to include("rails db:migration:status")
@@ -53,13 +53,13 @@ RSpec.describe MigrationGuard::Generators::HooksGenerator do
           File.chmod(mode, File.join(destination_root, path))
         end
         allow(generator).to receive(:empty_directory)
-        
+
         generator.invoke_all
-        
+
         hook_file = File.join(destination_root, ".git", "hooks", "pre-push")
         expect(File.exist?(hook_file)).to be true
         expect(File.executable?(hook_file)).to be true
-        
+
         content = File.read(hook_file)
         expect(content).to include("rails db:migration:check")
       end
@@ -67,9 +67,9 @@ RSpec.describe MigrationGuard::Generators::HooksGenerator do
       it "backs up existing hooks" do
         existing_hook = File.join(destination_root, ".git", "hooks", "post-checkout")
         File.write(existing_hook, "existing content")
-        
+
         generator.invoke_all
-        
+
         backup_file = "#{existing_hook}.backup"
         expect(File.exist?(backup_file)).to be true
         expect(File.read(backup_file)).to eq("existing content")
@@ -80,9 +80,9 @@ RSpec.describe MigrationGuard::Generators::HooksGenerator do
         temp_generator = described_class.new
         expected_content = temp_generator.send(:post_checkout_content)
         File.write(hook_file, expected_content)
-        
+
         generator.invoke_all
-        
+
         backup_file = "#{hook_file}.backup"
         expect(File.exist?(backup_file)).to be false
       end
@@ -94,10 +94,13 @@ RSpec.describe MigrationGuard::Generators::HooksGenerator do
       end
 
       it "displays error message and exits" do
-        expect(generator).to receive(:say).with(/Not a git repository/, :red)
-        expect(generator).to receive(:exit).with(1)
-        
+        allow(generator).to receive(:say)
+        allow(generator).to receive(:exit)
+
         generator.check_git_repository
+
+        expect(generator).to have_received(:say).with(/Not a git repository/, :red)
+        expect(generator).to have_received(:exit).with(1)
       end
     end
 
@@ -112,12 +115,12 @@ RSpec.describe MigrationGuard::Generators::HooksGenerator do
           File.chmod(mode, File.join(destination_root, path))
         end
         allow(generator).to receive(:empty_directory)
-        
+
         generator.invoke_all
-        
+
         post_checkout = File.join(destination_root, ".git", "hooks", "post-checkout")
         pre_push = File.join(destination_root, ".git", "hooks", "pre-push")
-        
+
         expect(File.exist?(post_checkout)).to be true
         expect(File.exist?(pre_push)).to be false
       end
@@ -132,12 +135,12 @@ RSpec.describe MigrationGuard::Generators::HooksGenerator do
           File.chmod(mode, File.join(destination_root, path))
         end
         allow(generator).to receive(:empty_directory)
-        
+
         generator.invoke_all
-        
+
         hook_file = File.join(destination_root, ".git", "hooks", "post-checkout")
         content = File.read(hook_file)
-        
+
         expect(content).to include("Custom warning message")
       end
     end
@@ -146,10 +149,10 @@ RSpec.describe MigrationGuard::Generators::HooksGenerator do
   describe "hook content" do
     it "post-checkout hook runs migration status on branch change" do
       generator.invoke_all
-      
+
       hook_file = File.join(destination_root, ".git", "hooks", "post-checkout")
       content = File.read(hook_file)
-      
+
       expect(content).to include("# Rails Migration Guard post-checkout hook")
       expect(content).to include('if [ "$3" = "1" ]')
       expect(content).to include("echo \"Checking migration status...\"")
@@ -166,16 +169,18 @@ RSpec.describe MigrationGuard::Generators::HooksGenerator do
         File.chmod(mode, File.join(destination_root, path))
       end
       allow(generator).to receive(:empty_directory)
-      
+
       generator.invoke_all
-      
+
       hook_file = File.join(destination_root, ".git", "hooks", "pre-push")
       content = File.read(hook_file)
-      
-      expect(content).to include("# Rails Migration Guard pre-push hook")
-      expect(content).to include("bundle exec rails db:migration:check")
-      expect(content).to include("if [ $? -ne 0 ]")
-      expect(content).to include("exit 1")
+
+      aggregate_failures do
+        expect(content).to include("# Rails Migration Guard pre-push hook")
+        expect(content).to include("bundle exec rails db:migration:check")
+        expect(content).to include("if [ $? -ne 0 ]")
+        expect(content).to include("exit 1")
+      end
     end
   end
 end

@@ -42,6 +42,14 @@ Metrics/ClassLength:
 RSpec/ExampleLength:
   Max: 15
 
+RSpec/FilePath:
+  Exclude:
+    - 'spec/generators/**/*'
+
+RSpec/SpecFilePathFormat:
+  Exclude:
+    - 'spec/generators/**/*'
+
 RSpec/MultipleExpectations:
   Max: 5
 
