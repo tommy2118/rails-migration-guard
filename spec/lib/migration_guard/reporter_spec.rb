@@ -111,8 +111,10 @@ RSpec.describe MigrationGuard::Reporter do
 
   describe "#status_report" do
     before do
-      allow(git_integration).to receive_messages(migration_versions_in_trunk: ["20240101000001"],
-                                                 current_branch: "feature/test")
+      allow(git_integration).to receive_messages(
+        migration_versions_in_trunk: ["20240101000001"],
+        current_branch: "feature/test"
+      )
     end
 
     context "with mixed migration states" do
@@ -136,17 +138,16 @@ RSpec.describe MigrationGuard::Reporter do
         report = reporter.status_report
 
         aggregate_failures do
-          expect(report[:current_branch]).to eq("feature/test")
-          expect(report[:main_branch]).to eq("main")
-          expect(report[:synced_count]).to eq(1)
-          expect(report[:orphaned_count]).to eq(1)
-          expect(report[:missing_count]).to eq(0)
-          expect(report[:orphaned_migrations].size).to eq(1)
-          expect(report[:orphaned_migrations].first).to include(
-            version: "20240102000002",
-            branch: "feature/test",
-            author: "dev@example.com",
-            status: "applied"
+          expect(report).to include(
+            current_branch: "feature/test", main_branch: "main",
+            synced_count: 1, orphaned_count: 1, missing_count: 0,
+            missing_migrations: []
+          )
+          expect(report[:orphaned_migrations]).to contain_exactly(
+            hash_including(
+              version: "20240102000002", branch: "feature/test",
+              author: "dev@example.com", status: "applied"
+            )
           )
         end
       end
@@ -169,8 +170,10 @@ RSpec.describe MigrationGuard::Reporter do
 
   describe "#format_status_output" do
     before do
-      allow(git_integration).to receive_messages(migration_versions_in_trunk: ["20240101000001"],
-                                                 current_branch: "feature/test")
+      allow(git_integration).to receive_messages(
+        migration_versions_in_trunk: ["20240101000001"],
+        current_branch: "feature/test"
+      )
     end
 
     context "with clean status" do
@@ -235,7 +238,10 @@ RSpec.describe MigrationGuard::Reporter do
 
   describe "#summary_line" do
     before do
-      allow(git_integration).to receive_messages(migration_versions_in_trunk: [], current_branch: "feature/test")
+      allow(git_integration).to receive_messages(
+        migration_versions_in_trunk: [],
+        current_branch: "feature/test"
+      )
     end
 
     it "generates concise summary" do

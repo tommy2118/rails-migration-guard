@@ -12,7 +12,7 @@ module MigrationGuard
 
     def rollback_orphaned
       orphaned = @reporter.orphaned_migrations
-      
+
       if orphaned.empty?
         output_message Colorizer.success("No orphaned migrations found.")
         return
@@ -26,17 +26,16 @@ module MigrationGuard
       end
       
       output_message ""
-      
       if @interactive
         print "Do you want to roll back these migrations? (y/n): "
         response = gets.chomp.downcase
-        
+
         if response != 'y'
           output_message Colorizer.info("Rollback cancelled.")
           return
         end
       end
-      
+
       orphaned.each do |migration|
         rollback_migration(migration)
       end
@@ -63,7 +62,7 @@ module MigrationGuard
 
     def rollback_all_orphaned
       orphaned = @reporter.orphaned_migrations
-      
+
       if orphaned.empty?
         output_message Colorizer.success("No orphaned migrations found.")
         return
@@ -75,20 +74,19 @@ module MigrationGuard
       end
       
       output_message ""
-      
       if @interactive
         print "Do you want to roll back ALL orphaned migrations? (y/n): "
         response = gets.chomp.downcase
-        
+
         if response != 'y'
           output_message Colorizer.info("Rollback cancelled.")
           return
         end
       end
-      
+
       success_count = 0
       failure_count = 0
-      
+
       orphaned.each do |migration|
         begin
           rollback_migration(migration)
@@ -98,7 +96,7 @@ module MigrationGuard
           failure_count += 1
         end
       end
-      
+
       if failure_count > 0
         output_message ""
         output_message Colorizer.warning("Rolled back #{success_count} migration(s) with #{failure_count} failure(s)")
@@ -112,7 +110,6 @@ module MigrationGuard
 
     def rollback_migration(migration)
       output_message Colorizer.info("Rolling back #{migration.version}...")
-      
       begin
         # Execute the down migration
         ActiveRecord::Migration.execute_down(migration.version)
