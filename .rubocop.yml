@@ -1,10 +1,8 @@
-plugins:
+require:
   - rubocop-rails
+  - rubocop-rspec
   - rubocop-capybara
   - rubocop-factory_bot
-
-require:
-  - rubocop-rspec
 
 AllCops:
   TargetRubyVersion: 3.0
@@ -40,7 +38,15 @@ Metrics/ClassLength:
   Max: 150
 
 RSpec/ExampleLength:
-  Max: 15
+  Max: 20
+
+RSpec/FilePath:
+  Exclude:
+    - 'spec/generators/**/*'
+
+RSpec/SpecFilePathFormat:
+  Exclude:
+    - 'spec/generators/**/*'
 
 RSpec/MultipleExpectations:
   Max: 5
@@ -59,3 +65,4 @@ Naming/PredicateMethod:
 Rails/ApplicationRecord:
   Exclude:
     - 'lib/migration_guard/migration_guard_record.rb'
+

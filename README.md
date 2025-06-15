@@ -50,6 +50,24 @@ This will:
 2. Generate a migration to create the `migration_guard_records` table
 3. Set up the gem with sensible defaults
 
+### Optional: Install Git Hooks
+
+To automatically check migration status when switching branches:
+
+```bash
+$ rails generate migration_guard:hooks
+```
+
+This installs a post-checkout hook that runs migration status checks when switching branches.
+
+For additional protection, install a pre-push hook:
+
+```bash
+$ rails generate migration_guard:hooks --pre-push
+```
+
+This prevents pushing when orphaned migrations are detected.
+
 ## Usage
 
 ### Basic Commands
