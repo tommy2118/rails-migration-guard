@@ -24,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Errors in red
   - Respects NO_COLOR environment variable
   - Configurable via `config.colorize_output`
+- Git hooks generator for automatic migration checking:
+  - `rails generate migration_guard:hooks` - Install post-checkout hook
+  - `rails generate migration_guard:hooks --pre-push` - Also install pre-push hook
 - Rake tasks for migration management:
   - `db:migration:status` - Show migration status
   - `db:migration:rollback_orphaned` - Roll back orphaned migrations
