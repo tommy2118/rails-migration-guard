@@ -118,24 +118,24 @@ RSpec.describe MigrationGuard::Configuration do
     end
   end
 
-  describe "#validate!" do
+  describe "#validate" do
     it "passes for valid configuration" do
-      expect { config.validate! }.not_to raise_error
+      expect { config.validate }.not_to raise_error
     end
 
     it "raises error for invalid git integration level" do
       allow(config).to receive(:git_integration_level).and_return(:invalid)
-      expect { config.validate! }.to raise_error(MigrationGuard::ConfigurationError)
+      expect { config.validate }.to raise_error(MigrationGuard::ConfigurationError)
     end
 
     it "raises error for empty enabled_environments" do
       config.enabled_environments = []
-      expect { config.validate! }.to raise_error(MigrationGuard::ConfigurationError)
+      expect { config.validate }.to raise_error(MigrationGuard::ConfigurationError)
     end
 
     it "raises error for empty main_branch_names" do
       config.main_branch_names = []
-      expect { config.validate! }.to raise_error(MigrationGuard::ConfigurationError)
+      expect { config.validate }.to raise_error(MigrationGuard::ConfigurationError)
     end
   end
 end

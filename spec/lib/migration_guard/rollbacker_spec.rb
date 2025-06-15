@@ -21,8 +21,9 @@ RSpec.describe MigrationGuard::Rollbacker do
   before do
     allow(MigrationGuard::GitIntegration).to receive(:new).and_return(git_integration)
     allow(git_integration).to receive_messages(main_branch: "main", migration_versions_in_trunk: ["20240101000001"])
-    allow(rollbacker).to receive(:puts) { |msg| io.puts(msg) }
-    allow(rollbacker).to receive(:print) { |msg| io.print(msg) }
+    allow(Rails.logger).to receive(:debug) { |msg| io.puts(msg.is_a?(String) ? msg : msg.call) }
+    allow(Rails.logger).to receive(:info) { |msg| io.puts(msg) }
+    allow(Rails.logger).to receive(:error) { |msg| io.puts(msg) }
   end
 
   describe "#rollback_orphaned" do
@@ -71,6 +72,7 @@ RSpec.describe MigrationGuard::Rollbacker do
       context "when user declines rollback" do
         before do
           allow(rollbacker).to receive(:gets).and_return("n\n")
+          allow(ActiveRecord::Migration).to receive(:execute_down)
         end
 
         it "does not roll back the migration" do

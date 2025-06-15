@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module MigrationGuard
-  class MigrationGuardRecord < ApplicationRecord
+  class MigrationGuardRecord < ActiveRecord::Base
     self.table_name = "migration_guard_records"
 
     validates :version, presence: true, uniqueness: true

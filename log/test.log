@@ -1,0 +1,122 @@
+Found 1 orphaned migration:
+
+  20240102000002 - feature/test
+
+Do you want to roll back these migrations? (y/n): 
+Rollback cancelled.
+Rolling back 20240102000002...
+✓ Successfully rolled back 20240102000002
+Rolling back 20240102000002...
+✓ Successfully rolled back 20240102000002
+Rolling back 20240102000002...
+✓ Successfully rolled back 20240102000002
+Migration 20240102000002 is already rolled back.
+Migration 20240102000002 is already rolled back.
+No orphaned migrations found.
+Found 1 orphaned migration:
+
+  20240102000002 - feature/test
+
+Do you want to roll back these migrations? (y/n): 
+Rolling back 20240102000002...
+Found 1 orphaned migration:
+
+  20240102000002 - feature/test
+
+Do you want to roll back these migrations? (y/n): 
+Rolling back 20240102000002...
+Found 1 orphaned migration:
+
+  20240102000002 - feature/test
+
+Do you want to roll back these migrations? (y/n): 
+Rolling back 20240102000002...
+
+✓ Successfully rolled back 1 migration
+Found 1 orphaned migration:
+
+  20240102000002 - feature/test
+
+Do you want to roll back these migrations? (y/n): 
+Rolling back 20240102000002...
+
+✓ Successfully rolled back 1 migration
+Found 1 orphaned migration:
+
+  20240102000002 - feature/test
+
+Do you want to roll back these migrations? (y/n): 
+Rolling back 20240102000002...
+
+✓ Successfully rolled back 1 migration
+Found 1 orphaned migration:
+
+  20240102000002 - feature/test
+
+Do you want to roll back these migrations? (y/n): 
+Rollback cancelled.
+Found 1 orphaned migration:
+
+  20240102000002 - feature/test
+
+Do you want to roll back these migrations? (y/n): 
+Rollback cancelled.
+Found 1 orphaned migration:
+
+  20240102000002 - feature/test
+
+Rolling back 20240102000002...
+
+✓ Successfully rolled back 1 migration
+Found 2 orphaned migrations:
+
+  20240102000002
+  20240103000003
+
+Do you want to roll back ALL orphaned migrations? (y/n): 
+Rolling back 20240102000002...
+Rolling back 20240103000003...
+
+✓ All orphaned migrations rolled back successfully
+Found 2 orphaned migrations:
+
+  20240102000002
+  20240103000003
+
+Do you want to roll back ALL orphaned migrations? (y/n): 
+Rolling back 20240102000002...
+Rolling back 20240103000003...
+
+✓ All orphaned migrations rolled back successfully
+Found 2 orphaned migrations:
+
+  20240102000002
+  20240103000003
+
+Do you want to roll back ALL orphaned migrations? (y/n): 
+Rolling back 20240102000002...
+Rolling back 20240103000003...
+
+✓ All orphaned migrations rolled back successfully
+Found 2 orphaned migrations:
+
+  20240102000002
+  20240103000003
+
+Do you want to roll back ALL orphaned migrations? (y/n): 
+Rolling back 20240102000002...
+Rolling back 20240103000003...
+Failed to roll back 20240103000003: Failed to roll back migration 20240103000003: Migration error
+
+Rolled back 1 migration(s) with 1 failure(s)
+Found 2 orphaned migrations:
+
+  20240102000002
+  20240103000003
+
+Do you want to roll back ALL orphaned migrations? (y/n): 
+Rolling back 20240102000002...
+Rolling back 20240103000003...
+Failed to roll back 20240103000003: Failed to roll back migration 20240103000003: Migration error
+
+Rolled back 1 migration(s) with 1 failure(s)
