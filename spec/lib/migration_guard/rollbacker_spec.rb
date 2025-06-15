@@ -17,12 +17,6 @@ RSpec.describe MigrationGuard::Rollbacker do
   before do
     # Disable colorization for testing
     allow(MigrationGuard::Colorizer).to receive(:colorize_output?).and_return(false)
-  end
-  let(:rollbacker) { described_class.new }
-  let(:git_integration) { instance_double(MigrationGuard::GitIntegration) }
-  let(:io) { StringIO.new }
-
-  before do
     allow(MigrationGuard::GitIntegration).to receive(:new).and_return(git_integration)
     allow(git_integration).to receive_messages(
       main_branch: "main",
@@ -40,6 +34,10 @@ RSpec.describe MigrationGuard::Rollbacker do
     allow(Rails.logger).to receive(:error) { |msg| io.puts(msg) }
     allow(rollbacker).to receive(:print) { |msg| io.print(msg) }
   end
+
+  let(:rollbacker) { described_class.new }
+  let(:git_integration) { instance_double(MigrationGuard::GitIntegration) }
+  let(:io) { StringIO.new }
 
   describe "#rollback_orphaned" do
     context "with orphaned migrations" do

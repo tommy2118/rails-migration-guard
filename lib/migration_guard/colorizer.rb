@@ -58,15 +58,16 @@ module MigrationGuard
       end
 
       def format_migration_count(count, type)
+        pluralized = count == 1 ? "migration" : "migrations"
         case type
         when :synced
-          success("#{count} migrations")
+          success("#{count} #{pluralized}")
         when :orphaned
-          warning("#{count} migrations")
+          warning("#{count} #{pluralized}")
         when :missing
-          error("#{count} migrations")
+          error("#{count} #{pluralized}")
         else
-          "#{count} migrations"
+          "#{count} #{pluralized}"
         end
       end
 

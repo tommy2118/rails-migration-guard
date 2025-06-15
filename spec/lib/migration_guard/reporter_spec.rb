@@ -191,7 +191,7 @@ RSpec.describe MigrationGuard::Reporter do
         aggregate_failures do
           expect(output).to include("Migration Status (main branch)")
           expect(output).to include("✓ All migrations synced with main")
-          expect(output).to include("✓ Synced: 1 migrations")
+          expect(output).to include("✓ Synced: 1 migration")
         end
       end
     end

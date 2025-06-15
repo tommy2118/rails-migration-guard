@@ -166,12 +166,17 @@ RSpec.describe MigrationGuard::Colorizer do
 
         it "formats missing count in red" do
           result = described_class.format_migration_count(1, :missing)
-          expect(result).to eq(Rainbow("1 migrations").red)
+          expect(result).to eq(Rainbow("1 migration").red)
         end
 
         it "returns uncolored text for unknown type" do
           result = described_class.format_migration_count(3, :unknown)
           expect(result).to eq("3 migrations")
+        end
+
+        it "uses singular form for count of 1" do
+          result = described_class.format_migration_count(1, :synced)
+          expect(result).to eq(Rainbow("1 migration").green)
         end
       end
 

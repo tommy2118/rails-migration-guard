@@ -42,12 +42,12 @@ module MigrationGuard
     def format_status_output
       report = status_report
       output = []
-      
+
       add_header(output, report)
       add_summary_section(output, report)
       add_orphaned_section(output, report) if report[:orphaned_count].positive?
       add_missing_section(output, report) if report[:missing_count].positive?
-      
+
       output.join("\n")
     end
 
@@ -100,40 +100,49 @@ module MigrationGuard
     end
 
     def add_header(output, report)
-      output << "═" * 55
+      output << ("═" * 55)
       output << Colorizer.bold("Migration Status (#{report[:main_branch]} branch)")
-      output << "═" * 55
+      output << ("═" * 55)
     end
 
     def add_summary_section(output, report)
       add_sync_status(output, report)
-      
+      add_synced_count(output, report)
+      add_orphaned_count(output, report)
+      add_missing_count(output, report)
+    end
+
+    def add_synced_count(output, report)
       output << Colorizer.format_status_line(
         Colorizer.format_checkmark,
         "Synced",
         report[:synced_count],
         :synced
       )
-      
-      if report[:orphaned_count].positive?
-        orphaned_line = Colorizer.format_status_line(
-          Colorizer.format_warning_symbol,
-          "Orphaned",
-          report[:orphaned_count],
-          :orphaned
-        )
-        output << "#{orphaned_line} (local only)"
-      end
-      
-      if report[:missing_count].positive?
-        missing_line = Colorizer.format_status_line(
-          Colorizer.format_error_symbol,
-          "Missing",
-          report[:missing_count],
-          :missing
-        )
-        output << "#{missing_line} (in trunk, not local)"
-      end
+    end
+
+    def add_orphaned_count(output, report)
+      return unless report[:orphaned_count].positive?
+
+      orphaned_line = Colorizer.format_status_line(
+        Colorizer.format_warning_symbol,
+        "Orphaned",
+        report[:orphaned_count],
+        :orphaned
+      )
+      output << "#{orphaned_line} (local only)"
+    end
+
+    def add_missing_count(output, report)
+      return unless report[:missing_count].positive?
+
+      missing_line = Colorizer.format_status_line(
+        Colorizer.format_error_symbol,
+        "Missing",
+        report[:missing_count],
+        :missing
+      )
+      output << "#{missing_line} (in trunk, not local)"
     end
 
     def add_sync_status(output, report)
@@ -146,7 +155,6 @@ module MigrationGuard
         :synced
       )
     end
-
 
     def add_orphaned_section(output, report)
       output << ""
