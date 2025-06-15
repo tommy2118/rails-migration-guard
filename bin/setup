@@ -1,0 +1,31 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "fileutils"
+
+# Path to your application root.
+APP_ROOT = File.expand_path("..", __dir__)
+
+def system!(*args)
+  system(*args) || abort("\n== Command #{args} failed ==")
+end
+
+FileUtils.chdir APP_ROOT do
+  puts "== Installing dependencies =="
+  system! "gem install bundler --conservative"
+  system("bundle check") || system!("bundle install")
+
+  puts "\n== Running tests =="
+  system! "bundle exec rspec"
+
+  puts "\n== Running code quality checks =="
+  system! "bundle exec rubocop"
+
+  puts "\n== Setup complete! =="
+  puts "\nYou're ready to contribute! Here are some helpful commands:"
+  puts "  bundle exec rspec          # Run tests"
+  puts "  bundle exec rubocop        # Check code style"
+  puts "  bundle exec rake           # Run default tasks"
+  puts "  gh issue list --label 'good first issue'  # Find issues to work on"
+  puts "\nHappy coding! 🚀"
+end
