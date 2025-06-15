@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "colorizer"
+
 module MigrationGuard
   class Reporter
     def initialize
@@ -41,10 +43,7 @@ module MigrationGuard
       report = status_report
       output = []
 
-      output << ("═" * 55)
-      output << "Migration Status (#{report[:main_branch]} branch)"
-      output << ("═" * 55)
-
+      add_header(output, report)
       add_summary_section(output, report)
       add_orphaned_section(output, report) if report[:orphaned_count].positive?
       add_missing_section(output, report) if report[:missing_count].positive?
@@ -100,47 +99,81 @@ module MigrationGuard
       count == 1 ? "migration" : "migrations"
     end
 
+    def add_header(output, report)
+      output << ("═" * 55)
+      output << Colorizer.bold("Migration Status (#{report[:main_branch]} branch)")
+      output << ("═" * 55)
+    end
+
     def add_summary_section(output, report)
       add_sync_status(output, report)
-      add_count_line(output, "✓ Synced:   ", report[:synced_count])
-      if report[:orphaned_count].positive?
-        add_count_line(output, "⚠ Orphaned: ", report[:orphaned_count],
-                       " (local only)")
-      end
-      if report[:missing_count].positive? # rubocop:disable Style/GuardClause
-        add_count_line(output, "✗ Missing:  ", report[:missing_count],
-                       " (in trunk, not local)")
-      end
+      add_synced_count(output, report)
+      add_orphaned_count(output, report)
+      add_missing_count(output, report)
+    end
+
+    def add_synced_count(output, report)
+      output << Colorizer.format_status_line(
+        Colorizer.format_checkmark,
+        "Synced",
+        report[:synced_count],
+        :synced
+      )
+    end
+
+    def add_orphaned_count(output, report)
+      return unless report[:orphaned_count].positive?
+
+      orphaned_line = Colorizer.format_status_line(
+        Colorizer.format_warning_symbol,
+        "Orphaned",
+        report[:orphaned_count],
+        :orphaned
+      )
+      output << "#{orphaned_line} (local only)"
+    end
+
+    def add_missing_count(output, report)
+      return unless report[:missing_count].positive?
+
+      missing_line = Colorizer.format_status_line(
+        Colorizer.format_error_symbol,
+        "Missing",
+        report[:missing_count],
+        :missing
+      )
+      output << "#{missing_line} (in trunk, not local)"
     end
 
     def add_sync_status(output, report)
       return unless report[:orphaned_count].zero? && report[:missing_count].zero?
 
-      output << "✓ All migrations synced with #{report[:main_branch]}"
-    end
-
-    def add_count_line(output, prefix, count, suffix = "")
-      output << "#{prefix} #{count} #{pluralize_migration(count)}#{suffix}"
+      output << Colorizer.format_status_line(
+        Colorizer.format_checkmark,
+        "All migrations synced with #{report[:main_branch]}",
+        report[:synced_count],
+        :synced
+      )
     end
 
     def add_orphaned_section(output, report)
       output << ""
-      output << "Orphaned Migrations:"
+      output << Colorizer.warning("Orphaned Migrations:")
       report[:orphaned_migrations].each do |migration|
         output << format_orphaned_migration(migration)
       end
       output << ""
-      output << "Run `rails db:migration:rollback_orphaned` to clean up"
+      output << Colorizer.info("Run `rails db:migration:rollback_orphaned` to clean up")
     end
 
     def add_missing_section(output, report)
       output << ""
-      output << "Missing Migrations:"
+      output << Colorizer.error("Missing Migrations:")
       report[:missing_migrations].each do |version|
         output << "  #{version}"
       end
       output << ""
-      output << "Run `rails db:migrate` to apply missing migrations"
+      output << Colorizer.info("Run `rails db:migrate` to apply missing migrations")
     end
   end
 end

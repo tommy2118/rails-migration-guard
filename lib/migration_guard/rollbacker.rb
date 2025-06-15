@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "colorizer"
+
 module MigrationGuard
   class Rollbacker
     def initialize(interactive: true)
@@ -10,15 +12,13 @@ module MigrationGuard
 
     def rollback_orphaned
       orphaned = @reporter.orphaned_migrations
-      return if handle_no_orphaned_migrations?(orphaned)
+      return display_no_orphaned_migrations if orphaned.empty?
 
-      display_orphaned_migrations(orphaned)
+      display_orphaned_list(orphaned)
       return unless confirm_rollback?("Do you want to roll back these migrations? (y/n): ")
 
-      orphaned.each { |migration| rollback_migration(migration) }
-
-      Rails.logger.debug ""
-      Rails.logger.debug { "✓ Successfully rolled back #{orphaned.size} #{pluralize_migration(orphaned.size)}" }
+      execute_rollbacks(orphaned)
+      display_rollback_success(orphaned.size)
     end
 
     def rollback_specific(version)
@@ -27,29 +27,28 @@ module MigrationGuard
       raise MigrationNotFoundError, "Migration #{version} not found" unless migration
 
       if migration.rolled_back?
-        Rails.logger.debug { "Migration #{version} is already rolled back." }
+        output_message Colorizer.warning("Migration #{version} is already rolled back.")
         return
       end
 
       rollback_migration(migration)
-      Rails.logger.debug { "✓ Successfully rolled back #{version}" }
+      output_message Colorizer.success("#{Colorizer.format_checkmark} Successfully rolled back #{version}")
     end
 
     def rollback_all_orphaned
       orphaned = @reporter.orphaned_migrations
-      return if handle_no_orphaned_migrations?(orphaned)
+      return display_no_orphaned_migrations if orphaned.empty?
 
-      display_orphaned_migrations(orphaned, simple_format: true)
+      display_orphaned_list_simple(orphaned)
       return unless confirm_rollback?("Do you want to roll back ALL orphaned migrations? (y/n): ")
 
-      rollback_migrations_with_error_handling(orphaned)
+      execute_rollbacks_with_error_handling(orphaned)
     end
 
     private
 
     def rollback_migration(migration)
-      Rails.logger.debug { "Rolling back #{migration.version}..." }
-
+      output_message Colorizer.info("Rolling back #{migration.version}...")
       begin
         # Execute the down migration
         ActiveRecord::Migration.execute_down(migration.version)
@@ -65,29 +64,29 @@ module MigrationGuard
       count == 1 ? "migration" : "migrations"
     end
 
-    def handle_no_orphaned_migrations?(orphaned)
-      if orphaned.empty?
-        Rails.logger.debug "No orphaned migrations found."
-        true
-      else
-        false
-      end
+    def output_message(message)
+      Rails.logger.debug message
     end
 
-    def display_orphaned_migrations(orphaned, simple_format: false)
-      Rails.logger.debug { "Found #{orphaned.size} orphaned #{pluralize_migration(orphaned.size)}:" }
-      Rails.logger.debug ""
-
-      display_migration_list(orphaned, simple_format)
-
-      Rails.logger.debug ""
+    def display_no_orphaned_migrations
+      output_message Colorizer.success("No orphaned migrations found.")
     end
 
-    def display_migration_list(orphaned, simple_format)
+    def display_orphaned_list(orphaned)
+      output_message Colorizer.warning("Found #{orphaned.size} orphaned #{pluralize_migration(orphaned.size)}:")
+      output_message ""
       orphaned.each do |migration|
-        message = simple_format ? migration.version : "#{migration.version} - #{migration.branch || 'unknown branch'}"
-        Rails.logger.debug { "  #{message}" }
+        output_message "  #{migration.version} - #{migration.branch || 'unknown branch'}"
       end
+      output_message ""
+    end
+
+    def display_orphaned_list_simple(orphaned)
+      output_message Colorizer.warning("Found #{orphaned.size} orphaned #{pluralize_migration(orphaned.size)}:")
+      orphaned.each do |migration|
+        output_message "  #{migration.version}"
+      end
+      output_message ""
     end
 
     def confirm_rollback?(prompt)
@@ -95,16 +94,23 @@ module MigrationGuard
 
       Rails.logger.debug prompt
       response = gets.chomp.downcase
+      return true if response == "y"
 
-      if response == "y"
-        true
-      else
-        Rails.logger.debug "Rollback cancelled."
-        false
-      end
+      output_message Colorizer.info("Rollback cancelled.")
+      false
     end
 
-    def rollback_migrations_with_error_handling(orphaned)
+    def execute_rollbacks(orphaned)
+      orphaned.each { |migration| rollback_migration(migration) }
+    end
+
+    def display_rollback_success(count)
+      output_message ""
+      message = "#{Colorizer.format_checkmark} Successfully rolled back #{count} #{pluralize_migration(count)}"
+      output_message Colorizer.success(message)
+    end
+
+    def execute_rollbacks_with_error_handling(orphaned)
       success_count = 0
       failure_count = 0
 
@@ -112,15 +118,21 @@ module MigrationGuard
         rollback_migration(migration)
         success_count += 1
       rescue StandardError => e
-        Rails.logger.debug { "Failed to roll back #{migration.version}: #{e.message}" }
+        output_message Colorizer.error("Failed to roll back #{migration.version}: #{e.message}")
         failure_count += 1
       end
 
-      Rails.logger.debug ""
+      display_batch_rollback_results(success_count, failure_count)
+    end
+
+    def display_batch_rollback_results(success_count, failure_count)
+      output_message ""
       if failure_count.positive?
-        Rails.logger.debug { "Rolled back #{success_count} migration(s) with #{failure_count} failure(s)" }
+        message = "Rolled back #{success_count} migration(s) with #{failure_count} failure(s)"
+        output_message Colorizer.warning(message)
       else
-        Rails.logger.debug "✓ All orphaned migrations rolled back successfully"
+        message = "#{Colorizer.format_checkmark} All orphaned migrations rolled back successfully"
+        output_message Colorizer.success(message)
       end
     end
   end

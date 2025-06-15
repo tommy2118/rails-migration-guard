@@ -14,13 +14,14 @@ unless defined?(ActiveRecord::Migration.execute_down)
 end
 
 RSpec.describe MigrationGuard::Rollbacker do
-  let(:rollbacker) { described_class.new }
-  let(:git_integration) { instance_double(MigrationGuard::GitIntegration) }
-  let(:io) { StringIO.new }
-
   before do
+    # Disable colorization for testing
+    allow(MigrationGuard::Colorizer).to receive(:colorize_output?).and_return(false)
     allow(MigrationGuard::GitIntegration).to receive(:new).and_return(git_integration)
-    allow(git_integration).to receive_messages(main_branch: "main", migration_versions_in_trunk: ["20240101000001"])
+    allow(git_integration).to receive_messages(
+      main_branch: "main",
+      migration_versions_in_trunk: ["20240101000001"]
+    )
     allow(Rails.logger).to receive(:debug) do |*args, &block|
       message = if block
                   block.call
@@ -31,7 +32,12 @@ RSpec.describe MigrationGuard::Rollbacker do
     end
     allow(Rails.logger).to receive(:info) { |msg| io.puts(msg) }
     allow(Rails.logger).to receive(:error) { |msg| io.puts(msg) }
+    allow(rollbacker).to receive(:print) { |msg| io.print(msg) }
   end
+
+  let(:rollbacker) { described_class.new }
+  let(:git_integration) { instance_double(MigrationGuard::GitIntegration) }
+  let(:io) { StringIO.new }
 
   describe "#rollback_orphaned" do
     context "with orphaned migrations" do

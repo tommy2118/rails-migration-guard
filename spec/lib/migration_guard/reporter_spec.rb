@@ -9,6 +9,8 @@ RSpec.describe MigrationGuard::Reporter do
   before do
     allow(MigrationGuard::GitIntegration).to receive(:new).and_return(git_integration)
     allow(git_integration).to receive(:main_branch).and_return("main")
+    # Disable colorization for testing
+    allow(MigrationGuard::Colorizer).to receive(:colorize_output?).and_return(false)
   end
 
   describe "#orphaned_migrations" do
@@ -109,8 +111,10 @@ RSpec.describe MigrationGuard::Reporter do
 
   describe "#status_report" do
     before do
-      allow(git_integration).to receive_messages(migration_versions_in_trunk: ["20240101000001"],
-                                                 current_branch: "feature/test")
+      allow(git_integration).to receive_messages(
+        migration_versions_in_trunk: ["20240101000001"],
+        current_branch: "feature/test"
+      )
     end
 
     context "with mixed migration states" do
@@ -134,17 +138,16 @@ RSpec.describe MigrationGuard::Reporter do
         report = reporter.status_report
 
         aggregate_failures do
-          expect(report[:current_branch]).to eq("feature/test")
-          expect(report[:main_branch]).to eq("main")
-          expect(report[:synced_count]).to eq(1)
-          expect(report[:orphaned_count]).to eq(1)
-          expect(report[:missing_count]).to eq(0)
-          expect(report[:orphaned_migrations].size).to eq(1)
-          expect(report[:orphaned_migrations].first).to include(
-            version: "20240102000002",
-            branch: "feature/test",
-            author: "dev@example.com",
-            status: "applied"
+          expect(report).to include(
+            current_branch: "feature/test", main_branch: "main",
+            synced_count: 1, orphaned_count: 1, missing_count: 0,
+            missing_migrations: []
+          )
+          expect(report[:orphaned_migrations]).to contain_exactly(
+            hash_including(
+              version: "20240102000002", branch: "feature/test",
+              author: "dev@example.com", status: "applied"
+            )
           )
         end
       end
@@ -167,8 +170,10 @@ RSpec.describe MigrationGuard::Reporter do
 
   describe "#format_status_output" do
     before do
-      allow(git_integration).to receive_messages(migration_versions_in_trunk: ["20240101000001"],
-                                                 current_branch: "feature/test")
+      allow(git_integration).to receive_messages(
+        migration_versions_in_trunk: ["20240101000001"],
+        current_branch: "feature/test"
+      )
     end
 
     context "with clean status" do
@@ -186,7 +191,7 @@ RSpec.describe MigrationGuard::Reporter do
         aggregate_failures do
           expect(output).to include("Migration Status (main branch)")
           expect(output).to include("✓ All migrations synced with main")
-          expect(output).to include("✓ Synced:    1 migration")
+          expect(output).to include("✓ Synced: 1 migration")
         end
       end
     end
@@ -206,7 +211,7 @@ RSpec.describe MigrationGuard::Reporter do
         output = reporter.format_status_output
 
         aggregate_failures do
-          expect(output).to include("⚠ Orphaned:  1 migration (local only)")
+          expect(output).to include("⚠ Orphaned: 1 migration (local only)")
           expect(output).to include("Orphaned Migrations:")
           expect(output).to include("20240102000002")
           expect(output).to include("Branch: feature/test")
@@ -222,7 +227,7 @@ RSpec.describe MigrationGuard::Reporter do
         output = reporter.format_status_output
 
         aggregate_failures do
-          expect(output).to include("✗ Missing:   1 migration (in trunk, not local)")
+          expect(output).to include("✗ Missing: 1 migration (in trunk, not local)")
           expect(output).to include("Missing Migrations:")
           expect(output).to include("20240101000001")
           expect(output).to include("Run `rails db:migrate` to apply missing migrations")
@@ -233,7 +238,10 @@ RSpec.describe MigrationGuard::Reporter do
 
   describe "#summary_line" do
     before do
-      allow(git_integration).to receive_messages(migration_versions_in_trunk: [], current_branch: "feature/test")
+      allow(git_integration).to receive_messages(
+        migration_versions_in_trunk: [],
+        current_branch: "feature/test"
+      )
     end
 
     it "generates concise summary" do

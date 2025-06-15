@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sandbox mode for testing migrations
 - Configurable behavior per environment
 - Rails generator for easy setup
+- Colorized CLI output for better readability:
+  - Success messages in green
+  - Warnings in yellow
+  - Errors in red
+  - Respects NO_COLOR environment variable
+  - Configurable via `config.colorize_output`
 - Rake tasks for migration management:
   - `db:migration:status` - Show migration status
   - `db:migration:rollback_orphaned` - Roll back orphaned migrations
