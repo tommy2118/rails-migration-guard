@@ -35,23 +35,3 @@ jobs:
     
     - name: Run linter
       run: bundle exec rubocop
-
-  coverage:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Ruby
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: '3.2'
-        bundler-cache: true
-    
-    - name: Run tests with coverage
-      run: bundle exec rspec
-    
-    - name: Upload coverage reports
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage/coverage.xml
-        fail_ci_if_error: true

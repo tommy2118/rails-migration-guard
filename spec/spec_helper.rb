@@ -2,13 +2,10 @@
 
 require "bundler/setup"
 require "simplecov"
-require "simplecov-cobertura"
 
 SimpleCov.start do
   add_filter "/spec/"
   add_filter "/vendor/"
-
-  formatter SimpleCov::Formatter::CoberturaFormatter if ENV["CI"]
 end
 
 require "rails_migration_guard"
