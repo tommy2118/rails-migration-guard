@@ -33,9 +33,9 @@ module MigrationGuard
     # Console helpers
     console do
       if MigrationGuard.enabled?
-        puts "MigrationGuard is enabled in #{Rails.env}"
+        Rails.logger.debug { "MigrationGuard is enabled in #{Rails.env}" }
         reporter = MigrationGuard::Reporter.new
-        puts reporter.summary_line
+        Rails.logger.debug reporter.summary_line
       end
     end
 
@@ -47,7 +47,8 @@ module MigrationGuard
         # Check if git hooks are installed
         git_hooks_path = Rails.root.join(".git/hooks/post-checkout")
         unless git_hooks_path.exist?
-          Rails.logger.info "[MigrationGuard] Git hooks not installed. Run 'rails generate migration_guard:hooks' to install."
+          msg = "[MigrationGuard] Git hooks not installed. Run 'rails generate migration_guard:hooks' to install."
+          Rails.logger.info msg
         end
       end
     end

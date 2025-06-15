@@ -3,13 +3,15 @@
 require "rails_helper"
 
 # Mock ActiveRecord::Migration for testing
-module ActiveRecord
-  class Migration
-    def self.execute_down(version)
-      # Mock implementation
+unless defined?(ActiveRecord::Migration.execute_down)
+  module ActiveRecord
+    class Migration
+      def self.execute_down(version)
+        # Mock implementation
+      end
     end
   end
-end unless defined?(ActiveRecord::Migration.execute_down)
+end
 
 RSpec.describe MigrationGuard::Rollbacker do
   let(:rollbacker) { described_class.new }
@@ -18,8 +20,7 @@ RSpec.describe MigrationGuard::Rollbacker do
 
   before do
     allow(MigrationGuard::GitIntegration).to receive(:new).and_return(git_integration)
-    allow(git_integration).to receive(:main_branch).and_return("main")
-    allow(git_integration).to receive(:migration_versions_in_trunk).and_return(["20240101000001"])
+    allow(git_integration).to receive_messages(main_branch: "main", migration_versions_in_trunk: ["20240101000001"])
     allow(rollbacker).to receive(:puts) { |msg| io.puts(msg) }
     allow(rollbacker).to receive(:print) { |msg| io.print(msg) }
   end
@@ -41,21 +42,21 @@ RSpec.describe MigrationGuard::Rollbacker do
         end
 
         it "rolls back the migration" do
-          expect(ActiveRecord::Migration).to receive(:execute_down).with("20240102000002")
-          
           rollbacker.rollback_orphaned
+
+          expect(ActiveRecord::Migration).to have_received(:execute_down).with("20240102000002")
         end
 
         it "updates the migration record status" do
           rollbacker.rollback_orphaned
-          
+
           orphaned_migration.reload
           expect(orphaned_migration.status).to eq("rolled_back")
         end
 
         it "displays rollback progress" do
           rollbacker.rollback_orphaned
-          
+
           output = io.string
           aggregate_failures do
             expect(output).to include("Found 1 orphaned migration")
@@ -73,14 +74,14 @@ RSpec.describe MigrationGuard::Rollbacker do
         end
 
         it "does not roll back the migration" do
-          expect(ActiveRecord::Migration).not_to receive(:execute_down)
-          
           rollbacker.rollback_orphaned
+
+          expect(ActiveRecord::Migration).not_to have_received(:execute_down)
         end
 
         it "displays cancellation message" do
           rollbacker.rollback_orphaned
-          
+
           expect(io.string).to include("Rollback cancelled")
         end
       end
@@ -97,7 +98,7 @@ RSpec.describe MigrationGuard::Rollbacker do
 
         it "does not update the record status" do
           expect { rollbacker.rollback_orphaned }.to raise_error(MigrationGuard::RollbackError)
-          
+
           orphaned_migration.reload
           expect(orphaned_migration.status).to eq("applied")
         end
@@ -107,7 +108,7 @@ RSpec.describe MigrationGuard::Rollbacker do
     context "with no orphaned migrations" do
       it "displays no orphaned migrations message" do
         rollbacker.rollback_orphaned
-        
+
         expect(io.string).to include("No orphaned migrations found")
       end
     end
@@ -115,7 +116,7 @@ RSpec.describe MigrationGuard::Rollbacker do
     context "with interactive mode disabled" do
       let(:rollbacker) { described_class.new(interactive: false) }
 
-      let!(:orphaned_migration) do
+      let(:orphaned_migration) do
         MigrationGuard::MigrationGuardRecord.create!(
           version: "20240102000002",
           status: "applied",
@@ -124,14 +125,15 @@ RSpec.describe MigrationGuard::Rollbacker do
       end
 
       before do
+        orphaned_migration
         allow(ActiveRecord::Migration).to receive(:execute_down)
       end
 
       it "rolls back without confirmation" do
-        expect(ActiveRecord::Migration).to receive(:execute_down).with("20240102000002")
-        expect(rollbacker).not_to receive(:gets)
-        
         rollbacker.rollback_orphaned
+
+        expect(ActiveRecord::Migration).to have_received(:execute_down).with("20240102000002")
+        expect(rollbacker).not_to have_received(:gets)
       end
     end
   end
@@ -151,21 +153,21 @@ RSpec.describe MigrationGuard::Rollbacker do
       end
 
       it "rolls back the specific migration" do
-        expect(ActiveRecord::Migration).to receive(:execute_down).with("20240102000002")
-        
         rollbacker.rollback_specific("20240102000002")
+
+        expect(ActiveRecord::Migration).to have_received(:execute_down).with("20240102000002")
       end
 
       it "updates the migration status" do
         rollbacker.rollback_specific("20240102000002")
-        
+
         migration.reload
         expect(migration.status).to eq("rolled_back")
       end
 
       it "displays success message" do
         rollbacker.rollback_specific("20240102000002")
-        
+
         expect(io.string).to include("✓ Successfully rolled back 20240102000002")
       end
     end
@@ -178,7 +180,7 @@ RSpec.describe MigrationGuard::Rollbacker do
     end
 
     context "when migration is already rolled back" do
-      let!(:migration) do
+      let(:migration) do
         MigrationGuard::MigrationGuardRecord.create!(
           version: "20240102000002",
           status: "rolled_back",
@@ -186,16 +188,20 @@ RSpec.describe MigrationGuard::Rollbacker do
         )
       end
 
+      before { migration }
+
       it "displays already rolled back message" do
         rollbacker.rollback_specific("20240102000002")
-        
+
         expect(io.string).to include("Migration 20240102000002 is already rolled back")
       end
 
       it "does not execute rollback" do
-        expect(ActiveRecord::Migration).not_to receive(:execute_down)
-        
+        allow(ActiveRecord::Migration).to receive(:execute_down)
+
         rollbacker.rollback_specific("20240102000002")
+
+        expect(ActiveRecord::Migration).not_to have_received(:execute_down)
       end
     end
   end
@@ -223,15 +229,15 @@ RSpec.describe MigrationGuard::Rollbacker do
       end
 
       it "rolls back all orphaned migrations" do
-        expect(ActiveRecord::Migration).to receive(:execute_down).with("20240102000002")
-        expect(ActiveRecord::Migration).to receive(:execute_down).with("20240103000003")
-        
         rollbacker.rollback_all_orphaned
+
+        expect(ActiveRecord::Migration).to have_received(:execute_down).with("20240102000002")
+        expect(ActiveRecord::Migration).to have_received(:execute_down).with("20240103000003")
       end
 
       it "updates all migration statuses" do
         rollbacker.rollback_all_orphaned
-        
+
         orphaned_migrations.each do |migration|
           migration.reload
           expect(migration.status).to eq("rolled_back")
@@ -240,7 +246,7 @@ RSpec.describe MigrationGuard::Rollbacker do
 
       it "displays progress for each migration" do
         rollbacker.rollback_all_orphaned
-        
+
         output = io.string
         aggregate_failures do
           expect(output).to include("Found 2 orphaned migrations")
@@ -256,18 +262,18 @@ RSpec.describe MigrationGuard::Rollbacker do
         allow(rollbacker).to receive(:gets).and_return("y\n")
         allow(ActiveRecord::Migration).to receive(:execute_down).with("20240102000002")
         allow(ActiveRecord::Migration).to receive(:execute_down).with("20240103000003")
-          .and_raise(StandardError, "Migration error")
+                                                                .and_raise(StandardError, "Migration error")
       end
 
       it "continues with other migrations" do
-        expect(ActiveRecord::Migration).to receive(:execute_down).with("20240102000002")
-        
         rollbacker.rollback_all_orphaned
+
+        expect(ActiveRecord::Migration).to have_received(:execute_down).with("20240102000002")
       end
 
       it "reports partial success" do
         rollbacker.rollback_all_orphaned
-        
+
         output = io.string
         aggregate_failures do
           expect(output).to include("Failed to roll back 20240103000003:")

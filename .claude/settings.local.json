@@ -5,7 +5,9 @@
       "Bash(bundle exec rspec:*)",
       "Bash(bundle install)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(grep:*)",
+      "Bash(mv:*)"
     ],
     "deny": []
   }

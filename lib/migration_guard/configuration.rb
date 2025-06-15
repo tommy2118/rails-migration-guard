@@ -4,16 +4,12 @@ module MigrationGuard
   class Configuration
     VALID_GIT_INTEGRATION_LEVELS = %i[off warning auto_rollback].freeze
 
-    attr_accessor :enabled_environments, :track_branch, :track_author, :track_timestamp,
-                  :sandbox_mode, :warn_on_switch, :block_deploy_with_orphans,
-                  :auto_cleanup, :main_branch_names
-    
-    attr_writer :cleanup_after_days
-
-    attr_reader :git_integration_level
+    attr_accessor :enabled_environments, :track_branch, :track_author, :track_timestamp, :sandbox_mode,
+                  :warn_on_switch, :block_deploy_with_orphans, :auto_cleanup, :main_branch_names
+    attr_reader :git_integration_level, :cleanup_after_days
 
     def initialize
-      @enabled_environments = [:development, :staging]
+      @enabled_environments = %i[development staging]
       @git_integration_level = :warning
       @track_branch = true
       @track_author = true
@@ -33,10 +29,6 @@ module MigrationGuard
       end
 
       @git_integration_level = level
-    end
-    
-    def cleanup_after_days
-      @cleanup_after_days
     end
 
     def cleanup_after_days=(days)
@@ -63,14 +55,10 @@ module MigrationGuard
       }
     end
 
-    def validate!
-      if enabled_environments.empty?
-        raise ConfigurationError, "enabled_environments cannot be empty"
-      end
+    def validate
+      raise ConfigurationError, "enabled_environments cannot be empty" if enabled_environments.empty?
 
-      if main_branch_names.empty?
-        raise ConfigurationError, "main_branch_names cannot be empty"
-      end
+      raise ConfigurationError, "main_branch_names cannot be empty" if main_branch_names.empty?
 
       unless VALID_GIT_INTEGRATION_LEVELS.include?(git_integration_level)
         raise ConfigurationError, "Invalid git integration level: #{git_integration_level}"

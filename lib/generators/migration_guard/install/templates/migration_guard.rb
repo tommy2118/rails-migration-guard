@@ -2,7 +2,7 @@
 
 MigrationGuard.configure do |config|
   # Environments where MigrationGuard is active
-  config.enabled_environments = [:development, :staging]
+  config.enabled_environments = %i[development staging]
 
   # Git integration level:
   # - :off - No git integration

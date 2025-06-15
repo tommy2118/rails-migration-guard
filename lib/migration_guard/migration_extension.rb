@@ -9,36 +9,36 @@ module MigrationGuard
     module ClassMethods
       def migrate(direction)
         result = super
-        
+
         if MigrationGuard.enabled? && respond_to?(:version)
           tracker = MigrationGuard::Tracker.new
           tracker.track_migration(version.to_s, direction)
         end
-        
+
         result
       end
     end
 
     def migrate(direction)
       result = super
-      
+
       if MigrationGuard.enabled? && respond_to?(:version)
         tracker = MigrationGuard::Tracker.new
         tracker.track_migration(version.to_s, direction)
       end
-      
+
       result
     end
 
     def exec_migration(conn, direction)
       if MigrationGuard.enabled? && MigrationGuard.configuration.sandbox_mode && direction == :up
-        puts "[MigrationGuard] Running migration #{version} in sandbox mode..."
+        Rails.logger.debug { "[MigrationGuard] Running migration #{version} in sandbox mode..." }
         conn.transaction(requires_new: true) do
           super
-          puts "[MigrationGuard] Migration would succeed. Rolling back sandbox..."
+          Rails.logger.debug "[MigrationGuard] Migration would succeed. Rolling back sandbox..."
           raise ActiveRecord::Rollback
         end
-        puts "[MigrationGuard] Sandbox rollback complete. Run without sandbox to apply."
+        Rails.logger.debug "[MigrationGuard] Sandbox rollback complete. Run without sandbox to apply."
       else
         super
       end

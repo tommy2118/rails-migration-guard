@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module MigrationGuard
-  class MigrationGuardRecord < ActiveRecord::Base
+  class MigrationGuardRecord < ApplicationRecord
     self.table_name = "migration_guard_records"
 
     validates :version, presence: true, uniqueness: true
@@ -14,9 +14,7 @@ module MigrationGuard
     scope :rolled_back, -> { where(status: "rolled_back") }
 
     def self.setup_serialization
-      if connection_pool.connected? && !connection.adapter_name.match?(/PostgreSQL|MySQL/)
-        serialize :metadata, JSON
-      end
+      serialize :metadata, JSON if connection_pool.connected? && !connection.adapter_name.match?(/PostgreSQL|MySQL/)
     rescue ActiveRecord::ConnectionNotEstablished
       # Connection not established yet, will set up serialization later
     end

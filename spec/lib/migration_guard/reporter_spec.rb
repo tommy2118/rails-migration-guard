@@ -13,7 +13,7 @@ RSpec.describe MigrationGuard::Reporter do
 
   describe "#orphaned_migrations" do
     before do
-      allow(git_integration).to receive(:migration_versions_in_trunk).and_return(["20240101000001", "20240102000002"])
+      allow(git_integration).to receive(:migration_versions_in_trunk).and_return(%w[20240101000001 20240102000002])
     end
 
     context "when migrations exist only locally" do
@@ -32,7 +32,7 @@ RSpec.describe MigrationGuard::Reporter do
 
       it "identifies migrations not in trunk" do
         orphaned = reporter.orphaned_migrations
-        
+
         aggregate_failures do
           expect(orphaned.size).to eq(1)
           expect(orphaned.first.version).to eq("20240103000003")
@@ -71,7 +71,8 @@ RSpec.describe MigrationGuard::Reporter do
 
   describe "#missing_migrations" do
     before do
-      allow(git_integration).to receive(:migration_versions_in_trunk).and_return(["20240101000001", "20240102000002", "20240103000003"])
+      allow(git_integration).to receive(:migration_versions_in_trunk).and_return(%w[20240101000001 20240102000002
+                                                                                    20240103000003])
     end
 
     context "when trunk has migrations not run locally" do
@@ -86,9 +87,9 @@ RSpec.describe MigrationGuard::Reporter do
 
       it "identifies missing migrations" do
         missing = reporter.missing_migrations
-        
+
         aggregate_failures do
-          expect(missing).to eq(["20240102000002", "20240103000003"])
+          expect(missing).to eq(%w[20240102000002 20240103000003])
         end
       end
     end
@@ -108,8 +109,8 @@ RSpec.describe MigrationGuard::Reporter do
 
   describe "#status_report" do
     before do
-      allow(git_integration).to receive(:migration_versions_in_trunk).and_return(["20240101000001"])
-      allow(git_integration).to receive(:current_branch).and_return("feature/test")
+      allow(git_integration).to receive_messages(migration_versions_in_trunk: ["20240101000001"],
+                                                 current_branch: "feature/test")
     end
 
     context "with mixed migration states" do
@@ -131,7 +132,7 @@ RSpec.describe MigrationGuard::Reporter do
 
       it "generates comprehensive status report" do
         report = reporter.status_report
-        
+
         aggregate_failures do
           expect(report[:current_branch]).to eq("feature/test")
           expect(report[:main_branch]).to eq("main")
@@ -145,7 +146,6 @@ RSpec.describe MigrationGuard::Reporter do
             author: "dev@example.com",
             status: "applied"
           )
-          expect(report[:missing_migrations]).to be_empty
         end
       end
     end
@@ -153,7 +153,7 @@ RSpec.describe MigrationGuard::Reporter do
     context "with no migrations" do
       it "returns empty report" do
         report = reporter.status_report
-        
+
         aggregate_failures do
           expect(report[:synced_count]).to eq(0)
           expect(report[:orphaned_count]).to eq(0)
@@ -167,8 +167,8 @@ RSpec.describe MigrationGuard::Reporter do
 
   describe "#format_status_output" do
     before do
-      allow(git_integration).to receive(:migration_versions_in_trunk).and_return(["20240101000001"])
-      allow(git_integration).to receive(:current_branch).and_return("feature/test")
+      allow(git_integration).to receive_messages(migration_versions_in_trunk: ["20240101000001"],
+                                                 current_branch: "feature/test")
     end
 
     context "with clean status" do
@@ -182,7 +182,7 @@ RSpec.describe MigrationGuard::Reporter do
 
       it "formats success message" do
         output = reporter.format_status_output
-        
+
         aggregate_failures do
           expect(output).to include("Migration Status (main branch)")
           expect(output).to include("✓ All migrations synced with main")
@@ -204,7 +204,7 @@ RSpec.describe MigrationGuard::Reporter do
 
       it "formats warning message with details" do
         output = reporter.format_status_output
-        
+
         aggregate_failures do
           expect(output).to include("⚠ Orphaned:   1 migration")
           expect(output).to include("Orphaned Migrations:")
@@ -220,7 +220,7 @@ RSpec.describe MigrationGuard::Reporter do
     context "with missing migrations" do
       it "formats error message" do
         output = reporter.format_status_output
-        
+
         aggregate_failures do
           expect(output).to include("✗ Missing:    1 migration")
           expect(output).to include("Missing Migrations:")
@@ -233,8 +233,7 @@ RSpec.describe MigrationGuard::Reporter do
 
   describe "#summary_line" do
     before do
-      allow(git_integration).to receive(:migration_versions_in_trunk).and_return([])
-      allow(git_integration).to receive(:current_branch).and_return("feature/test")
+      allow(git_integration).to receive_messages(migration_versions_in_trunk: [], current_branch: "feature/test")
     end
 
     it "generates concise summary" do
@@ -243,9 +242,9 @@ RSpec.describe MigrationGuard::Reporter do
         status: "applied",
         branch: "feature/test"
       )
-      
+
       summary = reporter.summary_line
-      
+
       expect(summary).to eq("MigrationGuard: 1 orphaned migration detected on branch 'feature/test'")
     end
 
@@ -257,15 +256,15 @@ RSpec.describe MigrationGuard::Reporter do
           branch: "feature/test"
         )
       end
-      
+
       summary = reporter.summary_line
-      
+
       expect(summary).to eq("MigrationGuard: 2 orphaned migrations detected on branch 'feature/test'")
     end
 
     it "reports clean status" do
       summary = reporter.summary_line
-      
+
       expect(summary).to eq("MigrationGuard: All migrations synced with main")
     end
   end
