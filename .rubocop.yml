@@ -1,5 +1,9 @@
-require:
+plugins:
   - rubocop-rails
+  - rubocop-capybara
+  - rubocop-factory_bot
+
+require:
   - rubocop-rspec
 
 AllCops:
@@ -12,6 +16,7 @@ AllCops:
     - 'script/**/*'
     - 'vendor/**/*'
     - 'spec/dummy/**/*'
+    - 'lib/generators/migration_guard/install/templates/**/*'
 
 Style/Documentation:
   Enabled: false
@@ -26,6 +31,7 @@ Metrics/BlockLength:
   Exclude:
     - 'spec/**/*'
     - 'rails-migration-guard.gemspec'
+    - 'lib/tasks/migration_guard.rake'
 
 Metrics/MethodLength:
   Max: 15
@@ -44,3 +50,12 @@ RSpec/NestedGroups:
 
 Layout/LineLength:
   Max: 120
+
+Naming/PredicateMethod:
+  Exclude:
+    - 'lib/migration_guard/configuration.rb'
+    - 'lib/migration_guard/rake_tasks.rb'
+
+Rails/ApplicationRecord:
+  Exclude:
+    - 'lib/migration_guard/migration_guard_record.rb'

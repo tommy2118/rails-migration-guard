@@ -14,9 +14,7 @@ module MigrationGuard
     scope :rolled_back, -> { where(status: "rolled_back") }
 
     def self.setup_serialization
-      if connection_pool.connected? && !connection.adapter_name.match?(/PostgreSQL|MySQL/)
-        serialize :metadata, JSON
-      end
+      serialize :metadata, JSON if connection_pool.connected? && !connection.adapter_name.match?(/PostgreSQL|MySQL/)
     rescue ActiveRecord::ConnectionNotEstablished
       # Connection not established yet, will set up serialization later
     end

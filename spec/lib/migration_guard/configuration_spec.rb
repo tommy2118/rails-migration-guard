@@ -7,7 +7,7 @@ RSpec.describe MigrationGuard::Configuration do
 
   describe "#enabled_environments" do
     it "defaults to development and staging" do
-      expect(config.enabled_environments).to eq([:development, :staging])
+      expect(config.enabled_environments).to eq(%i[development staging])
     end
 
     it "can be customized" do
@@ -76,7 +76,7 @@ RSpec.describe MigrationGuard::Configuration do
     it "can enable auto cleanup with custom age" do
       config.auto_cleanup = true
       config.cleanup_after_days = 7
-      
+
       expect(config.auto_cleanup).to be true
       expect(config.cleanup_after_days).to eq(7)
     end
@@ -101,9 +101,9 @@ RSpec.describe MigrationGuard::Configuration do
   describe "#to_h" do
     it "returns all configuration as a hash" do
       hash = config.to_h
-      
+
       expect(hash).to include(
-        enabled_environments: [:development, :staging],
+        enabled_environments: %i[development staging],
         git_integration_level: :warning,
         track_branch: true,
         track_author: true,
@@ -118,24 +118,24 @@ RSpec.describe MigrationGuard::Configuration do
     end
   end
 
-  describe "#validate!" do
+  describe "#validate" do
     it "passes for valid configuration" do
-      expect { config.validate! }.not_to raise_error
+      expect { config.validate }.not_to raise_error
     end
 
     it "raises error for invalid git integration level" do
       allow(config).to receive(:git_integration_level).and_return(:invalid)
-      expect { config.validate! }.to raise_error(MigrationGuard::ConfigurationError)
+      expect { config.validate }.to raise_error(MigrationGuard::ConfigurationError)
     end
 
     it "raises error for empty enabled_environments" do
       config.enabled_environments = []
-      expect { config.validate! }.to raise_error(MigrationGuard::ConfigurationError)
+      expect { config.validate }.to raise_error(MigrationGuard::ConfigurationError)
     end
 
     it "raises error for empty main_branch_names" do
       config.main_branch_names = []
-      expect { config.validate! }.to raise_error(MigrationGuard::ConfigurationError)
+      expect { config.validate }.to raise_error(MigrationGuard::ConfigurationError)
     end
   end
 end

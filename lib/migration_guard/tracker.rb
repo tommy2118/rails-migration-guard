@@ -34,7 +34,7 @@ module MigrationGuard
       days_ago = MigrationGuard.configuration.cleanup_after_days
       MigrationGuardRecord
         .where(status: "rolled_back")
-        .where("created_at < ?", days_ago.days.ago)
+        .where(created_at: ...days_ago.days.ago)
         .destroy_all
     end
 
@@ -42,7 +42,7 @@ module MigrationGuard
 
     def track_up_migration(version)
       record = MigrationGuardRecord.find_or_initialize_by(version: version)
-      
+
       return if record.persisted? && record.status == "applied"
 
       record.assign_attributes(
@@ -58,7 +58,7 @@ module MigrationGuard
 
     def track_down_migration(version)
       record = MigrationGuardRecord.find_or_initialize_by(version: version)
-      
+
       record.assign_attributes(
         status: "rolled_back",
         branch: track_branch? ? current_branch : nil,

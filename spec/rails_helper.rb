@@ -7,7 +7,7 @@ require "logger"
 require "active_support"
 require "active_record"
 require "rails"
-require "rails-migration-guard"
+require "rails_migration_guard"
 
 # Configure a minimal Rails application for testing
 module TestApp
@@ -26,7 +26,7 @@ ActiveRecord::Base.establish_connection(
 )
 
 # Load support files
-Dir[Rails.root.join("spec/support/**/*.rb")].sort.each { |f| require f }
+Rails.root.glob("spec/support/**/*.rb").each { |f| require f }
 
 RSpec.configure do |config|
   config.before(:suite) do
@@ -53,9 +53,13 @@ RSpec.configure do |config|
     end
   end
 
-  config.after(:each) do
+  config.after do
     # Clean up test data
-    ActiveRecord::Base.connection.execute("DELETE FROM migration_guard_records") if ActiveRecord::Base.connection.table_exists?(:migration_guard_records)
-    ActiveRecord::Base.connection.execute("DELETE FROM schema_migrations") if ActiveRecord::Base.connection.table_exists?(:schema_migrations)
+    if ActiveRecord::Base.connection.table_exists?(:migration_guard_records)
+      ActiveRecord::Base.connection.execute("DELETE FROM migration_guard_records")
+    end
+    if ActiveRecord::Base.connection.table_exists?(:schema_migrations)
+      ActiveRecord::Base.connection.execute("DELETE FROM schema_migrations")
+    end
   end
 end
