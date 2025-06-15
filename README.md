@@ -2,6 +2,8 @@
 
 [![Gem Version](https://badge.fury.io/rb/rails-migration-guard.svg)](https://badge.fury.io/rb/rails-migration-guard)
 [![Build Status](https://github.com/tommy2118/rails-migration-guard/workflows/CI/badge.svg)](https://github.com/tommy2118/rails-migration-guard/actions)
+[![GitHub issues](https://img.shields.io/github/issues/tommy2118/rails-migration-guard)](https://github.com/tommy2118/rails-migration-guard/issues)
+[![GitHub license](https://img.shields.io/github/license/tommy2118/rails-migration-guard)](https://github.com/tommy2118/rails-migration-guard/blob/master/MIT-LICENSE)
 
 Rails Migration Guard helps prevent orphaned database migrations in development and staging environments. It tracks migration state across git branches, identifies migrations that exist only locally, and provides tools for cleanup and prevention.
 
