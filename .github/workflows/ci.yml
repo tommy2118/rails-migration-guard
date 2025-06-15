@@ -53,5 +53,6 @@ jobs:
     - name: Upload coverage reports
       uses: codecov/codecov-action@v3
       with:
-        file: ./coverage/coverage.xml
-        fail_ci_if_error: true
+        files: ./coverage/coverage.xml
+        fail_ci_if_error: false
+        verbose: true

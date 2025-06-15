@@ -13,4 +13,5 @@ gem "rails", "~> #{rails_version}.0"
 group :development, :test do
   gem "pry"
   gem "pry-byebug" if RUBY_VERSION >= "3.0"
+  gem "simplecov-cobertura", "~> 2.1"
 end

@@ -5,7 +5,13 @@
       "Bash(bundle exec rspec:*)",
       "Bash(bundle install)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(CI=true bundle exec rspec spec/lib/migration_guard/configuration_spec.rb)",
+      "Bash(git push:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh run view:*)",
+      "Bash(ls:*)"
     ],
     "deny": []
   }

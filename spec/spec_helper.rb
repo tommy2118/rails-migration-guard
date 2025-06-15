@@ -3,10 +3,24 @@
 require "bundler/setup"
 require "simplecov"
 
+# Configure SimpleCov for CI
+require "simplecov-cobertura" if ENV["CI"]
+
 SimpleCov.start do
   add_filter "/spec/"
   add_filter "/vendor/"
+  
+  # Add formatters for both HTML and XML (for CodeCov)
+  if ENV["CI"]
+    SimpleCov.formatters = SimpleCov::Formatter::MultiFormatter.new([
+      SimpleCov::Formatter::HTMLFormatter,
+      SimpleCov::Formatter::CoberturaFormatter
+    ])
+  end
 end
+
+# Ensure coverage directory exists
+SimpleCov.coverage_dir "coverage"
 
 require "rails-migration-guard"
 
