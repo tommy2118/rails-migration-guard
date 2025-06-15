@@ -12,7 +12,8 @@
       "Bash(gh api:*)",
       "Bash(CI=true bundle exec rspec --no-profile 2 >& 1)",
       "Bash(CI=true bundle exec rspec spec/lib/migration_guard/configuration_spec.rb:10-15 --no-profile 2 >& 1)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(gh issue view:*)"
     ],
     "deny": []
   }

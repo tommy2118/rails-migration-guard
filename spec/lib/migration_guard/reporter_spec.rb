@@ -9,6 +9,8 @@ RSpec.describe MigrationGuard::Reporter do
   before do
     allow(MigrationGuard::GitIntegration).to receive(:new).and_return(git_integration)
     allow(git_integration).to receive(:main_branch).and_return("main")
+    # Disable colorization for testing
+    allow(MigrationGuard::Colorizer).to receive(:colorize_output?).and_return(false)
   end
 
   describe "#orphaned_migrations" do
@@ -186,7 +188,7 @@ RSpec.describe MigrationGuard::Reporter do
         aggregate_failures do
           expect(output).to include("Migration Status (main branch)")
           expect(output).to include("✓ All migrations synced with main")
-          expect(output).to include("✓ Synced:    1 migration")
+          expect(output).to include("✓ Synced: 1 migrations")
         end
       end
     end
@@ -206,7 +208,7 @@ RSpec.describe MigrationGuard::Reporter do
         output = reporter.format_status_output
 
         aggregate_failures do
-          expect(output).to include("⚠ Orphaned:  1 migration (local only)")
+          expect(output).to include("⚠ Orphaned: 1 migration (local only)")
           expect(output).to include("Orphaned Migrations:")
           expect(output).to include("20240102000002")
           expect(output).to include("Branch: feature/test")
@@ -222,7 +224,7 @@ RSpec.describe MigrationGuard::Reporter do
         output = reporter.format_status_output
 
         aggregate_failures do
-          expect(output).to include("✗ Missing:   1 migration (in trunk, not local)")
+          expect(output).to include("✗ Missing: 1 migration (in trunk, not local)")
           expect(output).to include("Missing Migrations:")
           expect(output).to include("20240101000001")
           expect(output).to include("Run `rails db:migrate` to apply missing migrations")

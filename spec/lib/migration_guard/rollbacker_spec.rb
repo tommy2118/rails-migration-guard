@@ -14,6 +14,10 @@ unless defined?(ActiveRecord::Migration.execute_down)
 end
 
 RSpec.describe MigrationGuard::Rollbacker do
+  before do
+    # Disable colorization for testing
+    allow(MigrationGuard::Colorizer).to receive(:colorize_output?).and_return(false)
+  end
   let(:rollbacker) { described_class.new }
   let(:git_integration) { instance_double(MigrationGuard::GitIntegration) }
   let(:io) { StringIO.new }
