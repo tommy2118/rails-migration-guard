@@ -72,13 +72,6 @@ module MigrationGuard
     def execute_migration_rollback(migration)
       version = migration.version.to_i
 
-      # In test environments, we may not have access to actual migrations
-      # so we'll simulate the rollback for testing purposes
-      if defined?(Rails) && Rails.env.test? && !migration_file_exists?(version)
-        MigrationGuard::Logger.debug("Simulating rollback in test environment", version: migration.version)
-        return
-      end
-
       # Get migrations path - handle different Rails versions
       migrations_paths = get_migrations_paths
 
