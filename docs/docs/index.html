@@ -393,6 +393,217 @@ end</code></pre>
                         </div>
                     </div>
                 </section>
+                
+                <!-- API Reference -->
+                <section id="api-reference" class="mb-16">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-6">API Reference</h2>
+                    
+                    <p class="text-lg text-gray-600 mb-8">
+                        Complete reference for Rails Migration Guard's programmatic API and configuration options.
+                    </p>
+                    
+                    <div class="space-y-12">
+                        <!-- Configuration API -->
+                        <div>
+                            <h3 class="text-2xl font-semibold text-gray-900 mb-6">Configuration API</h3>
+                            
+                            <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+                                <h4 class="text-lg font-semibold text-gray-900 mb-3">MigrationGuard.configure</h4>
+                                <p class="text-gray-600 mb-4">Main configuration method for setting up Migration Guard behavior.</p>
+                                
+                                <div class="code-block rounded-lg p-6 mb-4">
+                                    <pre><code class="language-ruby text-gray-100">MigrationGuard.configure do |config|
+  # Configuration options here
+end</code></pre>
+                                </div>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <h5 class="font-semibold text-gray-900">config.enabled_environments</h5>
+                                        <p class="text-sm text-gray-600 mb-2">Array of environments where Migration Guard is active.</p>
+                                        <div class="code-block rounded p-3">
+                                            <code class="text-xs text-gray-100">config.enabled_environments = [:development, :staging]</code>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <h5 class="font-semibold text-gray-900">config.git_integration_level</h5>
+                                        <p class="text-sm text-gray-600 mb-2">Level of Git integration. Options: <code>:off</code>, <code>:warning</code>, <code>:auto_rollback</code></p>
+                                        <div class="code-block rounded p-3">
+                                            <code class="text-xs text-gray-100">config.git_integration_level = :warning</code>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <h5 class="font-semibold text-gray-900">config.main_branch_names</h5>
+                                        <p class="text-sm text-gray-600 mb-2">Array of branch names to consider as the main branch.</p>
+                                        <div class="code-block rounded p-3">
+                                            <code class="text-xs text-gray-100">config.main_branch_names = %w[main master trunk]</code>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Rake Tasks API -->
+                        <div>
+                            <h3 class="text-2xl font-semibold text-gray-900 mb-6">Rake Tasks</h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="font-semibold text-gray-900 mb-2">db:migration:status</h4>
+                                    <p class="text-sm text-gray-600 mb-3">Shows comprehensive migration status report</p>
+                                    <div class="code-block rounded p-3">
+                                        <code class="text-xs text-gray-100">rails db:migration:status</code>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="font-semibold text-gray-900 mb-2">db:migration:rollback_orphaned</h4>
+                                    <p class="text-sm text-gray-600 mb-3">Interactively rollback orphaned migrations</p>
+                                    <div class="code-block rounded p-3">
+                                        <code class="text-xs text-gray-100">rails db:migration:rollback_orphaned</code>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="font-semibold text-gray-900 mb-2">db:migration:doctor</h4>
+                                    <p class="text-sm text-gray-600 mb-3">Run comprehensive diagnostics</p>
+                                    <div class="code-block rounded p-3">
+                                        <code class="text-xs text-gray-100">rails db:migration:doctor</code>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="font-semibold text-gray-900 mb-2">db:migration:cleanup</h4>
+                                    <p class="text-sm text-gray-600 mb-3">Clean up old tracking records</p>
+                                    <div class="code-block rounded p-3">
+                                        <code class="text-xs text-gray-100">rails db:migration:cleanup FORCE=true</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Ruby API -->
+                        <div>
+                            <h3 class="text-2xl font-semibold text-gray-900 mb-6">Ruby API</h3>
+                            
+                            <div class="space-y-6">
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="text-lg font-semibold text-gray-900 mb-3">MigrationGuard::Reporter</h4>
+                                    <p class="text-gray-600 mb-4">Generate migration status reports programmatically.</p>
+                                    
+                                    <div class="code-block rounded-lg p-6 mb-4">
+                                        <pre><code class="language-ruby text-gray-100"># Create a reporter instance
+reporter = MigrationGuard::Reporter.new
+
+# Get status report data
+report = reporter.status_report
+# Returns: { current_branch:, main_branch:, synced_count:, orphaned_count:, orphaned_migrations:, missing_migrations: }
+
+# Get formatted output
+output = reporter.format_status_output
+puts output</code></pre>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="text-lg font-semibold text-gray-900 mb-3">MigrationGuard::Tracker</h4>
+                                    <p class="text-gray-600 mb-4">Track migrations programmatically.</p>
+                                    
+                                    <div class="code-block rounded-lg p-6 mb-4">
+                                        <pre><code class="language-ruby text-gray-100"># Create a tracker instance
+tracker = MigrationGuard::Tracker.new
+
+# Track a migration manually
+tracker.track_migration('20240116123456', :up)
+
+# Check if migration exists
+tracker.migration_tracked?('20240116123456')
+
+# Clean up old records
+tracker.cleanup_old_records
+# Returns: number of records cleaned</code></pre>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="text-lg font-semibold text-gray-900 mb-3">MigrationGuard::GitIntegration</h4>
+                                    <p class="text-gray-600 mb-4">Access Git information and branch details.</p>
+                                    
+                                    <div class="code-block rounded-lg p-6 mb-4">
+                                        <pre><code class="language-ruby text-gray-100"># Create git integration instance
+git = MigrationGuard::GitIntegration.new
+
+# Get current branch
+current_branch = git.current_branch
+
+# Get main branch name
+main_branch = git.main_branch
+
+# Get migration versions in trunk
+trunk_migrations = git.migration_versions_in_trunk
+# Returns: Array of migration version strings</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Events and Hooks -->
+                        <div>
+                            <h3 class="text-2xl font-semibold text-gray-900 mb-6">Events and Hooks</h3>
+                            
+                            <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                <h4 class="text-lg font-semibold text-gray-900 mb-3">Migration Callbacks</h4>
+                                <p class="text-gray-600 mb-4">Hook into migration events for custom behavior.</p>
+                                
+                                <div class="code-block rounded-lg p-6 mb-4">
+                                    <pre><code class="language-ruby text-gray-100"># In an initializer or model
+MigrationGuard.configure do |config|
+  # Called after migration is tracked
+  config.on_migration_tracked = ->(migration_record) do
+    Rails.logger.info "Tracked migration: #{migration_record.version}"
+    # Send notification, update external systems, etc.
+  end
+  
+  # Called when orphaned migrations are detected
+  config.on_orphans_detected = ->(orphaned_migrations) do
+    # Send alerts, notifications, etc.
+    SlackNotifier.notify("#{orphaned_migrations.count} orphaned migrations detected")
+  end
+end</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Error Classes -->
+                        <div>
+                            <h3 class="text-2xl font-semibold text-gray-900 mb-6">Error Classes</h3>
+                            
+                            <div class="space-y-4">
+                                <div class="bg-white border border-gray-200 rounded-lg p-4">
+                                    <h4 class="font-semibold text-gray-900">MigrationGuard::Error</h4>
+                                    <p class="text-sm text-gray-600">Base error class for all Migration Guard errors</p>
+                                </div>
+                                
+                                <div class="bg-white border border-gray-200 rounded-lg p-4">
+                                    <h4 class="font-semibold text-gray-900">MigrationGuard::GitError</h4>
+                                    <p class="text-sm text-gray-600">Raised when Git operations fail</p>
+                                </div>
+                                
+                                <div class="bg-white border border-gray-200 rounded-lg p-4">
+                                    <h4 class="font-semibold text-gray-900">MigrationGuard::MigrationNotFoundError</h4>
+                                    <p class="text-sm text-gray-600">Raised when trying to rollback a non-existent migration</p>
+                                </div>
+                                
+                                <div class="bg-white border border-gray-200 rounded-lg p-4">
+                                    <h4 class="font-semibold text-gray-900">MigrationGuard::RollbackError</h4>
+                                    <p class="text-sm text-gray-600">Raised when migration rollback fails</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
         </div>
     </div>
