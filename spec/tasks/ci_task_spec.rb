@@ -3,6 +3,8 @@
 require "rails_helper"
 require "rake"
 
+# rubocop:disable RSpec/VerifiedDoubles, RSpec/NestedGroups
+
 RSpec.describe "CI rake task", type: :integration do
   before(:all) do
     Rails.application.load_tasks if Rake::Task.tasks.empty?
@@ -226,8 +228,17 @@ RSpec.describe "CI rake task", type: :integration do
     original_stdout = $stdout
     $stdout = StringIO.new
     yield
-    $stdout.string
+    output = $stdout.string
+
+    # Filter out ActiveRecord migration output that could interfere with JSON parsing
+    lines = output.split("\n")
+    filtered_lines = lines.reject do |line|
+      line.match?(/^\s*--/) || line.match?(/^\s*->/) || line.strip.empty?
+    end
+
+    filtered_lines.join("\n")
   ensure
     $stdout = original_stdout
   end
 end
+# rubocop:enable RSpec/VerifiedDoubles, RSpec/NestedGroups
