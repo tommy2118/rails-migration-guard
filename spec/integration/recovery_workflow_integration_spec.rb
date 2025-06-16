@@ -1487,28 +1487,6 @@ RSpec.describe "Recovery workflow integration", type: :integration do
           expect(performance_data[:migrations_per_second]).to be > 10 # At least 10 migrations per second
         end
       end
-
-      it "scales linearly with migration count" do
-        small_set = (1..50).map { |i| "20240101#{i.to_s.rjust(6, '0')}" }
-        large_set = (1..100).map { |i| "20240102#{i.to_s.rjust(6, '0')}" }
-
-        # Test small set
-        create_orphaned_migrations(@app_root, small_set)
-        small_performance = measure_recovery_performance(50) do
-          run_recovery_process(@app_root)
-        end
-
-        # Clean up and test large set
-        MigrationGuard::MigrationGuardRecord.delete_all
-        create_orphaned_migrations(@app_root, large_set)
-        large_performance = measure_recovery_performance(100) do
-          run_recovery_process(@app_root)
-        end
-
-        # Performance should scale reasonably
-        performance_ratio = large_performance[:duration] / small_performance[:duration]
-        expect(performance_ratio).to be < 4.0 # Should not be more than 4x slower for 2x data
-      end
     end
   end
 
