@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Rails 8.0 compatibility documentation and testing
+- Debug logging enhancements with visible output options
 - Initial release of Rails Migration Guard
 - Core migration tracking functionality
 - Automatic tracking of migration up/down operations

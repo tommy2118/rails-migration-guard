@@ -7,6 +7,15 @@
 
 Rails Migration Guard helps prevent orphaned database migrations in development and staging environments. It tracks migration state across git branches, identifies migrations that exist only locally, and provides tools for cleanup and prevention.
 
+## Compatibility
+
+Rails Migration Guard supports:
+
+- **Ruby**: 3.0.0 and higher
+- **Rails**: 6.1.0 through 8.0+ (tested up to Rails 8.0.2)
+- **Databases**: SQLite, PostgreSQL, MySQL
+- **Git**: 2.0 and higher
+
 ## The Problem
 
 When working on feature branches, developers often:

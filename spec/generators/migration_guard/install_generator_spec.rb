@@ -27,6 +27,12 @@ RSpec.describe MigrationGuard::Generators::InstallGenerator do
       expect { generator.check_rails_version }.not_to raise_error
     end
 
+    it "passes with Rails 8.0+" do
+      allow(Rails).to receive(:version).and_return("8.0.2")
+
+      expect { generator.check_rails_version }.not_to raise_error
+    end
+
     it "fails with Rails < 6.1" do
       allow(Rails).to receive(:version).and_return("6.0.0")
 
