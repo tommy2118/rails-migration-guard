@@ -112,7 +112,7 @@ title: Home
             </p>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
             <!-- Feature 1 -->
             <div class="text-center" data-animate>
                 <div class="inline-flex items-center justify-center w-16 h-16 bg-brand-100 rounded-2xl mb-6">
@@ -122,8 +122,7 @@ title: Home
                 </div>
                 <h3 class="text-xl font-semibold text-gray-900 mb-4">Automatic Tracking</h3>
                 <p class="text-gray-600 leading-relaxed">
-                    Automatically detects and tracks migrations as they're run, 
-                    storing metadata about branch, author, and timestamp.
+                    Seamlessly tracks every migration as it runs, capturing branch, author, and timestamp metadata. Works with your existing Rails workflow without any changes.
                 </p>
             </div>
             
@@ -136,8 +135,7 @@ title: Home
                 </div>
                 <h3 class="text-xl font-semibold text-gray-900 mb-4">Smart Detection</h3>
                 <p class="text-gray-600 leading-relaxed">
-                    Identifies orphaned migrations that exist locally but not in your main branch, 
-                    preventing deployment issues before they happen.
+                    Instantly identifies orphaned migrations that exist locally but not in your main branch. Prevents deployment issues before they reach staging or production.
                 </p>
             </div>
             
@@ -150,8 +148,49 @@ title: Home
                 </div>
                 <h3 class="text-xl font-semibold text-gray-900 mb-4">Easy Cleanup</h3>
                 <p class="text-gray-600 leading-relaxed">
-                    One-command rollback for orphaned migrations with interactive prompts 
-                    and safety checks to protect your data.
+                    One-command rollback for orphaned migrations with interactive prompts and safety checks. Protects your data while keeping your schema clean.
+                </p>
+            </div>
+        </div>
+        
+        <!-- Second row of features -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+            <!-- Feature 4 -->
+            <div class="text-center" data-animate>
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-2xl mb-6">
+                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">Recovery Tools</h3>
+                <p class="text-gray-600 leading-relaxed">
+                    Powerful recovery system fixes inconsistent migration states automatically. Handles stuck rollbacks, missing files, and duplicate records with database backups.
+                </p>
+            </div>
+            
+            <!-- Feature 5 -->
+            <div class="text-center" data-animate>
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-2xl mb-6">
+                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">Migration History</h3>
+                <p class="text-gray-600 leading-relaxed">
+                    Complete audit trail of all migration executions with author tracking. Filter by branch, date, or developer to understand your migration timeline.
+                </p>
+            </div>
+            
+            <!-- Feature 6 -->
+            <div class="text-center" data-animate>
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-2xl mb-6">
+                    <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">Rails 8.0 Ready</h3>
+                <p class="text-gray-600 leading-relaxed">
+                    Fully compatible with Rails 6.1 through 8.0. Tested across all major Ruby versions and databases including PostgreSQL, MySQL, and SQLite.
                 </p>
             </div>
         </div>

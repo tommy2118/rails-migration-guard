@@ -32,6 +32,7 @@ title: Documentation
                     <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Usage</h3>
                     <ul class="space-y-2">
                         <li><a href="#basic-commands" class="text-gray-600 hover:text-brand-600">Basic Commands</a></li>
+                        <li><a href="#migration-recovery" class="text-gray-600 hover:text-brand-600">Migration Recovery</a></li>
                         <li><a href="#workflows" class="text-gray-600 hover:text-brand-600">Workflows</a></li>
                         <li><a href="#git-integration" class="text-gray-600 hover:text-brand-600">Git Integration</a></li>
                     </ul>
@@ -58,8 +59,8 @@ title: Documentation
                     
                     <h3 class="text-xl font-semibold text-gray-900 mb-4">Requirements</h3>
                     <ul class="list-disc list-inside mb-6">
-                        <li>Rails 6.1+ (including Rails 8.0)</li>
-                        <li>Ruby 3.0+</li>
+                        <li>Rails 6.1+ through Rails 8.0 (tested with Rails 8.0.2)</li>
+                        <li>Ruby 3.0+ (Ruby 3.2+ required for Rails 8.0)</li>
                         <li>Git (for branch tracking)</li>
                     </ul>
                     
@@ -280,6 +281,133 @@ $ rails db:migration:history AUTHOR=alice # Filter by author</code></pre>
                                 <pre><code class="language-bash text-gray-100">$ rails db:migration:authors</code></pre>
                             </div>
                             <p class="text-gray-600">Displays comprehensive author statistics showing who created migrations and their contribution breakdown.</p>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Migration Recovery -->
+                <section id="migration-recovery" class="mb-16">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-6">Migration Recovery</h2>
+                    
+                    <p class="text-gray-600 mb-6">Rails Migration Guard includes powerful recovery tools to help fix inconsistent migration states that can occur during development.</p>
+                    
+                    <div class="space-y-8">
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Analyze Migration Issues</h3>
+                            <div class="code-block rounded-lg p-6 mb-4">
+                                <pre><code class="language-bash text-gray-100">$ rails db:migration:recover</code></pre>
+                            </div>
+                            <p class="text-gray-600 mb-4">Detects and helps resolve various migration inconsistencies including:</p>
+                            <ul class="list-disc list-inside space-y-2 text-gray-600 ml-4">
+                                <li>Migrations stuck in <code class="text-sm bg-gray-100 px-2 py-1 rounded">rolling_back</code> state</li>
+                                <li>Schema entries without tracking records</li>
+                                <li>Missing migration files</li>
+                                <li>Duplicate tracking records</li>
+                                <li>Migrations applied but missing from schema</li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Interactive Recovery Mode</h3>
+                            <div class="code-block rounded-lg p-6 mb-4">
+                                <pre><code class="language-bash text-gray-100"># Interactive mode (default)
+$ rails db:migration:recover
+
+⚠️  Detected migration inconsistencies:
+
+1. Partial rollback
+   Version: 20240115123456
+   Migration appears to be stuck in rollback state
+   Severity: HIGH
+   Branch: feature/user-prefs
+   Last updated: 2024-01-15 14:30:45
+   Recovery options: complete_rollback, restore_migration, mark_as_rolled_back
+
+Select option (0-3): </code></pre>
+                            </div>
+                            <p class="text-gray-600">Prompts for action on each detected issue with multiple recovery strategies.</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Automatic Recovery Mode</h3>
+                            <div class="code-block rounded-lg p-6 mb-4">
+                                <pre><code class="language-bash text-gray-100"># Automatic mode for CI/CD
+$ AUTO=true rails db:migration:recover</code></pre>
+                            </div>
+                            <p class="text-gray-600">Automatically applies the first recovery option for each issue. Useful for CI/CD pipelines.</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Recovery Features</h3>
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                                <ul class="space-y-3 text-gray-700">
+                                    <li class="flex items-start">
+                                        <svg class="h-6 w-6 text-blue-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <div>
+                                            <span class="font-semibold">Automatic Database Backups:</span> Creates backups before any recovery operation (PostgreSQL, MySQL, SQLite)
+                                        </div>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <svg class="h-6 w-6 text-blue-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <div>
+                                            <span class="font-semibold">Multiple Recovery Strategies:</span> Different approaches for each type of inconsistency
+                                        </div>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <svg class="h-6 w-6 text-blue-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <div>
+                                            <span class="font-semibold">Git Integration:</span> Can restore missing migration files from git history
+                                        </div>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <svg class="h-6 w-6 text-blue-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <div>
+                                            <span class="font-semibold">Safe Operations:</span> All commands use parameterized queries and safe execution methods
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Common Recovery Scenarios</h3>
+                            <div class="space-y-4">
+                                <div class="bg-gray-50 rounded-lg p-4">
+                                    <h4 class="font-semibold text-gray-900 mb-2">Stuck Rollback</h4>
+                                    <p class="text-sm text-gray-600 mb-2">Migration started rolling back but didn't complete:</p>
+                                    <ul class="text-sm text-gray-600 list-disc list-inside ml-4">
+                                        <li><strong>Complete Rollback:</strong> Finish the rollback operation</li>
+                                        <li><strong>Restore Migration:</strong> Re-apply the migration</li>
+                                        <li><strong>Mark as Rolled Back:</strong> Update status without changes</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="bg-gray-50 rounded-lg p-4">
+                                    <h4 class="font-semibold text-gray-900 mb-2">Orphaned Schema</h4>
+                                    <p class="text-sm text-gray-600 mb-2">Migration in schema_migrations but not tracked:</p>
+                                    <ul class="text-sm text-gray-600 list-disc list-inside ml-4">
+                                        <li><strong>Track Migration:</strong> Create tracking record</li>
+                                        <li><strong>Remove from Schema:</strong> Delete the schema entry</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="bg-gray-50 rounded-lg p-4">
+                                    <h4 class="font-semibold text-gray-900 mb-2">Missing File</h4>
+                                    <p class="text-sm text-gray-600 mb-2">Tracking record exists but migration file is missing:</p>
+                                    <ul class="text-sm text-gray-600 list-disc list-inside ml-4">
+                                        <li><strong>Restore from Git:</strong> Recover file from git history</li>
+                                        <li><strong>Mark as Resolved:</strong> Acknowledge the missing file</li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -553,6 +681,14 @@ end</code></pre>
                                         <code class="text-xs text-gray-100">rails db:migration:authors</code>
                                     </div>
                                 </div>
+                                
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="font-semibold text-gray-900 mb-2">db:migration:recover</h4>
+                                    <p class="text-sm text-gray-600 mb-3">Analyze and recover from inconsistent migration states</p>
+                                    <div class="code-block rounded p-3">
+                                        <code class="text-xs text-gray-100">rails db:migration:recover</code>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
@@ -616,6 +752,102 @@ main_branch = git.main_branch
 # Get migration versions in trunk
 trunk_migrations = git.migration_versions_in_trunk
 # Returns: Array of migration version strings</code></pre>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="text-lg font-semibold text-gray-900 mb-3">MigrationGuard::RecoveryAnalyzer</h4>
+                                    <p class="text-gray-600 mb-4">Detect inconsistent migration states that need recovery.</p>
+                                    
+                                    <div class="code-block rounded-lg p-6 mb-4">
+                                        <pre><code class="language-ruby text-gray-100"># Create analyzer instance
+analyzer = MigrationGuard::RecoveryAnalyzer.new
+
+# Analyze migration inconsistencies
+issues = analyzer.analyze
+# Returns: Array of issue hashes with :type, :version, :severity, :recovery_options
+
+# Check if there are issues
+if analyzer.issues?
+  # Get formatted report
+  report = analyzer.format_analysis_report
+  Rails.logger.info report
+end
+
+# Issue types detected:
+# - :partial_rollback (stuck in rolling_back state)
+# - :orphaned_schema (in schema_migrations but not tracked)
+# - :missing_file (tracked but file missing)
+# - :version_conflict (duplicate tracking records)</code></pre>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="text-lg font-semibold text-gray-900 mb-3">MigrationGuard::RecoveryExecutor</h4>
+                                    <p class="text-gray-600 mb-4">Execute recovery actions for inconsistent migration states.</p>
+                                    
+                                    <div class="code-block rounded-lg p-6 mb-4">
+                                        <pre><code class="language-ruby text-gray-100"># Create executor instance
+executor = MigrationGuard::RecoveryExecutor.new(interactive: false)
+
+# Execute recovery for an issue
+issue = analyzer.analyze.first
+success = executor.execute_recovery(issue, :complete_rollback)
+
+# Recovery options include:
+# - :complete_rollback - Finish incomplete rollback
+# - :restore_migration - Re-apply migration
+# - :mark_as_rolled_back - Update status only
+# - :track_migration - Create tracking record
+# - :remove_from_schema - Delete schema entry
+# - :consolidate_records - Merge duplicate records
+
+# Access backup path after recovery
+backup_path = executor.backup_path if executor.backup_path</code></pre>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="text-lg font-semibold text-gray-900 mb-3">MigrationGuard::Rollbacker</h4>
+                                    <p class="text-gray-600 mb-4">Safely rollback orphaned migrations.</p>
+                                    
+                                    <div class="code-block rounded-lg p-6 mb-4">
+                                        <pre><code class="language-ruby text-gray-100"># Create rollbacker instance
+rollbacker = MigrationGuard::Rollbacker.new
+
+# Get orphaned migrations
+orphaned = rollbacker.orphaned_migrations
+
+# Rollback a specific migration
+success = rollbacker.rollback_migration('20240116123456')
+
+# Rollback all orphaned migrations
+rollbacker.rollback_all_orphaned(force: true)
+
+# Interactive rollback (prompts for each)
+rollbacker.rollback_orphaned_interactively</code></pre>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="text-lg font-semibold text-gray-900 mb-3">MigrationGuard::AuthorReporter</h4>
+                                    <p class="text-gray-600 mb-4">Generate author statistics and contribution reports.</p>
+                                    
+                                    <div class="code-block rounded-lg p-6 mb-4">
+                                        <pre><code class="language-ruby text-gray-100"># Create author reporter instance
+author_reporter = MigrationGuard::AuthorReporter.new
+
+# Get author statistics
+stats = author_reporter.authors_summary
+# Returns: { total_authors:, total_migrations:, most_active:, average_per_author:, current_user: }
+
+# Get per-author breakdown
+authors = author_reporter.authors_report
+# Returns: Array of author data with counts by status
+
+# Get formatted report
+output = author_reporter.format_authors_report
+puts output</code></pre>
                                     </div>
                                 </div>
                             </div>
