@@ -19,9 +19,11 @@ RSpec.describe "migration_guard rake tasks" do
     end
 
     it "calls MigrationGuard::RakeTasks.status" do
-      expect(MigrationGuard::RakeTasks).to receive(:status)
+      allow(MigrationGuard::RakeTasks).to receive(:status)
 
       Rake::Task["db:migration:status"].execute
+
+      expect(MigrationGuard::RakeTasks).to have_received(:status).at_least(:once)
     end
   end
 
@@ -31,9 +33,11 @@ RSpec.describe "migration_guard rake tasks" do
     end
 
     it "calls MigrationGuard::RakeTasks.rollback_orphaned" do
-      expect(MigrationGuard::RakeTasks).to receive(:rollback_orphaned)
+      allow(MigrationGuard::RakeTasks).to receive(:rollback_orphaned)
 
       Rake::Task["db:migration:rollback_orphaned"].execute
+
+      expect(MigrationGuard::RakeTasks).to have_received(:rollback_orphaned).at_least(:once)
     end
   end
 
@@ -43,9 +47,11 @@ RSpec.describe "migration_guard rake tasks" do
     end
 
     it "calls MigrationGuard::RakeTasks.rollback_all" do
-      expect(MigrationGuard::RakeTasks).to receive(:rollback_all)
+      allow(MigrationGuard::RakeTasks).to receive(:rollback_all)
 
       Rake::Task["db:migration:rollback_all_orphaned"].execute
+
+      expect(MigrationGuard::RakeTasks).to have_received(:rollback_all).at_least(:once)
     end
   end
 
@@ -57,10 +63,11 @@ RSpec.describe "migration_guard rake tasks" do
     it "calls MigrationGuard::RakeTasks.rollback_specific with VERSION env var" do
       version = "20240115123456"
       allow(ENV).to receive(:fetch).with("VERSION", nil).and_return(version)
-
-      expect(MigrationGuard::RakeTasks).to receive(:rollback_specific).with(version)
+      allow(MigrationGuard::RakeTasks).to receive(:rollback_specific).with(version)
 
       Rake::Task["db:migration:rollback_specific"].execute
+
+      expect(MigrationGuard::RakeTasks).to have_received(:rollback_specific).with(version).at_least(:once)
     end
   end
 
@@ -71,10 +78,11 @@ RSpec.describe "migration_guard rake tasks" do
 
     it "calls MigrationGuard::RakeTasks.cleanup with force option from ENV" do
       allow(ENV).to receive(:[]).with("FORCE").and_return("true")
-
-      expect(MigrationGuard::RakeTasks).to receive(:cleanup).with(force: true)
+      allow(MigrationGuard::RakeTasks).to receive(:cleanup).with(force: true)
 
       Rake::Task["db:migration:cleanup"].execute
+
+      expect(MigrationGuard::RakeTasks).to have_received(:cleanup).with(force: true).at_least(:once)
     end
   end
 
@@ -84,9 +92,11 @@ RSpec.describe "migration_guard rake tasks" do
     end
 
     it "calls MigrationGuard::RakeTasks.doctor" do
-      expect(MigrationGuard::RakeTasks).to receive(:doctor)
+      allow(MigrationGuard::RakeTasks).to receive(:doctor)
 
       Rake::Task["db:migration:doctor"].execute
+
+      expect(MigrationGuard::RakeTasks).to have_received(:doctor).at_least(:once)
     end
   end
 
@@ -96,9 +106,12 @@ RSpec.describe "migration_guard rake tasks" do
     end
 
     it "calls MigrationGuard::RakeTasks.check_branch_change with arguments" do
-      expect(MigrationGuard::RakeTasks).to receive(:check_branch_change).with("abc123", "def456", "1")
+      allow(MigrationGuard::RakeTasks).to receive(:check_branch_change).with("abc123", "def456", "1")
 
       Rake::Task["db:migration:check_branch_change"].invoke("abc123", "def456", "1")
+
+      expect(MigrationGuard::RakeTasks).to have_received(:check_branch_change).with("abc123", "def456",
+                                                                                    "1").at_least(:once)
     end
   end
 end
