@@ -18,6 +18,7 @@ MigrationGuard.configure do |config|
   # Behavior options
   config.sandbox_mode = false              # Run migrations in sandbox mode
   config.warn_on_switch = true             # Warn when switching branches
+  config.warn_after_migration = true      # Warn about orphaned migrations after running migrations
   config.block_deploy_with_orphans = false # Block deploys with orphaned migrations
 
   # Cleanup policies

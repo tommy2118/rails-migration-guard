@@ -5,7 +5,8 @@ module MigrationGuard
     VALID_GIT_INTEGRATION_LEVELS = %i[off warning auto_rollback].freeze
 
     attr_accessor :enabled_environments, :track_branch, :track_author, :track_timestamp, :sandbox_mode,
-                  :warn_on_switch, :block_deploy_with_orphans, :auto_cleanup, :main_branch_names, :colorize_output
+                  :warn_on_switch, :warn_after_migration, :block_deploy_with_orphans, :auto_cleanup, 
+                  :main_branch_names, :colorize_output
     attr_reader :git_integration_level, :cleanup_after_days
 
     def initialize
@@ -16,6 +17,7 @@ module MigrationGuard
       @track_timestamp = true
       @sandbox_mode = false
       @warn_on_switch = true
+      @warn_after_migration = true
       @block_deploy_with_orphans = false
       @auto_cleanup = false
       @cleanup_after_days = 30
@@ -49,6 +51,7 @@ module MigrationGuard
         track_timestamp: track_timestamp,
         sandbox_mode: sandbox_mode,
         warn_on_switch: warn_on_switch,
+        warn_after_migration: warn_after_migration,
         block_deploy_with_orphans: block_deploy_with_orphans,
         auto_cleanup: auto_cleanup,
         cleanup_after_days: cleanup_after_days,

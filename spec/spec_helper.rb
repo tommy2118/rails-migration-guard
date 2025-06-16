@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# Suppress ActiveSupport deprecation warnings
+Warning[:deprecated] = false if defined?(Warning.warn)
+
 require "bundler/setup"
 require "simplecov"
 

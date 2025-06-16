@@ -32,13 +32,13 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{\Abin/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "activerecord", ">= 6.1", "< 8.0"
-  spec.add_dependency "activesupport", ">= 6.1", "< 8.0"
+  spec.add_dependency "activerecord", ">= 6.1", "< 9.0"
+  spec.add_dependency "activesupport", ">= 6.1", "< 9.0"
   spec.add_dependency "bigdecimal"
   spec.add_dependency "drb"
   spec.add_dependency "logger"
   spec.add_dependency "mutex_m"
-  spec.add_dependency "rails", ">= 6.1", "< 8.0"
+  spec.add_dependency "rails", ">= 6.1", "< 9.0"
   spec.add_dependency "rainbow", "~> 3.1"
 
   spec.metadata["rubygems_mfa_required"] = "true"
