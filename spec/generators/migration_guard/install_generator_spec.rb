@@ -122,4 +122,3 @@ RSpec.describe MigrationGuard::Generators::InstallGenerator do
     end
   end
 end
-
