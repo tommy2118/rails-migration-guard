@@ -21,38 +21,48 @@ end
 # This allows testing rake tasks without a full Rails app
 begin
   # Only load in development environment, not in test
-  if ENV["RAILS_ENV"] != "test"
+  if ENV["RAILS_ENV"] != "test" && ENV["SKIP_MIGRATION_GUARD_TASKS"] != "true"
     # Preload logger gem for Ruby 3.4+ compatibility
     require "logger" if RUBY_VERSION >= "3.4.0"
-    require "rails"
-
-    # Define a minimal Rails.root for task testing
-    Rails.define_singleton_method(:root) { Pathname.new(File.expand_path(".", __dir__)) } unless Rails.respond_to?(:root)
-
-    # Define a minimal Rails.env for task testing
-    unless Rails.respond_to?(:env)
-      Rails.define_singleton_method(:env) { ActiveSupport::StringInquirer.new("development") }
+    
+    # Try to load rails if available
+    begin
+      require "rails"
+    rescue LoadError
+      # Rails not available, define minimal stubs
+      module Rails
+        def self.root
+          Pathname.new(File.expand_path(".", __dir__))
+        end
+        
+        def self.env
+          require "active_support/string_inquirer"
+          ActiveSupport::StringInquirer.new("development")
+        end
+      end
     end
 
     # Define :environment task if it doesn't exist
-    # rubocop:disable Rails/RakeEnvironment
-    task :environment do
-      # Minimal environment setup for gem development
-      require "active_record"
-      require "active_support/all"
+    unless Rake::Task.task_defined?(:environment)
+      # rubocop:disable Rails/RakeEnvironment
+      task :environment do
+        # Minimal environment setup for gem development
+        require "active_record"
+        require "active_support/all"
 
-      # Setup database connection for testing
-      ActiveRecord::Base.establish_connection(
-        adapter: "sqlite3",
-        database: ":memory:"
-      )
+        # Setup database connection for testing
+        ActiveRecord::Base.establish_connection(
+          adapter: "sqlite3",
+          database: ":memory:"
+        )
+      end
+      # rubocop:enable Rails/RakeEnvironment
     end
-    # rubocop:enable Rails/RakeEnvironment
 
     # Load the rake tasks
     load "lib/tasks/migration_guard.rake"
   end
 rescue LoadError => e
-  # Rails not available, skip loading migration tasks
+  # Dependencies not available, skip loading migration tasks
   puts "Skipping migration_guard tasks: #{e.message}" if ENV["DEBUG"]
 end
