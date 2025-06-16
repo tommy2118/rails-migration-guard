@@ -33,5 +33,10 @@ group :development, :test do
   end
 end
 
-# Suppress Ruby 3.5 deprecation warning
-gem "benchmark"
+# Ruby 3.4+ extracted these from stdlib
+if RUBY_VERSION >= "3.4.0"
+  gem "benchmark"
+  gem "bigdecimal"
+  gem "logger"
+  gem "mutex_m"
+end
