@@ -305,7 +305,7 @@ RSpec.describe "CI rake task", type: :integration do
     end
   end
 
-  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/BlockNesting
+  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
   def capture_rake_output
     original_stdout = $stdout
     $stdout = StringIO.new
@@ -352,7 +352,7 @@ RSpec.describe "CI rake task", type: :integration do
   ensure
     $stdout = original_stdout
   end
-  # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/BlockNesting
+  # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
   def capture_stdout
     original_stdout = $stdout

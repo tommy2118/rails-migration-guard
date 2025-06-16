@@ -163,11 +163,11 @@ module MigrationGuard
     end
 
     def format_text_header(result)
-      status_emoji = case result[:status]
-                     when "success" then "✅"
-                     when "warning" then "⚠️ "
-                     when "error" then "❌"
-                     end
+      status_emoji = {
+        "success" => "✅",
+        "warning" => "⚠️ ",
+        "error" => "❌"
+      }[result[:status]]
 
       branch_info = result[:branch_info]
       "#{status_emoji} Migration Guard CI Check (#{branch_info[:current]} → #{branch_info[:main]})"
@@ -231,9 +231,7 @@ module MigrationGuard
         EXIT_SUCCESS
       when "warning"
         @strictness == "strict" ? EXIT_ERROR : EXIT_WARNING
-      when "error"
-        EXIT_ERROR
-      else
+      else # "error" or any other status
         EXIT_ERROR
       end
     end

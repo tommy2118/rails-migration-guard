@@ -2,6 +2,8 @@
 
 require "rails_helper"
 
+# rubocop:disable RSpec/VerifiedDoubles, RSpec/NestedGroups
+
 RSpec.describe MigrationGuard::CiRunner do
   let(:git_integration) { instance_double(MigrationGuard::GitIntegration) }
   let(:reporter) { instance_double(MigrationGuard::Reporter) }
@@ -320,3 +322,4 @@ RSpec.describe MigrationGuard::CiRunner do
     $stdout = original_stdout
   end
 end
+# rubocop:enable RSpec/VerifiedDoubles, RSpec/NestedGroups
