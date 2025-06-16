@@ -1,4 +1,4 @@
-require:
+plugins:
   - rubocop-rails
   - rubocop-rspec
   - rubocop-capybara
@@ -42,10 +42,6 @@ RSpec/ExampleLength:
   Max: 20
   Exclude:
     - 'spec/integration/**/*'
-
-RSpec/FilePath:
-  Exclude:
-    - 'spec/generators/**/*'
 
 RSpec/SpecFilePathFormat:
   Exclude:
