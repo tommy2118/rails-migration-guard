@@ -5,7 +5,7 @@ require "rails_helper"
 RSpec.describe MigrationGuard::PostMigrationChecker do
   let(:checker) { described_class.new }
   let(:reporter) { instance_double(MigrationGuard::Reporter) }
-  
+
   before do
     allow(MigrationGuard::Reporter).to receive(:new).and_return(reporter)
     allow(MigrationGuard).to receive(:enabled?).and_return(true)
@@ -34,8 +34,8 @@ RSpec.describe MigrationGuard::PostMigrationChecker do
         end
 
         it "lists all orphaned migrations" do
-          expect { checker.check_and_warn }.to output(/20240115123456.*feature\/test/).to_stderr
-          expect { checker.check_and_warn }.to output(/20240116123456.*feature\/other/).to_stderr
+          expect { checker.check_and_warn }.to output(%r{20240115123456.*feature/test}).to_stderr
+          expect { checker.check_and_warn }.to output(%r{20240116123456.*feature/other}).to_stderr
         end
 
         it "shows the correct count" do

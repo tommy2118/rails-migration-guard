@@ -25,20 +25,32 @@ module MigrationGuard
     end
 
     def output_warning(orphaned_migrations)
+      output_header
+      output_migration_list(orphaned_migrations)
+      output_suggestions
+    end
+
+    def output_header
       warn ""
       warn Colorizer.warning("⚠️  Migration Guard Warning")
       warn Colorizer.warning("=" * 50)
       warn ""
-      warn "You have #{Colorizer.format_migration_count(orphaned_migrations.size, :orphaned)} " \
-           "that #{orphaned_migrations.size == 1 ? 'is' : 'are'} not in the main branch:"
+    end
+
+    def output_migration_list(orphaned_migrations)
+      count = Colorizer.format_migration_count(orphaned_migrations.size, :orphaned)
+      plural = orphaned_migrations.size == 1 ? "is" : "are"
+      warn "You have #{count} that #{plural} not in the main branch:"
       warn ""
 
       orphaned_migrations.each do |migration|
         warn "  • #{Colorizer.bold(migration[:version])} - #{migration[:branch]}"
       end
+    end
 
+    def output_suggestions
       warn ""
-      warn "#{Colorizer.info('Suggestions:')}"
+      warn Colorizer.info("Suggestions:")
       warn "  1. Commit these migrations to your branch before merging"
       warn "  2. Run #{Colorizer.info('rails db:migration:rollback_orphaned')} to remove them"
       warn "  3. Run #{Colorizer.info('rails db:migration:status')} for more details"

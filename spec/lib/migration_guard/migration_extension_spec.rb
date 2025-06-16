@@ -54,12 +54,12 @@ RSpec.describe MigrationGuard::MigrationExtension do
         # Just verify it doesn't raise an error
         expect { test_migration_class.migrate(:up) }.not_to raise_error
       end
-      
+
       it "checks for orphaned migrations after running up" do
         expect(post_migration_checker).to receive(:check_and_warn)
         test_migration_class.migrate(:up)
       end
-      
+
       it "does not check for orphaned migrations after running down" do
         expect(post_migration_checker).not_to receive(:check_and_warn)
         test_migration_class.migrate(:down)
@@ -76,12 +76,12 @@ RSpec.describe MigrationGuard::MigrationExtension do
         expect(tracker).to receive(:track_migration).with("20240115123456", :down)
         migration_instance.migrate(:down)
       end
-      
+
       it "checks for orphaned migrations after running up" do
         expect(post_migration_checker).to receive(:check_and_warn)
         migration_instance.migrate(:up)
       end
-      
+
       it "does not check for orphaned migrations after running down" do
         expect(post_migration_checker).not_to receive(:check_and_warn)
         migration_instance.migrate(:down)
