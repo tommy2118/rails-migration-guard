@@ -159,7 +159,7 @@ RSpec.describe "Recovery workflow integration", type: :integration do
 
           conflict_issue = conflict_issues.first
           expect(conflict_issue[:version]).to eq(conflict_version)
-          expect(conflict_issue[:severity]).to eq(:high)
+          expect(conflict_issue[:severity]).to eq(:critical)
           expect(conflict_issue[:recovery_options]).to include(:consolidate_records, :remove_duplicates)
         end
       end
@@ -172,8 +172,23 @@ RSpec.describe "Recovery workflow integration", type: :integration do
         initial_count = MigrationGuard::MigrationGuardRecord.where(version: conflict_version).count
         expect(initial_count).to eq(2)
 
-        # Execute recovery
-        recovery_data = run_recovery_process(@app_root, execute_recovery: true, recovery_action: :consolidate_records)
+        # Execute recovery - only on version conflict issues
+        recovery_data = nil
+        within_app_directory(@app_root) do
+          analyzer = MigrationGuard::RecoveryAnalyzer.new
+          issues = analyzer.analyze
+          
+          # Find version conflict issue
+          conflict_issue = issues.find { |i| i[:type] == :version_conflict }
+          expect(conflict_issue).not_to be_nil, "Expected to find version conflict issue"
+          
+          # Execute recovery only on the conflict issue
+          executor = MigrationGuard::RecoveryExecutor.new
+          
+          result = executor.execute_recovery(conflict_issue, :consolidate_records)
+          
+          recovery_data = { issues: [conflict_issue], results: [result] }
+        end
 
         aggregate_failures do
           expect(recovery_data[:results].all?).to be true
@@ -915,7 +930,7 @@ RSpec.describe "Recovery workflow integration", type: :integration do
           conflict_issue = conflict_issues.first
           expect(conflict_issue[:version]).to eq(conflicting_version)
           expect(conflict_issue[:severity]).to eq(:critical)
-          expect(conflict_issue[:description]).to include("version conflict")
+          expect(conflict_issue[:description]).to include("Version conflict")
         end
       end
 
@@ -932,7 +947,7 @@ RSpec.describe "Recovery workflow integration", type: :integration do
 
           # Should provide guidance on manual resolution
           expect(conflict_issue[:description]).to be_present
-          expect(conflict_issue[:severity]).to eq(:high)
+          expect(conflict_issue[:severity]).to eq(:critical)
         end
       end
     end

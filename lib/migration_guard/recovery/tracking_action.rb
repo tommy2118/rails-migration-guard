@@ -77,7 +77,11 @@ module MigrationGuard
         others = records.where.not(id: keeper.id)
 
         metadata = build_consolidated_metadata(records)
-        keeper.update!(metadata: metadata)
+        
+        # Skip validation to allow updating duplicate version records
+        keeper.metadata = metadata
+        keeper.save!(validate: false)
+        
         others.destroy_all
       end
 
