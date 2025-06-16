@@ -219,7 +219,7 @@ The gem is available as open source under the terms of the [MIT License](https:/
 
 ## Credits
 
-Created and maintained by [Your Name].
+Created and maintained by Tommy A. Caruso.
 
 ## Changelog
 
