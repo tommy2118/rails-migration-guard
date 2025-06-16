@@ -34,6 +34,7 @@ begin
   end
 
   # Define :environment task if it doesn't exist
+  # rubocop:disable Rails/RakeEnvironment
   task :environment do
     # Minimal environment setup for gem development
     require "active_record"
@@ -48,6 +49,7 @@ begin
     # Load migration guard
     require_relative "lib/rails_migration_guard"
   end
+  # rubocop:enable Rails/RakeEnvironment
 
   # Load the rake tasks
   load "lib/tasks/migration_guard.rake"
