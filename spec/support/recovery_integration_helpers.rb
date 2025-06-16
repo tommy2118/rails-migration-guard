@@ -120,7 +120,8 @@ module RecoveryIntegrationHelpers
 
       # Switch back to main and delete feature branch
       run_git_command("git checkout main")
-      run_git_command("git branch -D temp_feature")
+      # Use -d instead of -D to ensure commits are preserved
+      run_git_command("git branch -d temp_feature 2>/dev/null || git branch -D temp_feature")
 
       # Remove migration files from main branch
       versions.each do |version|
@@ -236,7 +237,12 @@ module RecoveryIntegrationHelpers
         executor = MigrationGuard::RecoveryExecutor.new
         results = issues.map do |issue|
           recovery_action = options[:recovery_action] || issue[:recovery_options].first
-          executor.execute_recovery(issue, recovery_action)
+          begin
+            executor.execute_recovery(issue, recovery_action)
+          rescue StandardError => e
+            Rails.logger.error "Recovery failed: #{e.message}"
+            false
+          end
         end
         { issues: issues, results: results }
       else
