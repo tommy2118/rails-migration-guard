@@ -1,556 +1,263 @@
-<!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rails Migration Guard - Prevent Orphaned Migrations</title>
-    <meta name="description" content="Track database migrations across git branches, identify orphaned migrations, and prevent schema divergence in Rails development.">
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Inter Font -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    
-    <!-- Custom Configuration -->
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        'sans': ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-                    },
-                    colors: {
-                        'midnight': '#0a0a0a',
-                        'steel': '#1d1d1f',
-                        'smoke': '#86868b',
-                        'cloud': '#f5f5f7',
-                    },
-                    animation: {
-                        'float': 'float 6s ease-in-out infinite',
-                        'slide-up': 'slideUp 0.5s ease-out',
-                        'fade-in': 'fadeIn 0.5s ease-out',
-                    },
-                    keyframes: {
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-20px)' },
-                        },
-                        slideUp: {
-                            '0%': { transform: 'translateY(20px)', opacity: '0' },
-                            '100%': { transform: 'translateY(0)', opacity: '1' },
-                        },
-                        fadeIn: {
-                            '0%': { opacity: '0' },
-                            '100%': { opacity: '1' },
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    
-    <style>
-        /* Smooth gradient background */
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
-        .gradient-text {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        /* Glass morphism effect */
-        .glass {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        /* Code block styling */
-        .code-block {
-            background: #1d1d1f;
-            border-radius: 16px;
-            padding: 24px;
-            overflow-x: auto;
-        }
-        
-        /* Smooth scroll behavior */
-        html {
-            scroll-behavior: smooth;
-        }
-        
-        /* Terminal animation */
-        @keyframes typing {
-            from { width: 0; }
-            to { width: 100%; }
-        }
-        
-        .typing-effect {
-            overflow: hidden;
-            white-space: nowrap;
-            animation: typing 2s steps(40, end);
-        }
-    </style>
-</head>
-<body class="font-sans bg-white text-midnight">
-    <!-- Navigation -->
-    <nav class="fixed top-0 w-full z-50 glass">
-        <div class="max-w-7xl mx-auto px-6 py-4">
-            <div class="flex justify-between items-center">
-                <div class="font-semibold text-lg">Rails Migration Guard</div>
-                <div class="hidden md:flex space-x-8">
-                    <a href="#features" class="hover:text-purple-600 transition">Features</a>
-                    <a href="#installation" class="hover:text-purple-600 transition">Installation</a>
-                    <a href="#usage" class="hover:text-purple-600 transition">Usage</a>
-                    <a href="#configuration" class="hover:text-purple-600 transition">Configuration</a>
-                    <a href="https://github.com/tommy2118/rails-migration-guard" class="hover:text-purple-600 transition">GitHub</a>
-                </div>
-            </div>
-        </div>
-    </nav>
+---
+layout: default
+title: Home
+---
 
-    <!-- Hero Section -->
-    <section class="min-h-screen flex items-center justify-center px-6 pt-20">
-        <div class="max-w-4xl mx-auto text-center animate-fade-in">
-            <h1 class="text-5xl md:text-7xl font-bold mb-6">
-                Rails Migration Guard
+<!-- Hero Section -->
+<section class="relative overflow-hidden bg-gradient-to-br from-brand-50 via-white to-accent-50">
+    <div class="absolute inset-0">
+        <!-- Animated background elements -->
+        <div class="absolute top-20 left-10 w-72 h-72 bg-brand-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-float"></div>
+        <div class="absolute top-40 right-10 w-72 h-72 bg-accent-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-float" style="animation-delay: 2s;"></div>
+        <div class="absolute -bottom-8 left-20 w-72 h-72 bg-purple-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-float" style="animation-delay: 4s;"></div>
+    </div>
+    
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-32">
+        <div class="text-center" data-animate>
+            <!-- Badge -->
+            <div class="inline-flex items-center px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-gray-200 text-sm font-medium text-gray-700 mb-8 animate-fade-in">
+                <span class="w-2 h-2 bg-accent-500 rounded-full mr-2"></span>
+                Latest: v0.4.0 - Now with enhanced Git integration
+            </div>
+            
+            <!-- Main heading -->
+            <h1 class="text-5xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight">
+                Keep Your Rails
+                <span class="gradient-text">Migrations</span>
+                in Sync
             </h1>
-            <p class="text-xl md:text-2xl text-smoke mb-8 leading-relaxed">
-                Prevent orphaned database migrations in development.<br>
-                Track migration state across git branches.
+            
+            <!-- Subtitle -->
+            <p class="text-xl md:text-2xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
+                Intelligent migration tracking that prevents orphaned migrations, 
+                reduces team conflicts, and keeps your database schema organized.
             </p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="#installation" class="px-8 py-4 gradient-bg text-white rounded-full font-semibold hover:shadow-lg transition transform hover:-translate-y-0.5">
+            
+            <!-- CTA Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
+                <a href="#installation" 
+                   class="inline-flex items-center px-8 py-4 border border-transparent text-lg font-medium rounded-xl text-white bg-brand-600 hover:bg-brand-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
                     Get Started
+                    <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                    </svg>
                 </a>
-                <a href="https://github.com/tommy2118/rails-migration-guard" class="px-8 py-4 border-2 border-steel rounded-full font-semibold hover:bg-steel hover:text-white transition">
-                    View on GitHub
+                
+                <a href="{{ '/docs/' | relative_url }}" 
+                   class="inline-flex items-center px-8 py-4 border border-gray-300 text-lg font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                    <svg class="mr-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Documentation
                 </a>
             </div>
             
             <!-- Demo Terminal -->
-            <div class="mt-16 max-w-3xl mx-auto">
-                <div class="code-block shadow-2xl">
-                    <div class="flex items-center mb-4">
-                        <div class="w-3 h-3 rounded-full bg-red-500 mr-2"></div>
-                        <div class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></div>
-                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+            <div class="max-w-4xl mx-auto" data-animate>
+                <div class="bg-gray-900 rounded-2xl shadow-2xl overflow-hidden">
+                    <!-- Terminal header -->
+                    <div class="flex items-center px-6 py-4 bg-gray-800">
+                        <div class="flex space-x-2">
+                            <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                            <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                            <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                        </div>
+                        <div class="flex-1 text-center">
+                            <span class="text-gray-400 text-sm font-mono">rails db:migration:status</span>
+                        </div>
                     </div>
-                    <pre class="text-green-400 font-mono text-sm"><code>$ rails db:migration:status
-
-═══════════════════════════════════════════════════════
-Migration Status (main branch)
-═══════════════════════════════════════════════════════
-
-✓ Synced: 15 migrations
-<span class="text-yellow-400">⚠ Orphaned: 2 migrations (local only)</span>
-✗ Missing: 0 migrations
-
-Orphaned Migrations:
-  20240115123456
-    Branch: feature/user-prefs
-    Author: developer@example.com
-    Age: 3 days
-
-Run `rails db:migration:rollback_orphaned` to clean up</code></pre>
+                    
+                    <!-- Terminal content -->
+                    <div class="p-6 font-mono text-sm">
+                        <div class="text-green-400 mb-2">$ rails db:migration:status</div>
+                        <div class="text-gray-300 mb-4">
+                            <div class="text-brand-400 font-bold mb-2">Migration Status Report</div>
+                            <div class="text-gray-400 text-xs mb-3">Current branch: feature/user-profiles → main branch</div>
+                            
+                            <div class="space-y-1">
+                                <div class="text-green-400">✓ Synced: 12 migrations</div>
+                                <div class="text-yellow-400">⚠ Orphaned: 2 migrations</div>
+                                <div class="text-red-400">✗ Missing: 0 migrations</div>
+                            </div>
+                            
+                            <div class="mt-4 text-gray-400">
+                                <div class="text-xs uppercase tracking-wide mb-2">Orphaned Migrations:</div>
+                                <div class="space-y-1 text-yellow-400">
+                                    <div>• 20240115123456_add_avatar_to_users.rb (feature/avatars, 3 days ago)</div>
+                                    <div>• 20240116789012_create_notifications.rb (feature/notifications, 1 day ago)</div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 text-blue-400 text-xs">
+                                💡 Run `rails db:migration:rollback_orphaned` to clean up
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- The Problem Section -->
-    <section class="py-20 px-6 bg-cloud">
-        <div class="max-w-4xl mx-auto">
-            <h2 class="text-4xl md:text-5xl font-bold mb-12 text-center">The Problem</h2>
-            <div class="grid md:grid-cols-2 gap-8">
-                <div class="bg-white p-8 rounded-2xl shadow-sm">
-                    <div class="text-4xl mb-4">🌿</div>
-                    <h3 class="text-xl font-semibold mb-3">Branch Switching Chaos</h3>
-                    <p class="text-smoke">Developers create migrations on feature branches that never make it to main, leaving local databases in inconsistent states.</p>
-                </div>
-                <div class="bg-white p-8 rounded-2xl shadow-sm">
-                    <div class="text-4xl mb-4">💔</div>
-                    <h3 class="text-xl font-semibold mb-3">Broken References</h3>
-                    <p class="text-smoke">Migrations reference tables or columns that only exist in certain branches, causing confusing errors.</p>
-                </div>
-                <div class="bg-white p-8 rounded-2xl shadow-sm">
-                    <div class="text-4xl mb-4">🔍</div>
-                    <h3 class="text-xl font-semibold mb-3">Hidden State</h3>
-                    <p class="text-smoke">No visibility into which migrations belong to which branches, making cleanup a manual, error-prone process.</p>
-                </div>
-                <div class="bg-white p-8 rounded-2xl shadow-sm">
-                    <div class="text-4xl mb-4">🚀</div>
-                    <h3 class="text-xl font-semibold mb-3">Deployment Risks</h3>
-                    <p class="text-smoke">Orphaned migrations in staging can cause deployment failures or data corruption when not caught early.</p>
-                </div>
-            </div>
+<!-- Features Section -->
+<section class="py-24 bg-white" id="features">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-20" data-animate>
+            <h2 class="text-4xl font-bold text-gray-900 mb-6">
+                Built for Modern Rails Teams
+            </h2>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                Stop worrying about migration conflicts and orphaned schemas. 
+                Rails Migration Guard automatically tracks and manages your database migrations across branches.
+            </p>
         </div>
-    </section>
-
-    <!-- Features Section -->
-    <section id="features" class="py-20 px-6">
-        <div class="max-w-6xl mx-auto">
-            <h2 class="text-4xl md:text-5xl font-bold mb-12 text-center">Powerful Features</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+            <!-- Feature 1 -->
+            <div class="text-center" data-animate>
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-brand-100 rounded-2xl mb-6">
+                    <svg class="w-8 h-8 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">Automatic Tracking</h3>
+                <p class="text-gray-600 leading-relaxed">
+                    Automatically detects and tracks migrations as they're run, 
+                    storing metadata about branch, author, and timestamp.
+                </p>
+            </div>
             
-            <div class="space-y-20">
-                <!-- Feature 1 -->
-                <div class="flex flex-col md:flex-row items-center gap-12">
-                    <div class="flex-1">
-                        <h3 class="text-3xl font-semibold mb-4">Automatic Tracking</h3>
-                        <p class="text-lg text-smoke mb-6">
-                            Every migration is automatically tracked with branch, author, and timestamp information. No manual intervention required.
-                        </p>
-                        <ul class="space-y-2 text-smoke">
-                            <li class="flex items-center"><span class="text-green-500 mr-2">✓</span> Git branch detection</li>
-                            <li class="flex items-center"><span class="text-green-500 mr-2">✓</span> Author tracking</li>
-                            <li class="flex items-center"><span class="text-green-500 mr-2">✓</span> Timestamp recording</li>
-                        </ul>
-                    </div>
-                    <div class="flex-1">
-                        <div class="code-block">
-                            <pre class="text-gray-300 font-mono text-sm"><code># Automatic tracking on migrate
-$ rails db:migrate
-== 20240120123456 AddUserPreferences: migrating ======
--- create_table(:user_preferences)
-   -> 0.0012s
-== 20240120123456 AddUserPreferences: migrated (0.0013s)
-
-<span class="text-green-400">[MigrationGuard] Tracked migration 20240120123456
-  Branch: feature/user-prefs
-  Author: dev@example.com</span></code></pre>
-                        </div>
-                    </div>
+            <!-- Feature 2 -->
+            <div class="text-center" data-animate>
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-accent-100 rounded-2xl mb-6">
+                    <svg class="w-8 h-8 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
                 </div>
-
-                <!-- Feature 2 -->
-                <div class="flex flex-col md:flex-row-reverse items-center gap-12">
-                    <div class="flex-1">
-                        <h3 class="text-3xl font-semibold mb-4">Smart Warnings</h3>
-                        <p class="text-lg text-smoke mb-6">
-                            Get instant feedback when switching branches with different migration states. Never be caught off-guard by orphaned migrations again.
-                        </p>
-                        <ul class="space-y-2 text-smoke">
-                            <li class="flex items-center"><span class="text-yellow-500 mr-2">⚠</span> Branch switch detection</li>
-                            <li class="flex items-center"><span class="text-yellow-500 mr-2">⚠</span> Orphan warnings</li>
-                            <li class="flex items-center"><span class="text-yellow-500 mr-2">⚠</span> Missing migration alerts</li>
-                        </ul>
-                    </div>
-                    <div class="flex-1">
-                        <div class="code-block">
-                            <pre class="text-gray-300 font-mono text-sm"><code>$ git checkout main
-Switched to branch 'main'
-
-<span class="text-yellow-400">⚠ MigrationGuard: 2 orphaned migrations detected
-
-Migrations that exist locally but not in main:
-  - 20240120123456 (AddUserPreferences)
-  - 20240119654321 (CreateUserAvatars)
-
-Consider running: rails db:migration:rollback_orphaned</span></code></pre>
-                        </div>
-                    </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">Smart Detection</h3>
+                <p class="text-gray-600 leading-relaxed">
+                    Identifies orphaned migrations that exist locally but not in your main branch, 
+                    preventing deployment issues before they happen.
+                </p>
+            </div>
+            
+            <!-- Feature 3 -->
+            <div class="text-center" data-animate>
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-2xl mb-6">
+                    <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                    </svg>
                 </div>
-
-                <!-- Feature 3 -->
-                <div class="flex flex-col md:flex-row items-center gap-12">
-                    <div class="flex-1">
-                        <h3 class="text-3xl font-semibold mb-4">Safe Rollbacks</h3>
-                        <p class="text-lg text-smoke mb-6">
-                            Interactive rollback process ensures you never accidentally remove important migrations. Review each one before rolling back.
-                        </p>
-                        <ul class="space-y-2 text-smoke">
-                            <li class="flex items-center"><span class="text-blue-500 mr-2">↩</span> Interactive mode</li>
-                            <li class="flex items-center"><span class="text-blue-500 mr-2">↩</span> Batch operations</li>
-                            <li class="flex items-center"><span class="text-blue-500 mr-2">↩</span> Safe defaults</li>
-                        </ul>
-                    </div>
-                    <div class="flex-1">
-                        <div class="code-block">
-                            <pre class="text-gray-300 font-mono text-sm"><code>$ rails db:migration:rollback_orphaned
-
-Found 2 orphaned migrations:
-
-1. AddUserPreferences (20240120123456)
-   Branch: feature/user-prefs
-   Author: dev@example.com
-   Age: 2 days
-
-   <span class="text-cyan-400">Rollback this migration? (y/n):</span> y
-   <span class="text-green-400">✓ Rolled back successfully</span>
-
-2. CreateUserAvatars (20240119654321)
-   Branch: feature/avatars
-   Author: other@example.com
-   Age: 3 days
-
-   <span class="text-cyan-400">Rollback this migration? (y/n):</span> n
-   <span class="text-gray-500">✓ Skipped</span></code></pre>
-                        </div>
-                    </div>
-                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">Easy Cleanup</h3>
+                <p class="text-gray-600 leading-relaxed">
+                    One-command rollback for orphaned migrations with interactive prompts 
+                    and safety checks to protect your data.
+                </p>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- Installation Section -->
-    <section id="installation" class="py-20 px-6 bg-cloud">
+<!-- Installation Section -->
+<section class="py-24 bg-gray-50" id="installation">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="max-w-4xl mx-auto">
-            <h2 class="text-4xl md:text-5xl font-bold mb-12 text-center">Quick Installation</h2>
+            <div class="text-center mb-16" data-animate>
+                <h2 class="text-4xl font-bold text-gray-900 mb-6">
+                    Get Started in Minutes
+                </h2>
+                <p class="text-xl text-gray-600">
+                    Add Rails Migration Guard to your project with a few simple commands.
+                </p>
+            </div>
             
             <div class="space-y-8">
-                <div class="bg-white p-8 rounded-2xl shadow-sm">
-                    <div class="flex items-start">
-                        <div class="text-2xl font-bold text-purple-600 mr-4">1</div>
-                        <div class="flex-1">
-                            <h3 class="text-xl font-semibold mb-3">Add to Gemfile</h3>
-                            <div class="code-block">
-                                <pre class="text-gray-300 font-mono text-sm"><code>group :development, :staging do
+                <!-- Step 1 -->
+                <div class="flex items-start space-x-6" data-animate>
+                    <div class="flex-shrink-0 w-8 h-8 bg-brand-600 text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-3">Add to your Gemfile</h3>
+                        <div class="code-block rounded-xl p-6 overflow-x-auto">
+                            <pre><code class="language-ruby text-gray-100"># Gemfile
+group :development, :staging do
   gem 'rails_migration_guard'
 end</code></pre>
-                            </div>
                         </div>
                     </div>
                 </div>
-
-                <div class="bg-white p-8 rounded-2xl shadow-sm">
-                    <div class="flex items-start">
-                        <div class="text-2xl font-bold text-purple-600 mr-4">2</div>
-                        <div class="flex-1">
-                            <h3 class="text-xl font-semibold mb-3">Install & Setup</h3>
-                            <div class="code-block">
-                                <pre class="text-gray-300 font-mono text-sm"><code>$ bundle install
+                
+                <!-- Step 2 -->
+                <div class="flex items-start space-x-6" data-animate>
+                    <div class="flex-shrink-0 w-8 h-8 bg-brand-600 text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-3">Install and generate</h3>
+                        <div class="code-block rounded-xl p-6 overflow-x-auto">
+                            <pre><code class="language-bash text-gray-100">$ bundle install
 $ rails generate migration_guard:install
 $ rails db:migrate</code></pre>
-                            </div>
                         </div>
                     </div>
                 </div>
-
-                <div class="bg-white p-8 rounded-2xl shadow-sm">
-                    <div class="flex items-start">
-                        <div class="text-2xl font-bold text-purple-600 mr-4">3</div>
-                        <div class="flex-1">
-                            <h3 class="text-xl font-semibold mb-3">Install Git Hooks (Optional)</h3>
-                            <div class="code-block">
-                                <pre class="text-gray-300 font-mono text-sm"><code>$ rails generate migration_guard:hooks --pre-push</code></pre>
-                            </div>
+                
+                <!-- Step 3 -->
+                <div class="flex items-start space-x-6" data-animate>
+                    <div class="flex-shrink-0 w-8 h-8 bg-brand-600 text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-3">Check your migration status</h3>
+                        <div class="code-block rounded-xl p-6 overflow-x-auto">
+                            <pre><code class="language-bash text-gray-100">$ rails db:migration:status
+$ rails db:migration:doctor  # Run diagnostics</code></pre>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
-
-    <!-- Usage Section -->
-    <section id="usage" class="py-20 px-6">
-        <div class="max-w-6xl mx-auto">
-            <h2 class="text-4xl md:text-5xl font-bold mb-12 text-center">How to Use</h2>
             
-            <div class="grid md:grid-cols-2 gap-8">
-                <div class="space-y-6">
-                    <h3 class="text-2xl font-semibold">Essential Commands</h3>
-                    
-                    <div class="bg-cloud p-6 rounded-xl">
-                        <h4 class="font-semibold mb-2">Check Status</h4>
-                        <code class="text-sm text-purple-600">rails db:migration:status</code>
-                        <p class="text-sm text-smoke mt-2">View all migrations and their sync status</p>
-                    </div>
-                    
-                    <div class="bg-cloud p-6 rounded-xl">
-                        <h4 class="font-semibold mb-2">Rollback Orphaned</h4>
-                        <code class="text-sm text-purple-600">rails db:migration:rollback_orphaned</code>
-                        <p class="text-sm text-smoke mt-2">Interactively rollback orphaned migrations</p>
-                    </div>
-                    
-                    <div class="bg-cloud p-6 rounded-xl">
-                        <h4 class="font-semibold mb-2">Run Diagnostics</h4>
-                        <code class="text-sm text-purple-600">rails db:migration:doctor</code>
-                        <p class="text-sm text-smoke mt-2">Troubleshoot configuration issues</p>
-                    </div>
-                </div>
-                
-                <div class="space-y-6">
-                    <h3 class="text-2xl font-semibold">Workflows</h3>
-                    
-                    <div class="bg-cloud p-6 rounded-xl">
-                        <h4 class="font-semibold mb-2">Switching Branches</h4>
-                        <ol class="text-sm text-smoke space-y-1">
-                            <li>1. Check migration status before switching</li>
-                            <li>2. Switch branch (auto-warning if issues)</li>
-                            <li>3. Rollback orphaned if needed</li>
-                            <li>4. Run missing migrations if any</li>
-                        </ol>
-                    </div>
-                    
-                    <div class="bg-cloud p-6 rounded-xl">
-                        <h4 class="font-semibold mb-2">Before Merging</h4>
-                        <ol class="text-sm text-smoke space-y-1">
-                            <li>1. Run status check</li>
-                            <li>2. Ensure no orphaned migrations</li>
-                            <li>3. Commit all migrations</li>
-                            <li>4. Push with confidence</li>
-                        </ol>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Configuration Section -->
-    <section id="configuration" class="py-20 px-6 bg-cloud">
-        <div class="max-w-4xl mx-auto">
-            <h2 class="text-4xl md:text-5xl font-bold mb-12 text-center">Configuration</h2>
-            
-            <div class="bg-white p-8 rounded-2xl shadow-sm">
-                <p class="text-lg text-smoke mb-6">
-                    Customize Migration Guard to fit your workflow with extensive configuration options:
-                </p>
-                
-                <div class="code-block">
-                    <pre class="text-gray-300 font-mono text-sm"><code># config/initializers/migration_guard.rb
-MigrationGuard.configure do |config|
-  # Environments where MigrationGuard is active
-  config.enabled_environments = [:development, :staging]
-  
-  # Git integration level
-  config.git_integration_level = :warning  # :off, :warning, :auto_rollback
-  
-  # Branch configuration
-  config.main_branch_names = %w[main master trunk]
-  config.target_branches = %w[main develop staging]  # optional
-  
-  # Behavior options
-  config.warn_on_switch = true
-  config.block_deploy_with_orphans = false
-  config.sandbox_mode = false
-  
-  # Cleanup policies
-  config.auto_cleanup = false
-  config.cleanup_after_days = 30
-  
-  # Logging
-  config.log_level = :info
-  config.colorize_output = true
-end</code></pre>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Integration Section -->
-    <section class="py-20 px-6">
-        <div class="max-w-6xl mx-auto">
-            <h2 class="text-4xl md:text-5xl font-bold mb-12 text-center">Seamless Integration</h2>
-            
-            <div class="grid md:grid-cols-3 gap-8">
-                <div class="text-center">
-                    <div class="text-5xl mb-4">🚂</div>
-                    <h3 class="text-xl font-semibold mb-3">Rails Native</h3>
-                    <p class="text-smoke">Works transparently with Rails migrations. No changes to your existing workflow.</p>
-                </div>
-                
-                <div class="text-center">
-                    <div class="text-5xl mb-4">🔄</div>
-                    <h3 class="text-xl font-semibold mb-3">Git Aware</h3>
-                    <p class="text-smoke">Integrates with git hooks for automatic checks on branch switches and pushes.</p>
-                </div>
-                
-                <div class="text-center">
-                    <div class="text-5xl mb-4">🚀</div>
-                    <h3 class="text-xl font-semibold mb-3">CI/CD Ready</h3>
-                    <p class="text-smoke">Add to your deployment pipeline to prevent orphaned migrations in staging.</p>
-                </div>
-            </div>
-            
-            <div class="mt-12 max-w-3xl mx-auto">
-                <div class="code-block">
-                    <pre class="text-gray-300 font-mono text-sm"><code># .github/workflows/deploy.yml
-- name: Check for orphaned migrations
-  run: bundle exec rails db:migration:check
-  
-- name: Deploy only if migrations are clean
-  if: success()
-  run: ./deploy.sh</code></pre>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="py-20 px-6 gradient-bg text-white">
-        <div class="max-w-4xl mx-auto text-center">
-            <h2 class="text-4xl md:text-5xl font-bold mb-6">
-                Stop Fighting Orphaned Migrations
-            </h2>
-            <p class="text-xl mb-8 opacity-90">
-                Join developers who've eliminated migration headaches from their workflow.
-            </p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="https://github.com/tommy2118/rails-migration-guard" class="px-8 py-4 bg-white text-purple-600 rounded-full font-semibold hover:shadow-lg transition transform hover:-translate-y-0.5">
-                    Get Started on GitHub
+            <div class="text-center mt-12" data-animate>
+                <a href="{{ '/docs/' | relative_url }}" 
+                   class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-brand-700 bg-brand-100 hover:bg-brand-200 transition-colors">
+                    View Complete Documentation
+                    <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
                 </a>
-                <a href="https://rubygems.org/gems/rails_migration_guard" class="px-8 py-4 border-2 border-white rounded-full font-semibold hover:bg-white hover:text-purple-600 transition">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Community Section -->
+<section class="py-24 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center" data-animate>
+            <h2 class="text-4xl font-bold text-gray-900 mb-6">
+                Join the Community
+            </h2>
+            <p class="text-xl text-gray-600 mb-12 max-w-3xl mx-auto">
+                Rails Migration Guard is open source and actively maintained. 
+                Contribute, report issues, or just star us on GitHub!
+            </p>
+            
+            <div class="flex flex-col sm:flex-row gap-6 justify-center items-center">
+                <a href="https://github.com/tommy2118/rails-migration-guard" 
+                   target="_blank"
+                   rel="noopener"
+                   class="inline-flex items-center px-8 py-4 border border-gray-300 text-lg font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                    <svg class="mr-3 w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 0C5.374 0 0 5.373 0 12 0 17.302 3.438 21.8 8.207 23.387c.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    Star on GitHub
+                </a>
+                
+                <a href="https://rubygems.org/gems/rails_migration_guard" 
+                   target="_blank"
+                   rel="noopener"
+                   class="inline-flex items-center px-8 py-4 border border-transparent text-lg font-medium rounded-xl text-white bg-red-600 hover:bg-red-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                    <svg class="mr-3 w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 0L1.5 6v12L12 24l10.5-6V6L12 0zm7.5 16.5L12 21l-7.5-4.5v-9L12 3l7.5 4.5v9z"/>
+                    </svg>
                     View on RubyGems
                 </a>
             </div>
         </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="py-12 px-6 bg-midnight text-white">
-        <div class="max-w-6xl mx-auto">
-            <div class="flex flex-col md:flex-row justify-between items-center">
-                <div class="mb-4 md:mb-0">
-                    <p class="text-sm text-smoke">
-                        Created by <a href="https://github.com/tommy2118" class="hover:text-white transition">Tommy A. Caruso</a>
-                    </p>
-                    <p class="text-sm text-smoke mt-1">
-                        Released under the MIT License
-                    </p>
-                </div>
-                <div class="flex space-x-6">
-                    <a href="https://github.com/tommy2118/rails-migration-guard" class="text-smoke hover:text-white transition">
-                        GitHub
-                    </a>
-                    <a href="https://github.com/tommy2118/rails-migration-guard/issues" class="text-smoke hover:text-white transition">
-                        Issues
-                    </a>
-                    <a href="https://github.com/tommy2118/rails-migration-guard/blob/main/CONTRIBUTING.md" class="text-smoke hover:text-white transition">
-                        Contributing
-                    </a>
-                </div>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Smooth scroll script -->
-    <script>
-        // Add smooth scrolling to all links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
-            });
-        });
-
-        // Add scroll effect to navigation
-        window.addEventListener('scroll', function() {
-            const nav = document.querySelector('nav');
-            if (window.scrollY > 50) {
-                nav.classList.add('shadow-lg');
-            } else {
-                nav.classList.remove('shadow-lg');
-            }
-        });
-    </script>
-</body>
-</html>
+    </div>
+</section>

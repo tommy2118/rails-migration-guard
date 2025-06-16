@@ -2,7 +2,8 @@ name: Deploy GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: ["master"]
+    paths: ["docs/**"]
   workflow_dispatch:
 
 permissions:
@@ -27,11 +28,15 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
         
+      - name: Build with Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./docs
+          destination: ./_site
+          
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
-        with:
-          path: './docs'
-          
+        
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

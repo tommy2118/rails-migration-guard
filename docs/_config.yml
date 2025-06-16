@@ -1,15 +1,42 @@
-# GitHub Pages configuration
+# GitHub Pages configuration for Rails Migration Guard
+title: "Rails Migration Guard"
+description: "Intelligent migration tracking for Rails applications"
+url: "https://tommy2118.github.io"
+baseurl: "/rails-migration-guard"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
 theme: null
 plugins: []
 
-# Site settings
-title: Rails Migration Guard
-description: Prevent orphaned Rails migrations in development and staging environments
-url: https://tommy2118.github.io
-baseurl: /rails-migration-guard
+# Navigation
+navigation:
+  - title: "Home"
+    url: "/"
+  - title: "Documentation"
+    url: "/docs/"
+  - title: "Installation"
+    url: "/installation/"
+  - title: "Examples"
+    url: "/examples/"
+  - title: "GitHub"
+    url: "https://github.com/tommy2118/rails-migration-guard"
+    external: true
 
-# Exclude files from processing
+# SEO
+social:
+  name: Rails Migration Guard
+  links:
+    - https://github.com/tommy2118/rails-migration-guard
+
+# Exclude files
 exclude:
   - Gemfile
   - Gemfile.lock
+  - node_modules
   - vendor
+  - .sass-cache
+  - .jekyll-cache
+  - gemfiles
+  - README.md

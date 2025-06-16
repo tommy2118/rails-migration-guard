@@ -1,0 +1,563 @@
+---
+layout: default
+title: Examples
+---
+
+<div class="bg-gray-50 py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h1 class="text-4xl font-bold text-gray-900 mb-6">Examples & Workflows</h1>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                Real-world examples of how Rails Migration Guard helps teams manage database migrations across branches.
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <!-- Feature Development Workflow -->
+    <section class="mb-20">
+        <h2 class="text-3xl font-bold text-gray-900 mb-8">Feature Development Workflow</h2>
+        
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-4">
+                <h3 class="text-xl font-semibold text-white">Scenario: Adding a new feature with database changes</h3>
+            </div>
+            
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4">📝 The Situation</h4>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <ul class="space-y-2 text-gray-700">
+                                <li>• You're working on a user profiles feature</li>
+                                <li>• Need to add several new database tables</li>
+                                <li>• Multiple developers on different features</li>
+                                <li>• Want to avoid migration conflicts</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4">✅ How Migration Guard Helps</h4>
+                        <div class="bg-green-50 rounded-lg p-4">
+                            <ul class="space-y-2 text-green-700">
+                                <li>• Tracks all migrations by branch</li>
+                                <li>• Warns when switching branches</li>
+                                <li>• Easy rollback of experimental changes</li>
+                                <li>• Prevents pushing orphaned migrations</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-6">
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-3">Step 1: Create feature branch and migrations</h4>
+                        <div class="code-block rounded-lg p-6">
+                            <pre><code class="language-bash text-gray-100"># Create and switch to feature branch
+$ git checkout -b feature/user-profiles
+
+# Create migrations for your feature
+$ rails generate migration CreateUserProfiles user:references bio:text avatar_url:string
+$ rails generate migration AddProfileSettingsToUsers show_email:boolean show_phone:boolean
+
+# Run migrations (automatically tracked by Migration Guard)
+$ rails db:migrate</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-3">Step 2: Check what's been tracked</h4>
+                        <div class="code-block rounded-lg p-6">
+                            <pre><code class="language-bash text-gray-100">$ rails db:migration:status</code></pre>
+                        </div>
+                        <div class="mt-4 bg-gray-900 rounded-lg p-4">
+                            <pre class="text-green-400 font-mono text-sm"><code>Migration Status Report
+Current branch: feature/user-profiles → main branch
+
+✓ Synced: 10 migrations
+⚠ Orphaned: 2 migrations
+
+Orphaned Migrations:
+• 20240116123456_create_user_profiles.rb (feature/user-profiles, 5 minutes ago)
+• 20240116123457_add_profile_settings_to_users.rb (feature/user-profiles, 3 minutes ago)</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-3">Step 3: Switch back to main (with automatic warning)</h4>
+                        <div class="code-block rounded-lg p-6">
+                            <pre><code class="language-bash text-gray-100">$ git checkout main</code></pre>
+                        </div>
+                        <div class="mt-4 bg-gray-900 rounded-lg p-4">
+                            <pre class="text-yellow-400 font-mono text-sm"><code>⚠ MigrationGuard: 2 orphaned migrations detected
+
+Migrations that exist locally but not in main:
+  - 20240116123456 (CreateUserProfiles)
+  - 20240116123457 (AddProfileSettingsToUsers)
+
+These migrations were created on: feature/user-profiles
+Consider running: rails db:migration:rollback_orphaned</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-3">Step 4: Rollback orphaned migrations</h4>
+                        <div class="code-block rounded-lg p-6">
+                            <pre><code class="language-bash text-gray-100">$ rails db:migration:rollback_orphaned</code></pre>
+                        </div>
+                        <div class="mt-4 bg-gray-900 rounded-lg p-4">
+                            <pre class="text-cyan-400 font-mono text-sm"><code>Found 2 orphaned migrations:
+
+1. CreateUserProfiles (20240116123456)
+   Branch: feature/user-profiles
+   Author: dev@example.com
+   Age: 10 minutes
+
+   Rollback this migration? (y/n): y
+   ✓ Rolled back successfully
+
+2. AddProfileSettingsToUsers (20240116123457)
+   Branch: feature/user-profiles
+   Author: dev@example.com
+   Age: 8 minutes
+
+   Rollback this migration? (y/n): y
+   ✓ Rolled back successfully
+
+All orphaned migrations have been cleaned up!</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-3">Step 5: Return to feature branch</h4>
+                        <div class="code-block rounded-lg p-6">
+                            <pre><code class="language-bash text-gray-100"># Switch back to feature branch
+$ git checkout feature/user-profiles
+
+# Re-run the migrations
+$ rails db:migrate
+
+# Continue developing...
+$ rails db:migration:status  # Shows orphaned migrations again</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Team Collaboration -->
+    <section class="mb-20">
+        <h2 class="text-3xl font-bold text-gray-900 mb-8">Team Collaboration Scenario</h2>
+        
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-accent-500 to-accent-600 px-6 py-4">
+                <h3 class="text-xl font-semibold text-white">Multiple developers, multiple features, shared staging</h3>
+            </div>
+            
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <h4 class="font-semibold text-blue-900 mb-2">👩‍💻 Alice</h4>
+                        <p class="text-blue-700 text-sm">Working on user authentication (branch: auth-system)</p>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-4">
+                        <h4 class="font-semibold text-green-900 mb-2">👨‍💻 Bob</h4>
+                        <p class="text-green-700 text-sm">Building payment system (branch: payments)</p>
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-4">
+                        <h4 class="font-semibold text-purple-900 mb-2">👩‍💻 Carol</h4>
+                        <p class="text-purple-700 text-sm">Adding admin panel (branch: admin-panel)</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-6">
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-3">Problem: Conflicting migrations in staging</h4>
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <p class="text-red-700">
+                                When deploying to staging, migrations from different branches conflict, causing deployment failures and database inconsistencies.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-3">Solution: Pre-push hooks prevent the problem</h4>
+                        <div class="code-block rounded-lg p-6">
+                            <pre><code class="language-bash text-gray-100"># Each developer installs pre-push hooks
+$ rails generate migration_guard:hooks --pre-push</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-3">Alice tries to push her auth-system branch:</h4>
+                        <div class="code-block rounded-lg p-6 mb-4">
+                            <pre><code class="language-bash text-gray-100">$ git push origin auth-system</code></pre>
+                        </div>
+                        <div class="bg-gray-900 rounded-lg p-4">
+                            <pre class="text-yellow-400 font-mono text-sm"><code>Pre-push check: Checking for orphaned migrations...
+
+✓ No orphaned migrations found
+✓ Safe to push
+
+Pushing to origin/auth-system...</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-3">Bob tries to push, but has orphaned migrations:</h4>
+                        <div class="code-block rounded-lg p-6 mb-4">
+                            <pre><code class="language-bash text-gray-100">$ git push origin payments</code></pre>
+                        </div>
+                        <div class="bg-gray-900 rounded-lg p-4">
+                            <pre class="text-red-400 font-mono text-sm"><code>Pre-push check: Checking for orphaned migrations...
+
+⚠ Found 3 orphaned migrations:
+  - 20240116001122_create_payment_methods.rb
+  - 20240116001123_create_transactions.rb  
+  - 20240116001124_add_payment_status_to_orders.rb
+
+These migrations exist locally but not in main branch.
+Push blocked to prevent staging conflicts.
+
+To resolve:
+1. rails db:migration:rollback_orphaned (if experimental)
+2. Or merge these migrations to main first
+3. Then retry push</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- CI/CD Integration -->
+    <section class="mb-20">
+        <h2 class="text-3xl font-bold text-gray-900 mb-8">CI/CD Pipeline Integration</h2>
+        
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-purple-500 to-purple-600 px-6 py-4">
+                <h3 class="text-xl font-semibold text-white">Preventing deployment issues with automated checks</h3>
+            </div>
+            
+            <div class="p-6 space-y-6">
+                <div>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-3">GitHub Actions Workflow</h4>
+                    <div class="code-block rounded-lg p-6">
+                        <pre><code class="language-yaml text-gray-100"># .github/workflows/deploy.yml
+name: Deploy to Staging
+on:
+  push:
+    branches: [staging]
+
+jobs:
+  migration-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.1
+          bundler-cache: true
+      
+      - name: Check for orphaned migrations
+        run: |
+          bundle exec rails db:create
+          bundle exec rails db:migrate
+          bundle exec rails db:migration:status
+          
+          # Fail if orphaned migrations found
+          if bundle exec rails db:migration:check --orphaned; then
+            echo "✅ No orphaned migrations found"
+          else
+            echo "❌ Orphaned migrations detected - deployment blocked"
+            exit 1
+          fi
+      
+      - name: Deploy to staging
+        if: success()
+        run: ./deploy-staging.sh</code></pre>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-3">Heroku Integration</h4>
+                    <div class="code-block rounded-lg p-6">
+                        <pre><code class="language-bash text-gray-100"># In your Heroku build process
+echo "Checking migration status before deployment..."
+
+if bundle exec rails db:migration:check --orphaned; then
+  echo "✅ Migration check passed"
+else
+  echo "❌ Orphaned migrations found - stopping deployment"
+  exit 1
+fi
+
+# Continue with normal deployment
+bundle exec rails db:migrate</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Common Commands Examples -->
+    <section class="mb-20">
+        <h2 class="text-3xl font-bold text-gray-900 mb-8">Command Examples</h2>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Status Command -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-brand-500 px-6 py-4">
+                    <h3 class="text-lg font-semibold text-white">Migration Status</h3>
+                </div>
+                <div class="p-6">
+                    <div class="code-block rounded-lg p-4 mb-4">
+                        <pre><code class="language-bash text-gray-100">$ rails db:migration:status</code></pre>
+                    </div>
+                    <div class="bg-gray-900 rounded-lg p-4">
+                        <pre class="text-green-400 font-mono text-xs"><code>Migration Status Report
+Current branch: feature/api-v2 → main branch
+
+✓ Synced: 15 migrations
+⚠ Orphaned: 3 migrations
+✗ Missing: 1 migration
+
+Orphaned Migrations:
+• 20240116123456_create_api_keys.rb (feature/api-v2, 2 hours ago)
+• 20240116123457_add_rate_limits.rb (feature/api-v2, 1 hour ago)
+• 20240116123458_create_webhooks.rb (feature/api-v2, 30 minutes ago)
+
+Missing Migrations:
+• 20240116120000_fix_user_indexes.rb (in main, not applied locally)
+
+💡 Run `rails db:migration:rollback_orphaned` to clean up
+💡 Run `rails db:migrate` to apply missing migrations</code></pre>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Doctor Command -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-accent-500 px-6 py-4">
+                    <h3 class="text-lg font-semibold text-white">Diagnostics</h3>
+                </div>
+                <div class="p-6">
+                    <div class="code-block rounded-lg p-4 mb-4">
+                        <pre><code class="language-bash text-gray-100">$ rails db:migration:doctor</code></pre>
+                    </div>
+                    <div class="bg-gray-900 rounded-lg p-4">
+                        <pre class="text-green-400 font-mono text-xs"><code>MigrationGuard Diagnostics
+==========================
+
+Environment Check:
+✓ Rails environment: development
+✓ MigrationGuard enabled: true
+✓ Database connection: OK
+
+Git Integration:
+✓ Git repository: detected
+✓ Current branch: feature/api-v2
+✓ Main branch: main (detected)
+✓ Git hooks: installed
+
+Configuration:
+✓ Enabled environments: [:development, :staging]
+✓ Git integration level: warning
+✓ Main branch names: ["main", "master"]
+
+Database:
+✓ Migration tracking table: exists
+✓ Tracked migrations: 18
+✓ Orphaned migrations: 3
+
+All systems operational! 🚀</code></pre>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Rollback Command -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-purple-500 px-6 py-4">
+                    <h3 class="text-lg font-semibold text-white">Interactive Rollback</h3>
+                </div>
+                <div class="p-6">
+                    <div class="code-block rounded-lg p-4 mb-4">
+                        <pre><code class="language-bash text-gray-100">$ rails db:migration:rollback_orphaned</code></pre>
+                    </div>
+                    <div class="bg-gray-900 rounded-lg p-4">
+                        <pre class="text-cyan-400 font-mono text-xs"><code>Found 3 orphaned migrations:
+
+1. CreateApiKeys (20240116123456)
+   Branch: feature/api-v2
+   Author: alice@company.com
+   Age: 2 hours
+   
+   This migration creates the api_keys table with:
+   - id (primary key)
+   - user_id (foreign key)
+   - key_hash (string)
+   - expires_at (datetime)
+   
+   Rollback this migration? (y/n/s/a): y
+   ✓ Rolled back successfully
+
+2. AddRateLimits (20240116123457)
+   Branch: feature/api-v2
+   Author: alice@company.com
+   Age: 1 hour
+   
+   Rollback this migration? (y/n/s/a): s
+   ↷ Skipped
+
+3. CreateWebhooks (20240116123458)
+   Branch: feature/api-v2
+   Author: alice@company.com
+   Age: 30 minutes
+   
+   Rollback this migration? (y/n/s/a): a
+   ✓ Auto-rolling back remaining migrations...
+   ✓ Rolled back successfully
+
+Summary: 2 rolled back, 1 skipped</code></pre>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Cleanup Command -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-yellow-500 px-6 py-4">
+                    <h3 class="text-lg font-semibold text-white">Cleanup Old Records</h3>
+                </div>
+                <div class="p-6">
+                    <div class="code-block rounded-lg p-4 mb-4">
+                        <pre><code class="language-bash text-gray-100">$ rails db:migration:cleanup FORCE=true</code></pre>
+                    </div>
+                    <div class="bg-gray-900 rounded-lg p-4">
+                        <pre class="text-yellow-400 font-mono text-xs"><code>Cleaning up migration tracking records...
+
+Records older than 30 days:
+• 12 tracking records from old feature branches
+• 3 records from rolled-back migrations
+• 8 records from merged features
+
+Total records to delete: 23
+
+Cleanup completed:
+✓ Deleted 23 old tracking records
+✓ Database cleanup successful
+✓ Tracking table optimized
+
+Current tracking records: 45 (active development)</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Best Practices -->
+    <section class="mb-20">
+        <h2 class="text-3xl font-bold text-gray-900 mb-8">Best Practices</h2>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="space-y-6">
+                <h3 class="text-xl font-semibold text-gray-900">✅ Do This</h3>
+                
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-green-800 mb-2">Check status before switching branches</h4>
+                    <p class="text-green-700 text-sm">Always run <code>rails db:migration:status</code> before switching branches to know what you're working with.</p>
+                </div>
+                
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-green-800 mb-2">Install git hooks for teams</h4>
+                    <p class="text-green-700 text-sm">Pre-push hooks prevent orphaned migrations from reaching shared branches.</p>
+                </div>
+                
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-green-800 mb-2">Review migrations before rollback</h4>
+                    <p class="text-green-700 text-sm">Use the interactive rollback to understand what each migration does before removing it.</p>
+                </div>
+                
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-green-800 mb-2">Clean up regularly</h4>
+                    <p class="text-green-700 text-sm">Run cleanup commands periodically to keep your tracking table optimized.</p>
+                </div>
+            </div>
+            
+            <div class="space-y-6">
+                <h3 class="text-xl font-semibold text-gray-900">❌ Avoid This</h3>
+                
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-red-800 mb-2">Don't ignore orphaned migration warnings</h4>
+                    <p class="text-red-700 text-sm">These warnings prevent real problems. Address them before they cause issues.</p>
+                </div>
+                
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-red-800 mb-2">Don't use --force without understanding</h4>
+                    <p class="text-red-700 text-sm">Batch rollbacks can be destructive. Use interactive mode first.</p>
+                </div>
+                
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-red-800 mb-2">Don't disable in production accidentally</h4>
+                    <p class="text-red-700 text-sm">The gem is designed for development/staging. Don't enable in production.</p>
+                </div>
+                
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-red-800 mb-2">Don't skip status checks in CI</h4>
+                    <p class="text-red-700 text-sm">Add migration checks to your deployment pipeline to catch issues early.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Real-world Tips -->
+    <section>
+        <h2 class="text-3xl font-bold text-gray-900 mb-8">Real-world Tips</h2>
+        
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-6">
+            <h3 class="text-lg font-semibold text-blue-900 mb-4">💡 Pro Tips from the Community</h3>
+            
+            <div class="space-y-4">
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
+                    <div>
+                        <p class="text-blue-800">
+                            <strong>Use branch prefixes:</strong> Name your migration files with feature prefixes like <code>20240116_user_profiles_create_table.rb</code> to make them easier to identify.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                    <div>
+                        <p class="text-blue-800">
+                            <strong>Coordinate with your team:</strong> Before merging large features, coordinate migration order to avoid conflicts in staging.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
+                    <div>
+                        <p class="text-blue-800">
+                            <strong>Document complex migrations:</strong> Add comments to migrations that modify existing data or have complex logic.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">4</div>
+                    <div>
+                        <p class="text-blue-800">
+                            <strong>Test migration rollbacks:</strong> Always test that your migrations can be rolled back cleanly, especially in production-like environments.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
