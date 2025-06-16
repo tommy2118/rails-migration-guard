@@ -81,6 +81,13 @@ module MigrationGuard
         Rails.logger.info historian.format_history_output
       end
 
+      def authors_report
+        return unless check_enabled
+
+        author_reporter = MigrationGuard::AuthorReporter.new
+        Rails.logger.info author_reporter.format_authors_report
+      end
+
       private
 
       def check_git_integration

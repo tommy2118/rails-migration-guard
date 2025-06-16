@@ -82,6 +82,13 @@ module MigrationGuard
       output.strip
     end
 
+    def current_author
+      output = `git config user.email 2>&1`
+      return nil if !$CHILD_STATUS.success? || output.strip.empty?
+
+      output.strip
+    end
+
     def file_exists_in_branch?(branch, file_path)
       `git cat-file -e "#{branch}:#{file_path}" 2>&1`
       $CHILD_STATUS.success?

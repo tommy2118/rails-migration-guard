@@ -38,6 +38,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `#migration_file_name` - Smart file name detection
     - `#display_status` - Human-readable status with icons
     - `#execution_time` - Formatted timing information
+- **Comprehensive Author Tracking** (#21) - Enhanced migration authorship features:
+  - New `rails db:migration:authors` rake task for author statistics:
+    - Shows total, applied, orphaned, and rolled back counts per author
+    - Ranks authors by activity level and latest migration
+    - Displays current user's rank and contribution summary
+    - Colorized output with smart truncation for long names
+  - Author filtering for migration history:
+    - `rails db:migration:history AUTHOR=email` - Filter by author email
+    - Supports partial matching for flexible searches
+  - New `AuthorReporter` class for dedicated author analysis
+  - Enhanced `GitIntegration` with non-throwing `current_author` method
+  - Graceful handling when git user.email is not configured
 - **Developer Experience Improvements** (#54):
   - Interactive console (`bin/console`) with pre-loaded test data and helper functions
   - Development helper script (`bin/dev`) with commands for testing, linting, and demos

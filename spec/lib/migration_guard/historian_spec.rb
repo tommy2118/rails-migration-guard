@@ -119,6 +119,22 @@ RSpec.describe MigrationGuard::Historian do
         expect(records.first.version).to eq("20240101000001")
       end
     end
+
+    context "with author filter" do
+      it "filters by author" do
+        historian = described_class.new(author: "developer@example.com")
+        records = historian.migration_history
+        expect(records.count).to eq(2)
+        expect(records.all? { |r| r.author&.include?("developer@example.com") }).to be true
+      end
+
+      it "filters by partial author match" do
+        historian = described_class.new(author: "developer")
+        records = historian.migration_history
+        expect(records.count).to eq(2)
+        expect(records.all? { |r| r.author&.include?("developer") }).to be true
+      end
+    end
   end
 
   describe "#format_history_output" do

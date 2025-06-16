@@ -463,3 +463,51 @@ $ git commit -m "feat: add migration tracking functionality
 5. **Respect Rails**: Follow Rails patterns and conventions
 
 Remember: This gem enhances the developer experience. Every decision should make developers' lives easier without adding complexity.
+
+## Author Tracking Implementation
+
+### Overview
+Author tracking captures and displays migration authorship information to help teams coordinate and track migration ownership.
+
+### Key Components
+
+1. **AuthorReporter** - Dedicated class for author statistics and reports
+   - Shows contribution breakdown by status (applied/orphaned/rolled back)
+   - Ranks authors by activity level
+   - Displays current user's rank when available
+
+2. **Enhanced Filtering** - Author-based queries across the system
+   - `MigrationGuardRecord.for_author(email)` scope with LIKE matching
+   - AUTHOR environment variable support in rake tasks
+   - Partial email matching for flexible searches
+
+3. **Git Integration** - Safe author detection
+   - `current_author` method that returns nil instead of raising
+   - Graceful handling when git user.email is not configured
+
+### Usage Examples
+
+```bash
+# View author statistics
+$ rails db:migration:authors
+
+# Filter history by author
+$ rails db:migration:history AUTHOR=alice@example.com
+
+# Partial matching works too
+$ rails db:migration:history AUTHOR=alice
+```
+
+### Testing Author Features
+
+```ruby
+RSpec.describe MigrationGuard::AuthorReporter do
+  # Always use aggregate_failures for multiple expectations
+  it "displays correct migration counts" do
+    aggregate_failures do
+      expect(output).to match(/developer2@example\.com.*3.*1.*0.*1/)
+      expect(output).to match(/developer1@example\.com.*2.*1.*1.*0/)
+    end
+  end
+end
+```
