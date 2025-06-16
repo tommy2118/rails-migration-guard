@@ -5,12 +5,12 @@ require "rake"
 
 RSpec.describe "migration_guard rake tasks" do
   before(:all) do
-    Rails.application.load_tasks
+    Rails.application.load_tasks if Rake::Task.tasks.empty?
   end
 
   before do
-    # Reenable all tasks before each test to allow multiple invocations
-    Rake::Task.tasks.each(&:reenable)
+    # Clear task invocations between tests
+    Rake::Task.tasks.each(&:reenable) if Rake::Task.tasks.any?
   end
 
   describe "db:migration:status" do

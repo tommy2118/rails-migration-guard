@@ -183,6 +183,7 @@ RSpec.describe "Migration status checking", type: :integration do
   describe "rake task integration" do
     before do
       Rails.application.load_tasks if Rake::Task.tasks.empty?
+      Rake::Task["db:migration:status"].reenable if Rake::Task.task_defined?("db:migration:status")
       allow(Rails.logger).to receive(:info)
       allow(MigrationGuard).to receive(:enabled?).and_return(true)
     end
