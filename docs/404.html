@@ -1,40 +1,61 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 - Page Not Found | Rails Migration Guard</title>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Inter Font -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        'sans': ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-</head>
-<body class="font-sans bg-gray-50 text-gray-900 min-h-screen flex items-center justify-center">
+---
+layout: default
+title: Page Not Found
+---
+
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-50 via-white to-accent-50">
     <div class="text-center px-6">
-        <h1 class="text-9xl font-bold text-purple-600 mb-4">404</h1>
-        <h2 class="text-3xl font-semibold mb-4">Migration Not Found</h2>
-        <p class="text-gray-600 mb-8">
-            Looks like this page has been rolled back. Let's get you back on track.
+        <!-- Animated 404 -->
+        <div class="mb-8">
+            <h1 class="text-9xl font-bold gradient-text mb-4 animate-float">404</h1>
+            <div class="text-6xl mb-4">🔍</div>
+        </div>
+        
+        <!-- Error Message -->
+        <h2 class="text-3xl font-bold text-gray-900 mb-4">Migration Not Found</h2>
+        <p class="text-xl text-gray-600 mb-8 max-w-md mx-auto">
+            Looks like this page has been rolled back or never existed. 
+            Let's get you back on track.
         </p>
-        <a href="/rails-migration-guard/" class="px-6 py-3 bg-purple-600 text-white rounded-full font-semibold hover:bg-purple-700 transition">
-            Back to Home
-        </a>
+        
+        <!-- Terminal-style error -->
+        <div class="bg-gray-900 rounded-xl p-6 mb-8 max-w-lg mx-auto">
+            <div class="font-mono text-sm">
+                <div class="text-red-400 mb-2">$ rails db:migration:find_page</div>
+                <div class="text-gray-300">
+                    <div class="text-red-400">✗ Error: Page not found in migration history</div>
+                    <div class="text-yellow-400 mt-2">💡 Suggestion: Try navigating from the home page</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{{ '/' | relative_url }}" 
+               class="inline-flex items-center px-8 py-4 border border-transparent text-lg font-medium rounded-xl text-white bg-brand-600 hover:bg-brand-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                <svg class="mr-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                </svg>
+                Back to Home
+            </a>
+            
+            <a href="{{ '/docs/' | relative_url }}" 
+               class="inline-flex items-center px-8 py-4 border border-gray-300 text-lg font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                <svg class="mr-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                View Documentation
+            </a>
+        </div>
+        
+        <!-- Helpful Links -->
+        <div class="mt-12 pt-8 border-t border-gray-200">
+            <p class="text-sm text-gray-500 mb-4">Looking for something specific?</p>
+            <div class="flex flex-wrap gap-4 justify-center text-sm">
+                <a href="{{ '/installation/' | relative_url }}" class="text-brand-600 hover:text-brand-700">Installation Guide</a>
+                <a href="{{ '/examples/' | relative_url }}" class="text-brand-600 hover:text-brand-700">Usage Examples</a>
+                <a href="https://github.com/tommy2118/rails-migration-guard" class="text-brand-600 hover:text-brand-700">GitHub Repository</a>
+            </div>
+        </div>
     </div>
-</body>
-</html>
+</div>
