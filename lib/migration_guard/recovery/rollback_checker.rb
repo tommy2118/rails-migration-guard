@@ -17,7 +17,7 @@ module MigrationGuard
       def find_stuck_rollbacks
         MigrationGuardRecord
           .where(status: "rolling_back")
-          .where(updated_at: ...ROLLBACK_TIMEOUT.ago)
+          .where(updated_at: ..ROLLBACK_TIMEOUT.ago)
       end
 
       def build_issue(record)
