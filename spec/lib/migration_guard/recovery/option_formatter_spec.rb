@@ -85,7 +85,7 @@ RSpec.describe MigrationGuard::Recovery::OptionFormatter do
       end
     end
 
-    context "OPTION_DESCRIPTIONS constant" do
+    context "when checking OPTION_DESCRIPTIONS constant" do
       it "is frozen" do
         expect(described_class::OPTION_DESCRIPTIONS).to be_frozen
       end

@@ -74,8 +74,10 @@ RSpec.describe MigrationGuard::Recovery::VersionConflictChecker do
         # Create duplicate by bypassing validation with direct SQL insert
         ActiveRecord::Base.connection.execute(
           ActiveRecord::Base.sanitize_sql([
-                                            "INSERT INTO migration_guard_records (version, status, branch, metadata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-                                            "20240116000001", "rolled_back", "feature/test", { "source" => "duplicate" }.to_json, Time.current, Time.current
+                                            "INSERT INTO migration_guard_records (version, status, branch, " \
+                                            "metadata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+                                            "20240116000001", "rolled_back", "feature/test",
+                                            { "source" => "duplicate" }.to_json, Time.current, Time.current
                                           ])
         )
         # Find the record we just created
@@ -113,7 +115,8 @@ RSpec.describe MigrationGuard::Recovery::VersionConflictChecker do
         records_data.each do |version, status, branch, metadata|
           ActiveRecord::Base.connection.execute(
             ActiveRecord::Base.sanitize_sql([
-                                              "INSERT INTO migration_guard_records (version, status, branch, metadata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+                                              "INSERT INTO migration_guard_records (version, status, branch, " \
+                                              "metadata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
                                               version, status, branch, metadata.to_json, Time.current, Time.current
                                             ])
           )
@@ -150,15 +153,19 @@ RSpec.describe MigrationGuard::Recovery::VersionConflictChecker do
         # Create duplicates with different metadata using direct SQL
         ActiveRecord::Base.connection.execute(
           ActiveRecord::Base.sanitize_sql([
-                                            "INSERT INTO migration_guard_records (version, status, branch, metadata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-                                            "20240116000001", "applied", "main", { "migration_time" => "fast" }.to_json, 1.day.ago, 1.day.ago
+                                            "INSERT INTO migration_guard_records (version, status, branch, " \
+                                            "metadata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+                                            "20240116000001", "applied", "main",
+                                            { "migration_time" => "fast" }.to_json, 1.day.ago, 1.day.ago
                                           ])
         )
 
         ActiveRecord::Base.connection.execute(
           ActiveRecord::Base.sanitize_sql([
-                                            "INSERT INTO migration_guard_records (version, status, branch, metadata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-                                            "20240116000001", "applied", "feature/duplicate", { "migration_time" => "slow" }.to_json, 1.hour.ago, 1.hour.ago
+                                            "INSERT INTO migration_guard_records (version, status, branch, " \
+                                            "metadata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+                                            "20240116000001", "applied", "feature/duplicate",
+                                            { "migration_time" => "slow" }.to_json, 1.hour.ago, 1.hour.ago
                                           ])
         )
       end
@@ -187,8 +194,10 @@ RSpec.describe MigrationGuard::Recovery::VersionConflictChecker do
         5.times do |i|
           ActiveRecord::Base.connection.execute(
             ActiveRecord::Base.sanitize_sql([
-                                              "INSERT INTO migration_guard_records (version, status, branch, metadata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-                                              "20240116000001", "applied", "branch_#{i}", { "index" => i }.to_json, Time.current, Time.current
+                                              "INSERT INTO migration_guard_records (version, status, branch, " \
+                                              "metadata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+                                              "20240116000001", "applied", "branch_#{i}",
+                                              { "index" => i }.to_json, Time.current, Time.current
                                             ])
           )
         end
@@ -209,15 +218,18 @@ RSpec.describe MigrationGuard::Recovery::VersionConflictChecker do
         # Create duplicate records using direct SQL
         ActiveRecord::Base.connection.execute(
           ActiveRecord::Base.sanitize_sql([
-                                            "INSERT INTO migration_guard_records (version, status, branch, metadata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+                                            "INSERT INTO migration_guard_records (version, status, branch, " \
+                                            "metadata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
                                             "20240116000001", "applied", "main", {}.to_json, Time.current, Time.current
                                           ])
         )
 
         ActiveRecord::Base.connection.execute(
           ActiveRecord::Base.sanitize_sql([
-                                            "INSERT INTO migration_guard_records (version, status, branch, metadata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-                                            "20240116000001", "applied", "feature", {}.to_json, Time.current, Time.current
+                                            "INSERT INTO migration_guard_records (version, status, branch, " \
+                                            "metadata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+                                            "20240116000001", "applied", "feature",
+                                            {}.to_json, Time.current, Time.current
                                           ])
         )
       end
@@ -234,3 +246,5 @@ RSpec.describe MigrationGuard::Recovery::VersionConflictChecker do
     end
   end
 end
+
+# rubocop:enable RSpec/IndexedLet

@@ -28,7 +28,9 @@ RSpec.describe MigrationGuard::Recovery::IssueFormatter do
     it "delegates to instance method" do
       issue = { type: :partial_rollback, version: "20240116000001" }
 
+      # rubocop:disable RSpec/AnyInstance
       expect_any_instance_of(described_class).to receive(:format).with(issue, 1)
+      # rubocop:enable RSpec/AnyInstance
       described_class.format(issue, 1)
     end
   end

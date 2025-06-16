@@ -157,13 +157,13 @@ module RecoveryIntegrationHelpers
       2.times do |i|
         ActiveRecord::Base.connection.execute(
           ActiveRecord::Base.sanitize_sql([
-            "INSERT INTO migration_guard_records (version, branch, author, status, metadata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            version, "feature/branch#{i + 1}", "dev#{i + 1}@example.com", "applied", 
-            { branch_info: "conflict_#{i + 1}" }.to_json, Time.current, Time.current
-          ])
+                                            "INSERT INTO migration_guard_records (version, branch, author, status, metadata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                                            version, "feature/branch#{i + 1}", "dev#{i + 1}@example.com", "applied",
+                                            { branch_info: "conflict_#{i + 1}" }.to_json, Time.current, Time.current
+                                          ])
         )
       end
-      
+
       # Restore unique index
       begin
         ActiveRecord::Base.connection.add_index(:migration_guard_records, :version, unique: true)
@@ -383,3 +383,5 @@ end
 RSpec.configure do |config|
   config.include RecoveryIntegrationHelpers
 end
+
+# rubocop:enable Metrics/ModuleLength, Metrics/MethodLength, Metrics/AbcSize, Layout/LineLength, RSpec/VerifiedDoubles

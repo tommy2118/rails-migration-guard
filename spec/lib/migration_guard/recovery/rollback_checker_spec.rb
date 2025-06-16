@@ -186,3 +186,5 @@ RSpec.describe MigrationGuard::Recovery::RollbackChecker do
     end
   end
 end
+
+# rubocop:enable RSpec/IndexedLet, RSpec/LetSetup

@@ -53,7 +53,7 @@ RSpec.describe MigrationGuard::Recovery::ManualIntervention do
   end
 
   describe "#show_sql_commands" do
-    context "for partial_rollback issue" do
+    context "when handling partial_rollback issue" do
       let(:issue) { { type: :partial_rollback, version: "20240116000001" } }
 
       it "shows partial rollback SQL commands" do
@@ -62,7 +62,7 @@ RSpec.describe MigrationGuard::Recovery::ManualIntervention do
       end
     end
 
-    context "for orphaned_schema issue" do
+    context "when handling orphaned_schema issue" do
       let(:issue) { { type: :orphaned_schema, version: "20240116000001" } }
 
       it "shows orphaned schema SQL commands" do
@@ -71,7 +71,7 @@ RSpec.describe MigrationGuard::Recovery::ManualIntervention do
       end
     end
 
-    context "for missing_from_schema issue" do
+    context "when handling missing_from_schema issue" do
       let(:issue) { { type: :missing_from_schema, version: "20240116000001" } }
 
       it "shows missing from schema SQL commands" do
@@ -80,7 +80,7 @@ RSpec.describe MigrationGuard::Recovery::ManualIntervention do
       end
     end
 
-    context "for missing_file issue" do
+    context "when handling missing_file issue" do
       let(:issue) { { type: :missing_file, version: "20240116000001" } }
 
       it "shows missing file SQL commands" do
@@ -89,7 +89,7 @@ RSpec.describe MigrationGuard::Recovery::ManualIntervention do
       end
     end
 
-    context "for version_conflict issue" do
+    context "when handling version_conflict issue" do
       let(:migrations) { [double, double, double] }
       let(:issue) { { type: :version_conflict, version: "20240116000001", migrations: migrations } }
 

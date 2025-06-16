@@ -114,14 +114,18 @@ RSpec.describe MigrationGuard::Recovery::FileChecker do
 
         # Mock one file exists, one doesn't
         allow(Rails.root).to receive(:glob) do |pattern|
+          # rubocop:disable Lint/DuplicateBranch
           case pattern
           when "db/migrate/20240116000001_*.rb"
             ["db/migrate/20240116000001_create_test.rb"]
           when "db/migrate/20240116000002_*.rb"
+            # Migration 2 files are missing
             []
           else
+            # Default case for other patterns - no files found
             []
           end
+          # rubocop:enable Lint/DuplicateBranch
         end
       end
 
