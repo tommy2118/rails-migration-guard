@@ -1,0 +1,98 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "bundler/setup"
+require "rails"
+require "active_record"
+require "rails_migration_guard"
+
+# Setup test database
+ActiveRecord::Base.establish_connection(
+  adapter: "sqlite3",
+  database: ":memory:"
+)
+
+# Create schema
+ActiveRecord::Schema.define do
+  create_table :migration_guard_records, force: true do |t|
+    t.string :version, null: false
+    t.string :branch
+    t.string :author
+    t.string :status
+    t.json :metadata
+    t.timestamps
+    
+    t.index :version, unique: true
+    t.index :status
+    t.index :created_at
+  end
+  
+  create_table :schema_migrations, force: true do |t|
+    t.string :version, null: false
+  end
+  
+  add_index :schema_migrations, :version, unique: true
+end
+
+# Configure MigrationGuard for testing
+MigrationGuard.configure do |config|
+  config.enabled_environments = [:development]
+  config.git_integration_level = :warning
+  config.track_branch = true
+  config.track_author = true
+end
+
+# Create some test data
+puts "Setting up test environment..."
+puts "=" * 60
+
+# Mock Rails environment
+Rails.define_singleton_method(:env) { ActiveSupport::StringInquirer.new("development") } unless Rails.respond_to?(:env)
+Rails.define_singleton_method(:root) { Pathname.new(File.expand_path("..", __dir__)) } unless Rails.respond_to?(:root)
+Rails.define_singleton_method(:logger) { Logger.new($stdout) } unless Rails.respond_to?(:logger)
+
+# Create some sample migration records
+MigrationGuard::MigrationGuardRecord.create!(
+  version: "20240101000001",
+  status: "applied",
+  branch: "main",
+  author: "developer@example.com",
+  created_at: 5.days.ago
+)
+
+MigrationGuard::MigrationGuardRecord.create!(
+  version: "20240115000001",
+  status: "applied",
+  branch: "feature/new-feature",
+  author: "developer@example.com",
+  created_at: 2.days.ago
+)
+
+MigrationGuard::MigrationGuardRecord.create!(
+  version: "20240120000001",
+  status: "rolled_back",
+  branch: "feature/old-feature",
+  author: "developer@example.com",
+  created_at: 10.days.ago
+)
+
+puts "Sample migration records created!"
+puts
+puts "Available objects:"
+puts "  - MigrationGuard::Tracker.new"
+puts "  - MigrationGuard::Reporter.new"
+puts "  - MigrationGuard::Rollbacker.new"
+puts "  - MigrationGuard::GitIntegration.new"
+puts "  - MigrationGuard::DiagnosticRunner.new"
+puts
+puts "Example commands:"
+puts "  reporter = MigrationGuard::Reporter.new"
+puts "  puts reporter.format_status_output"
+puts
+puts "  tracker = MigrationGuard::Tracker.new"
+puts "  tracker.track_migration('20240201000001', :up)"
+puts
+puts "=" * 60
+
+require "irb"
+IRB.start(__FILE__)

@@ -20,12 +20,11 @@ end
 # Load migration_guard tasks in development environment
 # This allows testing rake tasks without a full Rails app
 begin
-  # Skip loading in test environment to avoid conflicts (unless testing rake tasks)
-  if ENV["RAILS_ENV"] != "test" || ENV["TEST_RAKE_TASKS"]
+  # Only load in development environment, not in test
+  if ENV["RAILS_ENV"] != "test"
     # Preload logger gem for Ruby 3.4+ compatibility
     require "logger" if RUBY_VERSION >= "3.4.0"
     require "rails"
-    # Don't load rails_migration_guard here - it gets loaded by the rake tasks
 
     # Define a minimal Rails.root for task testing
     Rails.define_singleton_method(:root) { Pathname.new(File.expand_path(".", __dir__)) } unless Rails.respond_to?(:root)
@@ -47,9 +46,6 @@ begin
         adapter: "sqlite3",
         database: ":memory:"
       )
-
-      # Don't load migration guard here - let the rake tasks load it
-      # This prevents model loading issues in test environment
     end
     # rubocop:enable Rails/RakeEnvironment
 

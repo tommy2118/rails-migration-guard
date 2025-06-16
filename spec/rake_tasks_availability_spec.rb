@@ -7,16 +7,27 @@ require "rake"
 RSpec.describe "Rake tasks availability", type: :integration do
   # rubocop:disable RSpec/BeforeAfterAll, RSpec/InstanceVariable
   before(:all) do
-    # Enable rake task loading for this test
-    ENV["TEST_RAKE_TASKS"] = "true"
-
-    # Use the global Rake instance that has tasks loaded
+    # Load rake tasks manually for testing
     @rake = Rake.application
-    @rake.load_rakefile if @rake.tasks.empty?
-  end
 
-  after(:all) do
-    ENV.delete("TEST_RAKE_TASKS")
+    # Load Rails and setup minimal environment
+    require "rails"
+    unless Rails.respond_to?(:root)
+      Rails.define_singleton_method(:root) do
+        Pathname.new(File.expand_path("..", __dir__))
+      end
+    end
+    Rails.define_singleton_method(:env) { ActiveSupport::StringInquirer.new("test") } unless Rails.respond_to?(:env)
+
+    # Define environment task if not exists
+    unless @rake.lookup("environment")
+      Rake::Task.define_task(:environment) do
+        # Empty task for testing
+      end
+    end
+
+    # Load the migration guard rake tasks
+    load File.expand_path("../lib/tasks/migration_guard.rake", __dir__)
   end
 
   let(:rake) { @rake }
