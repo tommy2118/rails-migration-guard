@@ -194,9 +194,16 @@ module MigrationGuard
     end
 
     def migrations_paths
-      if defined?(Rails) && Rails.respond_to?(:application) && Rails.application&.config&.paths
-        Rails.application.config.paths["db/migrate"] || ["db/migrate"]
-      else
+      return ["db/migrate"] unless defined?(Rails) && Rails.respond_to?(:application)
+      return ["db/migrate"] unless Rails.application
+
+      begin
+        config_paths = Rails.application.config.paths
+        return ["db/migrate"] unless config_paths.respond_to?(:[])
+
+        migrate_paths = config_paths["db/migrate"]
+        migrate_paths || ["db/migrate"]
+      rescue StandardError
         ["db/migrate"]
       end
     end
