@@ -23,55 +23,54 @@ RSpec.describe MigrationGuard::Generators::InstallGenerator do
   describe "Rails version check" do
     it "passes with Rails 6.1+" do
       allow(Rails).to receive(:version).and_return("6.1.0")
-      
+
       expect { generator.check_rails_version }.not_to raise_error
     end
 
     it "fails with Rails < 6.1" do
       allow(Rails).to receive(:version).and_return("6.0.0")
-      allow(generator).to receive(:exit)
-      
-      generator.check_rails_version
-      
-      expect(generator).to have_received(:exit).with(1)
+
+      expect do
+        generator.check_rails_version
+      end.to raise_error(Thor::Error, "Rails version requirement not met")
     end
   end
 
   describe "file generation" do
     let(:templates_path) { File.expand_path("../../../lib/generators/migration_guard/install/templates", __dir__) }
-    
+
     before do
       allow(generator).to receive(:template) do |source, dest|
         template_path = File.join(templates_path, source)
         destination_path = File.join(destination_root, dest)
-        
+
         FileUtils.mkdir_p(File.dirname(destination_path))
         FileUtils.cp(template_path, destination_path)
       end
-      
+
       allow(generator).to receive(:migration_template) do |source, dest|
         template_path = File.join(templates_path, source)
-        timestamp = Time.now.strftime("%Y%m%d%H%M%S")
+        timestamp = Time.current.strftime("%Y%m%d%H%M%S")
         migration_name = File.basename(dest, ".rb")
         destination_path = File.join(destination_root, "db", "migrate", "#{timestamp}_#{migration_name}.rb")
-        
+
         FileUtils.mkdir_p(File.dirname(destination_path))
-        
+
         # Process ERB template
         content = File.read(template_path)
         processed_content = content.gsub(/<%= ActiveRecord::Migration.current_version %>/, "7.0")
         File.write(destination_path, processed_content)
       end
-      
+
       generator.create_initializer_file
       generator.create_migration_file
     end
 
     it "creates initializer file" do
       initializer_path = File.join(destination_root, "config", "initializers", "migration_guard.rb")
-      
+
       expect(File.exist?(initializer_path)).to be true
-      
+
       content = File.read(initializer_path)
       aggregate_failures do
         expect(content).to include("MigrationGuard.configure")
@@ -83,9 +82,9 @@ RSpec.describe MigrationGuard::Generators::InstallGenerator do
 
     it "creates migration file" do
       migration_files = Dir.glob(File.join(destination_root, "db", "migrate", "*_create_migration_guard_records.rb"))
-      
+
       expect(migration_files).not_to be_empty
-      
+
       content = File.read(migration_files.first)
       aggregate_failures do
         expect(content).to include("class CreateMigrationGuardRecords")
@@ -103,7 +102,7 @@ RSpec.describe MigrationGuard::Generators::InstallGenerator do
     it "creates database-specific metadata column" do
       migration_files = Dir.glob(File.join(destination_root, "db", "migrate", "*_create_migration_guard_records.rb"))
       content = File.read(migration_files.first)
-      
+
       aggregate_failures do
         expect(content).to include("if connection.adapter_name.match?(/PostgreSQL|MySQL/)")
         expect(content).to include("t.json :metadata")
@@ -115,9 +114,9 @@ RSpec.describe MigrationGuard::Generators::InstallGenerator do
   describe "success message" do
     it "displays installation success message" do
       allow(generator).to receive(:readme)
-      
+
       generator.display_post_install_message
-      
+
       expect(generator).to have_received(:readme).with("README")
     end
   end

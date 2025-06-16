@@ -16,7 +16,7 @@ module MigrationGuard
         return if Rails.version >= "6.1.0"
 
         say_status :error, "Rails Migration Guard requires Rails 6.1 or higher. Current version: #{Rails.version}", :red
-        exit 1
+        raise Thor::Error, "Rails version requirement not met"
       end
 
       def self.next_migration_number(dirname)

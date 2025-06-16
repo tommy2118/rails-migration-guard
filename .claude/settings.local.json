@@ -14,7 +14,10 @@
       "Bash(CI=true bundle exec rspec spec/lib/migration_guard/configuration_spec.rb:10-15 --no-profile 2 >& 1)",
       "Bash(echo:*)",
       "Bash(gh issue view:*)",
-      "Bash(bundle exec rubocop:*)"
+      "Bash(bundle exec rubocop:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh run view:*)"
     ],
     "deny": []
   }
