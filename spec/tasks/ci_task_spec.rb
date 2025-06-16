@@ -1,0 +1,233 @@
+# frozen_string_literal: true
+
+require "rails_helper"
+require "rake"
+
+RSpec.describe "CI rake task", type: :integration do
+  before(:all) do
+    Rails.application.load_tasks if Rake::Task.tasks.empty?
+  end
+
+  before do
+    # Reset task state
+    Rake::Task.tasks.each(&:reenable) if Rake::Task.tasks.any?
+
+    # Clean database state
+    MigrationGuard::MigrationGuardRecord.delete_all
+
+    # Set up git integration mock
+    git_integration = instance_double(MigrationGuard::GitIntegration)
+    allow(MigrationGuard::GitIntegration).to receive(:new).and_return(git_integration)
+    allow(git_integration).to receive_messages(
+      current_branch: "feature/test",
+      main_branch: "main"
+    )
+  end
+
+  describe "db:migration:ci" do
+    context "when MigrationGuard is disabled" do
+      before do
+        allow(MigrationGuard).to receive(:enabled?).and_return(false)
+      end
+
+      it "runs successfully and outputs disabled message" do
+        output = capture_rake_output { Rake::Task["db:migration:ci"].execute }
+
+        expect(output).to include("MigrationGuard is not enabled")
+      end
+
+      it "exits with success code when disabled" do
+        # The rake task should not call exit when return code is 0
+        expect { Rake::Task["db:migration:ci"].execute }.not_to raise_error
+      end
+    end
+
+    context "when MigrationGuard is enabled" do
+      before do
+        allow(MigrationGuard).to receive(:enabled?).and_return(true)
+      end
+
+      context "with no migration issues" do
+        before do
+          reporter = instance_double(MigrationGuard::Reporter)
+          allow(MigrationGuard::Reporter).to receive(:new).and_return(reporter)
+          allow(reporter).to receive_messages(orphaned_migrations: [], missing_migrations: [])
+        end
+
+        it "outputs success message in text format" do
+          output = capture_rake_output { Rake::Task["db:migration:ci"].execute }
+
+          expect(output).to include("✅ No migration issues found")
+        end
+
+        it "does not exit the process for success" do
+          expect { Rake::Task["db:migration:ci"].execute }.not_to raise_error
+        end
+      end
+
+      context "with orphaned migrations" do
+        before do
+          orphaned_migration = double("migration_record",
+                                      version: "20240101000001",
+                                      branch: "feature/test",
+                                      author: "test@example.com",
+                                      created_at: Time.current)
+
+          reporter = instance_double(MigrationGuard::Reporter)
+          allow(MigrationGuard::Reporter).to receive(:new).and_return(reporter)
+          allow(reporter).to receive_messages(orphaned_migrations: [orphaned_migration], missing_migrations: [])
+        end
+
+        it "outputs orphaned migration details" do
+          output = capture_rake_output { Rake::Task["db:migration:ci"].execute }
+
+          aggregate_failures "orphaned migration output" do
+            expect(output).to include("Orphaned Migrations Found")
+            expect(output).to include("20240101000001")
+            expect(output).to include("feature/test")
+            expect(output).to include("test@example.com")
+          end
+        end
+
+        it "includes recommended actions" do
+          output = capture_rake_output { Rake::Task["db:migration:ci"].execute }
+
+          expect(output).to include("rails db:migration:rollback_specific VERSION=20240101000001")
+        end
+
+        context "with default warning strictness" do
+          it "exits with warning code" do
+            expect { Rake::Task["db:migration:ci"].execute }.to raise_error(SystemExit) do |error|
+              expect(error.status).to eq(1) # EXIT_WARNING
+            end
+          end
+        end
+
+        context "with strict mode via ENV" do
+          before do
+            ENV["STRICT"] = "true"
+          end
+
+          after do
+            ENV.delete("STRICT")
+          end
+
+          it "exits with error code" do
+            expect { Rake::Task["db:migration:ci"].execute }.to raise_error(SystemExit) do |error|
+              expect(error.status).to eq(2) # EXIT_ERROR
+            end
+          end
+        end
+
+        context "with strictness level via ENV" do
+          before do
+            ENV["STRICTNESS"] = "permissive"
+          end
+
+          after do
+            ENV.delete("STRICTNESS")
+          end
+
+          it "does not exit for permissive mode" do
+            expect { Rake::Task["db:migration:ci"].execute }.not_to raise_error
+          end
+        end
+      end
+
+      context "with JSON format" do
+        before do
+          ENV["FORMAT"] = "json"
+
+          reporter = instance_double(MigrationGuard::Reporter)
+          allow(MigrationGuard::Reporter).to receive(:new).and_return(reporter)
+          allow(reporter).to receive_messages(orphaned_migrations: [], missing_migrations: [])
+        end
+
+        after do
+          ENV.delete("FORMAT")
+        end
+
+        it "outputs valid JSON" do
+          output = capture_rake_output { Rake::Task["db:migration:ci"].execute }
+
+          expect { JSON.parse(output) }.not_to raise_error
+
+          json = JSON.parse(output)
+          expect(json).to have_key("migration_guard")
+          expect(json["migration_guard"]).to include(
+            "status" => "success",
+            "exit_code" => 0
+          )
+        end
+      end
+
+      context "when an error occurs" do
+        before do
+          allow(MigrationGuard::Reporter).to receive(:new).and_raise(StandardError, "Database connection failed")
+        end
+
+        it "outputs error message" do
+          output = capture_rake_output { Rake::Task["db:migration:ci"].execute }
+
+          expect(output).to include("Error running Migration Guard CI check")
+          expect(output).to include("Database connection failed")
+        end
+
+        it "exits with error code" do
+          expect { Rake::Task["db:migration:ci"].execute }.to raise_error(SystemExit) do |error|
+            expect(error.status).to eq(2) # EXIT_ERROR
+          end
+        end
+      end
+    end
+
+    context "with environment variable handling" do
+      before do
+        allow(MigrationGuard).to receive(:enabled?).and_return(true)
+
+        reporter = instance_double(MigrationGuard::Reporter)
+        allow(MigrationGuard::Reporter).to receive(:new).and_return(reporter)
+        allow(reporter).to receive_messages(orphaned_migrations: [], missing_migrations: [])
+      end
+
+      it "supports case-insensitive FORMAT environment variable" do
+        ENV["format"] = "JSON"
+
+        output = capture_rake_output { Rake::Task["db:migration:ci"].execute }
+
+        expect { JSON.parse(output) }.not_to raise_error
+      ensure
+        ENV.delete("format")
+      end
+
+      it "supports case-insensitive STRICT environment variable" do
+        ENV["strict"] = "true"
+
+        output = capture_rake_output { Rake::Task["db:migration:ci"].execute }
+
+        expect(output).to include("Strictness: strict")
+      ensure
+        ENV.delete("strict")
+      end
+
+      it "supports case-insensitive STRICTNESS environment variable" do
+        ENV["strictness"] = "STRICT"
+
+        output = capture_rake_output { Rake::Task["db:migration:ci"].execute }
+
+        expect(output).to include("Strictness: strict")
+      ensure
+        ENV.delete("strictness")
+      end
+    end
+  end
+
+  def capture_rake_output
+    original_stdout = $stdout
+    $stdout = StringIO.new
+    yield
+    $stdout.string
+  ensure
+    $stdout = original_stdout
+  end
+end
