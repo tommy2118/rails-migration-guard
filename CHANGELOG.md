@@ -8,6 +8,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Migration Recovery Tools** (#29) - Comprehensive tools for recovering from failed rollbacks:
+  - New `rails db:migration:recover` rake task for analyzing and fixing inconsistent migration states
+  - Detects four types of migration inconsistencies:
+    - Partial rollbacks stuck in `rolling_back` state
+    - Orphaned schema changes (migrations in schema_migrations but not tracked)
+    - Missing migration files for applied migrations
+    - Version conflicts (duplicate tracking records)
+  - Interactive recovery mode with multiple options per issue type:
+    - Complete rollback operations
+    - Restore migrations to applied state
+    - Track untracked migrations
+    - Remove duplicates and consolidate records
+    - Manual SQL intervention guidance
+  - Automatic mode for CI/CD pipelines: `AUTO=true rails db:migration:recover`
+  - Database backup functionality before recovery operations:
+    - PostgreSQL support via pg_dump
+    - MySQL support via mysqldump
+    - SQLite support via file copy
+    - Automatic skip for in-memory databases
+  - Safe command execution using Open3 to prevent injection attacks
+  - Colorized output with severity levels (CRITICAL, HIGH, MEDIUM)
+  - Comprehensive test coverage for all recovery scenarios
 - **Migration History Feature** (#28) - Comprehensive migration history tracking and reporting:
   - New `rails db:migration:history` rake task for viewing migration execution history
   - Multiple output formats: table (default), JSON, and CSV
@@ -66,9 +88,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Complete API reference with code examples and usage patterns
   - Installation guides and troubleshooting resources
   - Multi-page navigation with clean Jekyll structure
-- **Rails 8.2 Compatibility**:
-  - Full support for Rails 8.2
-  - Updated CI matrix to test against Rails 8.0 and 8.2
+- **Rails 8.0 Compatibility**:
+  - Full support for Rails 8.0 (tested with 8.0.2)
+  - Updated CI matrix to test against Rails 8.0
   - Fixed deprecated `connection_config` method (now using `connection_db_config`)
   - Added Rails 8 compatibility test suite
   - Updated dependencies for Rails 8.x support

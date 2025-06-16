@@ -28,9 +28,7 @@ module MigrationGuard
       execute_action(recovery_method, issue)
     end
 
-    def create_backup
-      @backup_manager.create_backup?
-    end
+    delegate :create_backup, to: :@backup_manager
 
     private
 
@@ -87,14 +85,14 @@ module MigrationGuard
     def rollback_actions(issue)
       {
         complete_rollback: -> { @actions[:rollback].complete_rollback(issue) },
-        mark_as_rolled_back: -> { @actions[:rollback].mark_as_rolled_back?(issue) }
+        mark_as_rolled_back: -> { @actions[:rollback].mark_as_rolled_back(issue) }
       }
     end
 
     def restore_actions(issue)
       {
         restore_migration: -> { @actions[:restore].restore_migration(issue) },
-        restore_from_git: -> { @actions[:restore].restore_from_git?(issue) }
+        restore_from_git: -> { @actions[:restore].restore_from_git(issue) }
       }
     end
 
@@ -115,7 +113,7 @@ module MigrationGuard
 
     def manual_actions(issue)
       {
-        manual_intervention: -> { @actions[:manual].show?(issue) }
+        manual_intervention: -> { @actions[:manual].show(issue) }
       }
     end
 

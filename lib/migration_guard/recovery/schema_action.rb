@@ -22,7 +22,7 @@ module MigrationGuard
         log_info("Re-applying migration #{version}...")
 
         migration_file = find_migration_file(version)
-        return file_not_found_error?(version) unless migration_file
+        return file_not_found_error(version) unless migration_file
 
         run_migration(migration_file, version)
         update_reapply_status(migration)
@@ -47,7 +47,7 @@ module MigrationGuard
         Rails.root.glob("db/migrate/#{version}_*.rb").first
       end
 
-      def file_not_found_error?(version)
+      def file_not_found_error(version) # rubocop:disable Naming/PredicateMethod
         log_error("Migration file not found for #{version}")
         false
       end

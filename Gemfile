@@ -9,8 +9,10 @@ gemspec
 rails_version = ENV.fetch("RAILS_VERSION", "7.0")
 
 # Handle Rails version specification
-if rails_version == "8.2"
-  gem "rails", "~> 8.2.0"
+case rails_version
+when "8.0"
+  # Rails 8.0.2 is the latest stable release
+  gem "rails", "~> 8.0.0"
 else
   gem "rails", "~> #{rails_version}.0"
 end

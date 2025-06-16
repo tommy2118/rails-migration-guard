@@ -10,7 +10,7 @@ module MigrationGuard
         @backup_path = nil
       end
 
-      def create_backup?
+      def create_backup
         return skip_for_memory_database if using_memory_database?
 
         setup_backup_path
@@ -21,7 +21,7 @@ module MigrationGuard
 
         return false if result == false
 
-        verify_backup_creation?(result)
+        verify_backup_creation(result)
       end
 
       def skip_for_memory_database # rubocop:disable Naming/PredicateMethod
@@ -65,11 +65,11 @@ module MigrationGuard
         when /sqlite/i
           create_sqlite_backup
         else
-          handle_unsupported_adapter?(adapter_name)
+          handle_unsupported_adapter(adapter_name)
         end
       end
 
-      def verify_backup_creation?(result)
+      def verify_backup_creation(result) # rubocop:disable Naming/PredicateMethod
         if result && @backup_path && File.exist?(@backup_path)
           Rails.logger.info Colorizer.success("✓ Backup created: #{@backup_path}")
           true
@@ -80,7 +80,7 @@ module MigrationGuard
         end
       end
 
-      def handle_unsupported_adapter?(adapter_name)
+      def handle_unsupported_adapter(adapter_name) # rubocop:disable Naming/PredicateMethod
         Rails.logger.warn Colorizer.warning("Backup not supported for #{adapter_name}")
         @backup_path = nil
         false
@@ -126,11 +126,11 @@ module MigrationGuard
         ].tap { |cmd| cmd << "-p#{config[:password]}" if config[:password] }
       end
 
-      def create_sqlite_backup?
+      def create_sqlite_backup
         config = database_config
         source_path = config[:database]
 
-        return handle_memory_database? if memory_database?(source_path)
+        return handle_memory_database if memory_database?(source_path)
 
         # Ensure the source file exists before copying
         unless File.exist?(source_path)
@@ -146,7 +146,7 @@ module MigrationGuard
         path.to_s == ":memory:" || path.nil?
       end
 
-      def handle_memory_database?
+      def handle_memory_database # rubocop:disable Naming/PredicateMethod
         Rails.logger.warn "Cannot backup in-memory database"
         @backup_path = nil
         false

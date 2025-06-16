@@ -4,7 +4,7 @@ module MigrationGuard
   module Recovery
     # Handles manual intervention instructions
     class ManualIntervention
-      def show?(issue)
+      def show(issue) # rubocop:disable Naming/PredicateMethod
         show_header
         show_sql_commands(issue)
         show_footer(issue)

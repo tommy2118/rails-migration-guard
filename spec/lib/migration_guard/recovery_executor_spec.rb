@@ -47,7 +47,9 @@ RSpec.describe MigrationGuard::RecoveryExecutor do
       it "removes from schema and updates status" do
         # Add to schema first
         ActiveRecord::Base.connection.execute(
-          "INSERT INTO schema_migrations (version) VALUES ('#{migration.version}')"
+          ActiveRecord::Base.sanitize_sql(
+            ["INSERT INTO schema_migrations (version) VALUES (?)", migration.version]
+          )
         )
 
         result = executor.execute_recovery(issue, :complete_rollback)
@@ -57,7 +59,9 @@ RSpec.describe MigrationGuard::RecoveryExecutor do
 
           # Check schema_migrations
           count = ActiveRecord::Base.connection.select_value(
-            "SELECT COUNT(*) FROM schema_migrations WHERE version = '#{migration.version}'"
+            ActiveRecord::Base.sanitize_sql(
+              ["SELECT COUNT(*) FROM schema_migrations WHERE version = ?", migration.version]
+            )
           )
           expect(count).to eq(0)
 
@@ -88,7 +92,9 @@ RSpec.describe MigrationGuard::RecoveryExecutor do
 
           # Check schema_migrations
           count = ActiveRecord::Base.connection.select_value(
-            "SELECT COUNT(*) FROM schema_migrations WHERE version = '#{migration.version}'"
+            ActiveRecord::Base.sanitize_sql(
+              ["SELECT COUNT(*) FROM schema_migrations WHERE version = ?", migration.version]
+            )
           )
           expect(count).to eq(1)
 
@@ -113,7 +119,9 @@ RSpec.describe MigrationGuard::RecoveryExecutor do
       it "updates status without schema changes" do
         # Add to schema
         ActiveRecord::Base.connection.execute(
-          "INSERT INTO schema_migrations (version) VALUES ('#{migration.version}')"
+          ActiveRecord::Base.sanitize_sql(
+            ["INSERT INTO schema_migrations (version) VALUES (?)", migration.version]
+          )
         )
 
         result = executor.execute_recovery(issue, :mark_as_rolled_back)

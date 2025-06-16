@@ -12,7 +12,7 @@ Rails Migration Guard helps prevent orphaned database migrations in development 
 Rails Migration Guard supports:
 
 - **Ruby**: 3.0.0 and higher
-- **Rails**: 6.1.0 through 8.2+ (tested up to Rails 8.2)
+- **Rails**: 6.1.0 through 8.0+ (tested up to Rails 8.0.2)
 - **Databases**: SQLite, PostgreSQL, MySQL
 - **Git**: 2.0 and higher
 
@@ -115,7 +115,54 @@ $ rails db:migration:history FORMAT=json        # JSON output
 
 # View author statistics and contributions
 $ rails db:migration:authors                    # Author report
+
+# Recover from inconsistent migration states
+$ rails db:migration:recover                     # Interactive recovery
+$ AUTO=true rails db:migration:recover           # Automatic recovery
 ```
+
+### Migration Recovery
+
+Rails Migration Guard includes powerful recovery tools to help fix inconsistent migration states:
+
+```bash
+# Analyze migration inconsistencies
+$ rails db:migration:recover
+
+⚠️  Detected migration inconsistencies:
+
+1. Partial rollback
+   Version: 20240115123456
+   Migration appears to be stuck in rollback state
+   Severity: HIGH
+   Branch: feature/user-prefs
+   Last updated: 2024-01-15 14:30:45
+   Recovery options: complete_rollback, restore_migration, mark_as_rolled_back
+
+2. Orphaned schema
+   Version: 20240116789012
+   Schema contains migration not tracked by Migration Guard
+   Severity: MEDIUM
+   Recovery options: track_migration, remove_from_schema
+
+Select option (0-3): 1
+✓ Rollback completed for 20240115123456
+```
+
+Recovery features include:
+- **Automatic database backups** before recovery operations
+- **Multiple recovery strategies** for each type of issue
+- **Interactive mode** for careful review of each issue
+- **Automatic mode** for CI/CD pipelines
+- **Safe rollback** of partially completed migrations
+- **Git integration** to restore missing migration files
+
+Common recovery scenarios:
+- Migrations stuck in `rolling_back` state
+- Schema entries without tracking records
+- Missing migration files
+- Duplicate tracking records
+- Migrations applied but missing from schema
 
 ### Automatic Tracking
 

@@ -17,7 +17,7 @@ module MigrationGuard
         false
       end
 
-      def mark_as_rolled_back?(issue)
+      def mark_as_rolled_back(issue) # rubocop:disable Naming/PredicateMethod
         migration = issue[:migration]
         log_info("Marking #{migration.version} as rolled back...")
 

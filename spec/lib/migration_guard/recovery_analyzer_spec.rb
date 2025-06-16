@@ -29,25 +29,9 @@ RSpec.describe MigrationGuard::RecoveryAnalyzer do
 
     context "with partial rollbacks" do
       it "detects stuck rollback states" do
-        # Mock file existence to avoid missing file issue
-        allow(Dir).to receive(:glob).and_return(["db/migrate/20240101000001_test.rb"])
-
-        # Create a migration stuck in rolling_back state
-        MigrationGuard::MigrationGuardRecord.create!(
-          version: "20240101000001",
-          status: "rolling_back",
-          branch: "feature/test",
-          created_at: 2.hours.ago,
-          updated_at: 2.hours.ago
-        )
-
-        # Add to schema_migrations to simulate partial state
-        ActiveRecord::Base.connection.execute(
-          "INSERT INTO schema_migrations (version) VALUES ('20240101000001')"
-        )
+        setup_stuck_rollback_state("20240101000001")
 
         issues = analyzer.analyze
-
         partial_rollback = issues.find { |i| i[:type] == :partial_rollback }
 
         aggregate_failures do
@@ -57,6 +41,24 @@ RSpec.describe MigrationGuard::RecoveryAnalyzer do
           expect(partial_rollback[:severity]).to eq(:high)
           expect(partial_rollback[:recovery_options]).to include(:complete_rollback, :restore_migration)
         end
+      end
+
+      def setup_stuck_rollback_state(version)
+        allow(Dir).to receive(:glob).and_return(["db/migrate/#{version}_test.rb"])
+
+        MigrationGuard::MigrationGuardRecord.create!(
+          version: version,
+          status: "rolling_back",
+          branch: "feature/test",
+          created_at: 2.hours.ago,
+          updated_at: 2.hours.ago
+        )
+
+        ActiveRecord::Base.connection.execute(
+          ActiveRecord::Base.sanitize_sql(
+            ["INSERT INTO schema_migrations (version) VALUES (?)", version]
+          )
+        )
       end
 
       it "ignores recent rolling_back states" do
@@ -80,7 +82,9 @@ RSpec.describe MigrationGuard::RecoveryAnalyzer do
       it "detects schema entries without tracking records" do
         # Add to schema without tracking record
         ActiveRecord::Base.connection.execute(
-          "INSERT INTO schema_migrations (version) VALUES ('20240102000001')"
+          ActiveRecord::Base.sanitize_sql(
+            ["INSERT INTO schema_migrations (version) VALUES (?)", "20240102000001"]
+          )
         )
 
         issues = analyzer.analyze
@@ -216,7 +220,9 @@ RSpec.describe MigrationGuard::RecoveryAnalyzer do
         )
 
         ActiveRecord::Base.connection.execute(
-          "INSERT INTO schema_migrations (version) VALUES ('20240101000001')"
+          ActiveRecord::Base.sanitize_sql(
+            ["INSERT INTO schema_migrations (version) VALUES (?)", "20240101000001"]
+          )
         )
 
         analyzer.analyze
