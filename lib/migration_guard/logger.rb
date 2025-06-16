@@ -14,7 +14,7 @@ module MigrationGuard
       def visible_logger
         @visible_logger ||= ::Logger.new($stdout).tap do |logger|
           logger.level = ::Logger::DEBUG
-          logger.formatter = proc do |severity, datetime, progname, msg|
+          logger.formatter = proc do |severity, datetime, _progname, msg|
             "[#{datetime.strftime('%Y-%m-%d %H:%M:%S')}] #{severity} MigrationGuard -- #{msg}\n"
           end
         end
@@ -23,7 +23,7 @@ module MigrationGuard
       def file_logger(path = "log/migration_guard.log")
         ::Logger.new(path).tap do |logger|
           logger.level = ::Logger::DEBUG
-          logger.formatter = proc do |severity, datetime, progname, msg|
+          logger.formatter = proc do |severity, datetime, _progname, msg|
             "[#{datetime.strftime('%Y-%m-%d %H:%M:%S.%L')}] #{severity} MigrationGuard -- #{msg}\n"
           end
         end
@@ -62,11 +62,11 @@ module MigrationGuard
       def log(level, message, context)
         formatted_message = format_message(message, context)
         logger.send(level, formatted_message)
-        
+
         # Also output to visible logger if enabled and in debug mode
-        if MigrationGuard.configuration.visible_debug && level == :debug
-          visible_logger.debug(format_visible_message(message, context))
-        end
+        return unless MigrationGuard.configuration.visible_debug && level == :debug
+
+        visible_logger.debug(format_visible_message(message, context))
       end
 
       def format_message(message, context)

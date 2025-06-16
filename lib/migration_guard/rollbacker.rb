@@ -3,6 +3,7 @@
 require_relative "colorizer"
 
 module MigrationGuard
+  # rubocop:disable Metrics/ClassLength
   class Rollbacker
     def initialize(interactive: true)
       @interactive = interactive
@@ -71,36 +72,46 @@ module MigrationGuard
 
     def execute_migration_rollback(migration)
       version = migration.version.to_i
+      context = create_migration_context
 
-      # Get migrations path - handle different Rails versions
-      migrations_paths = if defined?(Rails) && Rails.respond_to?(:application)
-                           Rails.application.config.paths["db/migrate"].to_a
-                         else
-                           ["db/migrate"]
-                         end
-
-      # Create migration context
-      context = ActiveRecord::MigrationContext.new(migrations_paths)
-
-      # Check if migration is currently applied
-      applied_versions = context.get_all_versions
-      unless applied_versions.include?(version)
-        raise RollbackError, "Migration #{migration.version} is not currently applied"
-      end
-
-      # Find the migration and run its down method
-      target_migration = context.migrations.find { |m| m.version == version }
-      if target_migration
-        target_migration.migrate(:down) if target_migration.respond_to?(:migrate)
-      else
-        raise RollbackError, "Migration file for version #{migration.version} not found"
-      end
+      validate_migration_applied(context, version, migration.version)
+      target_migration = find_target_migration(context, version, migration.version)
+      execute_down_migration(target_migration)
 
       MigrationGuard::Logger.debug("Down migration executed successfully", version: migration.version)
     rescue RollbackError
       raise
     rescue StandardError => e
       raise RollbackError, "Failed to execute down migration for #{migration.version}: #{e.message}"
+    end
+
+    def create_migration_context
+      migration_paths = migrations_paths
+
+      # Rails 6.1 requires schema_migration argument, later versions make it optional
+      if ActiveRecord::MigrationContext.instance_method(:initialize).arity == 2
+        ActiveRecord::MigrationContext.new(migration_paths, ActiveRecord::SchemaMigration)
+      else
+        ActiveRecord::MigrationContext.new(migration_paths)
+      end
+    end
+
+    def validate_migration_applied(context, version, version_string)
+      applied_versions = context.get_all_versions
+      return if applied_versions.include?(version)
+
+      raise RollbackError, "Migration #{version_string} is not currently applied"
+    end
+
+    def find_target_migration(context, version, version_string)
+      target_migration = context.migrations.find { |m| m.version == version }
+      return target_migration if target_migration
+
+      raise RollbackError, "Migration file for version #{version_string} not found"
+    end
+
+    def execute_down_migration(target_migration)
+      target_migration.migrate(:down) if target_migration.respond_to?(:migrate)
     end
 
     def update_migration_status(migration)
@@ -188,5 +199,28 @@ module MigrationGuard
         output_message Colorizer.success(message)
       end
     end
+
+    def migrations_paths
+      return ["db/migrate"] unless defined?(Rails) && Rails.respond_to?(:application)
+      return ["db/migrate"] unless Rails.application
+
+      begin
+        config_paths = Rails.application.config.paths
+        return ["db/migrate"] unless config_paths.respond_to?(:[])
+
+        migrate_paths = config_paths["db/migrate"]
+        migrate_paths || ["db/migrate"]
+      rescue StandardError
+        ["db/migrate"]
+      end
+    end
+
+    def migration_file_exists?(version)
+      migration_paths = migrations_paths
+      migration_paths.any? do |path|
+        Dir.glob(File.join(path, "*_*.rb")).any? { |file| File.basename(file).start_with?(version.to_s) }
+      end
+    end
   end
+  # rubocop:enable Metrics/ClassLength
 end
