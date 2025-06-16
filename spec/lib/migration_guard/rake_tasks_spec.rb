@@ -184,67 +184,11 @@ RSpec.describe MigrationGuard::RakeTasks do
         allow(MigrationGuard).to receive(:enabled?).and_return(true)
       end
 
-      it "runs all diagnostic checks" do
-        git_integration = instance_double(MigrationGuard::GitIntegration)
-        config = instance_double(MigrationGuard::Configuration,
-                                 enabled_environments: %i[development staging],
-                                 git_integration_level: :warning,
-                                 auto_cleanup: false)
+      it "creates a diagnostic runner and calls run_all_checks" do
+        diagnostic_runner = instance_double(MigrationGuard::DiagnosticRunner)
 
-        allow(MigrationGuard::GitIntegration).to receive(:new).and_return(git_integration)
-        allow(git_integration).to receive_messages(current_branch: "feature/test", main_branch: "main")
-        allow(MigrationGuard::MigrationGuardRecord).to receive(:count).and_return(42)
-        allow(MigrationGuard).to receive(:configuration).and_return(config)
-
-        expect(logger).to receive(:info).with("Running MigrationGuard diagnostics...")
-        expect(logger).to receive(:info).with("✓ Git integration working")
-        expect(logger).to receive(:info).with("  Current branch: feature/test")
-        expect(logger).to receive(:info).with("  Main branch: main")
-        expect(logger).to receive(:info).with("✓ Database connection working")
-        expect(logger).to receive(:info).with("  Tracking records: 42")
-        expect(logger).to receive(:info).with("Configuration:")
-        expect(logger).to receive(:info).with("  Enabled environments: development, staging")
-        expect(logger).to receive(:info).with("  Git integration level: warning")
-        expect(logger).to receive(:info).with("  Auto cleanup: false")
-
-        described_class.doctor
-      end
-
-      it "handles git integration errors gracefully" do
-        error_message = "git command not found"
-        git_integration = instance_double(MigrationGuard::GitIntegration)
-        config = instance_double(MigrationGuard::Configuration,
-                                 enabled_environments: [:development],
-                                 git_integration_level: :off,
-                                 auto_cleanup: false)
-
-        allow(MigrationGuard::GitIntegration).to receive(:new).and_return(git_integration)
-        allow(git_integration).to receive(:current_branch)
-          .and_raise(StandardError, error_message)
-        allow(MigrationGuard::MigrationGuardRecord).to receive(:count).and_return(0)
-        allow(MigrationGuard).to receive(:configuration).and_return(config)
-
-        expect(logger).to receive(:info).with("Running MigrationGuard diagnostics...")
-        expect(logger).to receive(:error).with("✗ Git integration failed: #{error_message}")
-
-        described_class.doctor
-      end
-
-      it "handles database connection errors gracefully" do
-        git_integration = instance_double(MigrationGuard::GitIntegration)
-        error_message = "database connection failed"
-        config = instance_double(MigrationGuard::Configuration,
-                                 enabled_environments: [:development],
-                                 git_integration_level: :warning,
-                                 auto_cleanup: false)
-
-        allow(MigrationGuard::GitIntegration).to receive(:new).and_return(git_integration)
-        allow(git_integration).to receive_messages(current_branch: "main", main_branch: "main")
-        allow(MigrationGuard::MigrationGuardRecord).to receive(:count)
-          .and_raise(StandardError, error_message)
-        allow(MigrationGuard).to receive(:configuration).and_return(config)
-
-        expect(logger).to receive(:error).with("✗ Database connection failed: #{error_message}")
+        expect(MigrationGuard::DiagnosticRunner).to receive(:new).and_return(diagnostic_runner)
+        expect(diagnostic_runner).to receive(:run_all_checks)
 
         described_class.doctor
       end

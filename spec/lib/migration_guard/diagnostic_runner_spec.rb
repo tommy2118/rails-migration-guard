@@ -1,0 +1,204 @@
+# frozen_string_literal: true
+
+require "rails_helper"
+
+RSpec.describe MigrationGuard::DiagnosticRunner do
+  let(:runner) { described_class.new }
+  let(:io) { StringIO.new }
+
+  before do
+    # Disable colorization for testing
+    allow(MigrationGuard::Colorizer).to receive(:colorize_output?).and_return(false)
+    allow(runner).to receive(:puts) { |msg| io.puts(msg) }
+    allow(runner).to receive(:print) { |msg| io.print(msg) }
+  end
+
+  describe "#run_all_checks" do
+    let(:git_integration) { instance_double(MigrationGuard::GitIntegration) }
+    let(:reporter) { instance_double(MigrationGuard::Reporter) }
+
+    before do
+      allow(MigrationGuard::GitIntegration).to receive(:new).and_return(git_integration)
+      allow(MigrationGuard::Reporter).to receive(:new).and_return(reporter)
+      allow(git_integration).to receive_messages(current_branch: "feature/test", main_branch: "main")
+      allow(reporter).to receive_messages(orphaned_migrations: [], missing_migrations: {})
+    end
+
+    it "runs all diagnostic checks" do
+      # Configure to make this environment "enabled" for the test
+      allow(MigrationGuard.configuration).to receive_messages(enabled_environments: [:test], target_branches: ["main"])
+
+      runner.run_all_checks
+
+      output = io.string
+      aggregate_failures do
+        expect(output).to include("Running Migration Guard Diagnostics")
+        expect(output).to include("✓ Database connection")
+        expect(output).to include("✓ Migration guard tables")
+        expect(output).to include("✓ Git repository")
+        expect(output).to include("✓ Git branch detection")
+        expect(output).to include("✓ Orphaned migrations")
+        expect(output).to include("✓ Missing migrations")
+        expect(output).to include("✓ Environment configuration")
+        expect(output).to include("Overall Status: ALL SYSTEMS OK")
+      end
+    end
+
+    context "when database connection fails" do
+      before do
+        allow(ActiveRecord::Base.connection).to receive(:execute).and_call_original
+        allow(ActiveRecord::Base.connection).to receive(:execute).with("SELECT 1").and_raise(StandardError,
+                                                                                             "Connection failed")
+      end
+
+      it "reports database connection error" do
+        runner.run_all_checks
+
+        output = io.string
+        aggregate_failures do
+          expect(output).to include("✗ Database connection")
+          expect(output).to include("Issues Found:")
+          expect(output).to include("Database connection failed")
+          expect(output).to include("Check your database configuration")
+          expect(output).to include("Overall Status: NEEDS ATTENTION")
+        end
+      end
+    end
+
+    context "when migration guard tables are missing" do
+      before do
+        allow(MigrationGuard::MigrationGuardRecord).to receive(:table_exists?).and_return(false)
+        allow(MigrationGuard::MigrationGuardRecord).to receive(:count).and_raise(StandardError, "Table missing")
+      end
+
+      it "reports missing tables error" do
+        runner.run_all_checks
+
+        output = io.string
+        aggregate_failures do
+          expect(output).to include("✗ Migration guard tables")
+          expect(output).to include("Issues Found:")
+          expect(output).to include("Migration guard tables missing")
+          expect(output).to include("Run 'rails generate migration_guard:install'")
+        end
+      end
+    end
+
+    context "when git is not available" do
+      before do
+        allow(git_integration).to receive(:current_branch).and_raise(MigrationGuard::GitError, "Git not found")
+        allow(git_integration).to receive(:main_branch).and_raise(MigrationGuard::GitError, "Git not found")
+      end
+
+      it "reports git integration errors" do
+        runner.run_all_checks
+
+        output = io.string
+        aggregate_failures do
+          expect(output).to include("✗ Git repository")
+          expect(output).to include("✗ Git branch detection")
+          expect(output).to include("Issues Found:")
+          expect(output).to include("Git repository not found")
+          expect(output).to include("Git branch detection failed")
+        end
+      end
+    end
+
+    context "when orphaned migrations exist" do
+      let(:orphaned_migration) do
+        instance_double(MigrationGuard::MigrationGuardRecord,
+                        version: "20240115123456",
+                        created_at: 3.days.ago)
+      end
+
+      before do
+        allow(reporter).to receive(:orphaned_migrations).and_return([orphaned_migration])
+      end
+
+      it "reports orphaned migrations" do
+        runner.run_all_checks
+
+        output = io.string
+        aggregate_failures do
+          expect(output).to include("✗ Orphaned migrations")
+          expect(output).to include("1 found (oldest: 3 days)")
+          expect(output).to include("Issues Found:")
+          expect(output).to include("Orphaned migrations detected")
+          expect(output).to include("Run 'rails db:migration:rollback_orphaned'")
+        end
+      end
+    end
+
+    context "when missing migrations exist" do
+      before do
+        allow(reporter).to receive(:missing_migrations).and_return({
+                                                                     "main" => %w[20240101000001 20240102000002],
+                                                                     "develop" => ["20240103000003"]
+                                                                   })
+      end
+
+      it "reports missing migrations as warnings" do
+        runner.run_all_checks
+
+        output = io.string
+        aggregate_failures do
+          expect(output).to include("⚠ Missing migrations")
+          expect(output).to include("3 found in: main, develop")
+          expect(output).to include("Warnings:")
+          expect(output).to include("Missing migrations from trunk")
+          expect(output).to include("Consider running 'rails db:migrate'")
+          expect(output).to include("Overall Status: OK WITH WARNINGS")
+        end
+      end
+    end
+
+    context "when target branches are configured" do
+      before do
+        allow(MigrationGuard.configuration).to receive(:target_branches).and_return(%w[main develop])
+      end
+
+      it "reports configured target branches" do
+        runner.run_all_checks
+
+        output = io.string
+        expect(output).to include("✓ Target branch configuration: configured: main, develop")
+      end
+    end
+
+    context "when no target branches are configured" do
+      before do
+        allow(MigrationGuard.configuration).to receive(:target_branches).and_return(nil)
+      end
+
+      it "reports warning about default configuration" do
+        runner.run_all_checks
+
+        output = io.string
+        aggregate_failures do
+          expect(output).to include("⚠ Target branch configuration")
+          expect(output).to include("using default")
+          expect(output).to include("Warnings:")
+          expect(output).to include("No target branches configured")
+        end
+      end
+    end
+
+    context "when MigrationGuard is disabled in current environment" do
+      before do
+        allow(Rails).to receive(:env).and_return(ActiveSupport::StringInquirer.new("production"))
+      end
+
+      it "reports environment warning" do
+        runner.run_all_checks
+
+        output = io.string
+        aggregate_failures do
+          expect(output).to include("⚠ Environment configuration")
+          expect(output).to include("disabled in production")
+          expect(output).to include("Warnings:")
+          expect(output).to include("MigrationGuard disabled in current environment")
+        end
+      end
+    end
+  end
+end

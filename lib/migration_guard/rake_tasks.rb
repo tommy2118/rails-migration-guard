@@ -63,10 +63,8 @@ module MigrationGuard
       def doctor
         return unless check_enabled
 
-        Rails.logger.info "Running MigrationGuard diagnostics..."
-        check_git_integration
-        check_database_connection
-        show_configuration
+        diagnostics = DiagnosticRunner.new
+        diagnostics.run_all_checks
       end
 
       def check_branch_change(previous_head, new_head, is_branch_checkout)
