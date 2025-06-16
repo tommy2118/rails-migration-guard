@@ -7,6 +7,7 @@ require "active_record"
 require_relative "migration_guard/version"
 require_relative "migration_guard/configuration"
 require_relative "migration_guard/error"
+require_relative "migration_guard/logger"
 
 require_relative "migration_guard/migration_guard_record"
 require_relative "migration_guard/tracker"
@@ -26,13 +27,24 @@ module MigrationGuard
     end
 
     def configure
+      MigrationGuard::Logger.debug("Configuring MigrationGuard")
       yield(configuration)
+      MigrationGuard::Logger.debug("MigrationGuard configured", 
+                                   enabled_environments: configuration.enabled_environments,
+                                   log_level: configuration.log_level)
     end
 
     def enabled?
-      return false if Rails.env.production?
+      if Rails.env.production?
+        MigrationGuard::Logger.debug("MigrationGuard disabled in production")
+        return false
+      end
 
-      configuration.enabled_environments.include?(Rails.env.to_sym)
+      enabled = configuration.enabled_environments.include?(Rails.env.to_sym)
+      MigrationGuard::Logger.debug("MigrationGuard enabled check", 
+                                   environment: Rails.env,
+                                   enabled: enabled)
+      enabled
     end
 
     def reset_configuration!

@@ -153,6 +153,13 @@ MigrationGuard.configure do |config|
   # instead of just the main branch. Useful for teams with multiple
   # long-lived branches (e.g., develop, staging, production)
   # config.target_branches = %w[main develop staging]
+  
+  # Logging configuration
+  # config.log_level = :info  # :debug, :info, :warn, :error, :fatal
+  # config.logger = Rails.logger  # or Logger.new('log/migration_guard.log')
+  
+  # Enable debug logging via environment variable
+  # ENV['MIGRATION_GUARD_DEBUG'] = 'true'
 end
 ```
 
@@ -186,6 +193,27 @@ end
 2. **Clean up regularly**: Roll back orphaned migrations when switching contexts
 3. **Use sandbox mode**: Test complex migrations before applying them
 4. **Configure for your workflow**: Adjust settings based on team size and branch strategy
+
+## Debug Logging
+
+MigrationGuard includes comprehensive logging to help diagnose issues in production:
+
+```bash
+# Enable debug logging temporarily
+MIGRATION_GUARD_DEBUG=true rails db:migration:status
+
+# Or configure in your initializer
+MigrationGuard.configure do |config|
+  config.log_level = :debug
+  config.logger = Logger.new('log/migration_guard.log')
+end
+```
+
+Debug logs include:
+- Git operations and branch detection
+- Migration tracking and status changes
+- Performance timing for database operations
+- Detailed error messages with context
 
 ## Troubleshooting
 

@@ -3,11 +3,12 @@
 module MigrationGuard
   class Configuration
     VALID_GIT_INTEGRATION_LEVELS = %i[off warning auto_rollback].freeze
+    VALID_LOG_LEVELS = %i[debug info warn error fatal].freeze
 
     attr_accessor :enabled_environments, :track_branch, :track_author, :track_timestamp, :sandbox_mode,
                   :warn_on_switch, :warn_after_migration, :block_deploy_with_orphans, :auto_cleanup,
-                  :main_branch_names, :colorize_output, :target_branches
-    attr_reader :git_integration_level, :cleanup_after_days
+                  :main_branch_names, :colorize_output, :target_branches, :logger
+    attr_reader :git_integration_level, :cleanup_after_days, :log_level
 
     def initialize
       @enabled_environments = %i[development staging]
@@ -24,6 +25,8 @@ module MigrationGuard
       @main_branch_names = %w[main master trunk]
       @colorize_output = true
       @target_branches = nil
+      @log_level = ENV["MIGRATION_GUARD_DEBUG"] == "true" ? :debug : :info
+      @logger = nil # Will default to Rails.logger or Logger.new(STDOUT)
     end
 
     def git_integration_level=(level)
@@ -43,6 +46,15 @@ module MigrationGuard
       @cleanup_after_days = days
     end
 
+    def log_level=(level)
+      unless VALID_LOG_LEVELS.include?(level)
+        raise ConfigurationError, "Invalid log level: #{level}. " \
+                                  "Valid options are: #{VALID_LOG_LEVELS.join(', ')}"
+      end
+
+      @log_level = level
+    end
+
     def to_h # rubocop:disable Metrics/MethodLength
       {
         enabled_environments: enabled_environments,
@@ -58,7 +70,9 @@ module MigrationGuard
         cleanup_after_days: cleanup_after_days,
         main_branch_names: main_branch_names,
         colorize_output: colorize_output,
-        target_branches: target_branches
+        target_branches: target_branches,
+        log_level: log_level,
+        logger: logger
       }
     end
 

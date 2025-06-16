@@ -14,6 +14,10 @@ RSpec.describe MigrationGuard::Tracker do
       before do
         allow(Rails).to receive(:env).and_return(ActiveSupport::StringInquirer.new("development"))
         allow(MigrationGuard).to receive(:enabled?).and_return(true)
+        # Ensure logger doesn't interfere with tests
+        allow(MigrationGuard::Logger).to receive(:debug)
+        allow(MigrationGuard::Logger).to receive(:info)
+        allow(MigrationGuard::Logger).to receive(:error)
       end
 
       context "when running migration up" do
@@ -27,6 +31,7 @@ RSpec.describe MigrationGuard::Tracker do
           expect(record.version).to eq("20240115123456")
           expect(record.status).to eq("applied")
         end
+
 
         it "records the current branch" do
           allow(tracker).to receive(:current_branch).and_return("feature/new-stuff")
@@ -50,9 +55,10 @@ RSpec.describe MigrationGuard::Tracker do
         it "does not record author when not configured" do
           allow(MigrationGuard.configuration).to receive(:track_author).and_return(false)
 
-          track
-
+          expect { track }.to change(MigrationGuard::MigrationGuardRecord, :count).by(1)
+          
           record = MigrationGuard::MigrationGuardRecord.last
+          expect(record).not_to be_nil
           expect(record.author).to be_nil
         end
       end

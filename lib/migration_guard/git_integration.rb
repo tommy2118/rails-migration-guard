@@ -4,22 +4,38 @@ require "English"
 module MigrationGuard
   class GitIntegration
     def current_branch
+      MigrationGuard::Logger.debug("Getting current git branch")
       output = `git rev-parse --abbrev-ref HEAD 2>&1`
 
-      raise GitError, "Failed to determine current branch: #{output}" unless $CHILD_STATUS.success?
+      unless $CHILD_STATUS.success?
+        MigrationGuard::Logger.error("Failed to determine current branch", output: output)
+        raise GitError, "Failed to determine current branch: #{output}"
+      end
 
-      output.strip
+      branch = output.strip
+      MigrationGuard::Logger.debug("Current branch", branch: branch)
+      branch
     rescue Errno::ENOENT
+      MigrationGuard::Logger.error("Git command not found")
       raise GitError, "Git command not found"
     end
 
     def main_branch
+      MigrationGuard::Logger.debug("Searching for main branch")
+      
       MigrationGuard.configuration.main_branch_names.each do |branch_name|
+        MigrationGuard::Logger.debug("Checking branch", branch: branch_name)
         `git rev-parse --verify #{branch_name} >/dev/null 2>&1`
-        return branch_name if $CHILD_STATUS.success?
+        
+        if $CHILD_STATUS.success?
+          MigrationGuard::Logger.debug("Found main branch", branch: branch_name)
+          return branch_name
+        end
       end
 
-      raise GitError, "No main branch found. Tried: #{MigrationGuard.configuration.main_branch_names.join(', ')}"
+      branches_tried = MigrationGuard.configuration.main_branch_names.join(', ')
+      MigrationGuard::Logger.error("No main branch found", branches_tried: branches_tried)
+      raise GitError, "No main branch found. Tried: #{branches_tried}"
     end
 
     def migrations_in_branch(branch)

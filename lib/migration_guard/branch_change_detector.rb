@@ -7,17 +7,28 @@ module MigrationGuard
     def initialize
       @git_integration = GitIntegration.new
       @reporter = Reporter.new
+      MigrationGuard::Logger.debug("Initialized BranchChangeDetector")
     end
 
     def check_branch_change(previous_head, _new_head, is_branch_checkout)
+      MigrationGuard::Logger.debug("Checking branch change", 
+                                   previous_head: previous_head,
+                                   is_branch_checkout: is_branch_checkout)
+      
       # Only check on actual branch changes, not file checkouts
       return unless is_branch_checkout == "1"
 
       # Check if branch warnings are enabled
-      return unless MigrationGuard.configuration.warn_on_switch
+      unless MigrationGuard.configuration.warn_on_switch
+        MigrationGuard::Logger.debug("Branch switch warnings disabled")
+        return
+      end
 
       previous_branch = branch_name_from_ref(previous_head)
       current_branch = @git_integration.current_branch
+      MigrationGuard::Logger.debug("Branch change detected",
+                                   from: previous_branch,
+                                   to: current_branch)
 
       # Skip if we couldn't determine the branch change
       return if previous_branch == current_branch
@@ -51,11 +62,15 @@ module MigrationGuard
     end
 
     def check_for_orphaned_migrations(previous_branch, current_branch)
+      MigrationGuard::Logger.info("Branch switch detected", from: previous_branch, to: current_branch)
       Rails.logger.info ""
       Rails.logger.info Colorizer.info("Switched from '#{previous_branch}' to '#{current_branch}'")
 
       warning = format_branch_change_warnings
-      Rails.logger.info warning if warning
+      if warning
+        MigrationGuard::Logger.warn("Orphaned migrations detected on branch switch")
+        Rails.logger.info warning
+      end
     end
 
     def add_warning_header(output)

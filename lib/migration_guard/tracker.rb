@@ -7,6 +7,8 @@ module MigrationGuard
     def track_migration(version, direction)
       return unless MigrationGuard.enabled?
 
+      MigrationGuard::Logger.debug("Starting migration tracking", version: version, direction: direction)
+
       case direction
       when :up
         track_up_migration(version)
@@ -14,28 +16,37 @@ module MigrationGuard
         track_down_migration(version)
       end
     rescue StandardError => e
-      Rails.logger.error "[MigrationGuard] Failed to track migration: #{e.message}"
+      MigrationGuard::Logger.error("Failed to track migration", error: e.message, version: version)
       nil
     end
 
     def current_branch
       output = `git rev-parse --abbrev-ref HEAD 2>/dev/null`.strip
-      output.empty? ? "unknown" : output
+      branch = output.empty? ? "unknown" : output
+      MigrationGuard::Logger.debug("Current branch detected", branch: branch)
+      branch
     end
 
     def current_author
       output = `git config user.email 2>/dev/null`.strip
-      output.empty? ? "unknown" : output
+      author = output.empty? ? "unknown" : output
+      MigrationGuard::Logger.debug("Current author detected", author: author)
+      author
     end
 
     def cleanup_old_records
       return unless MigrationGuard.configuration.auto_cleanup
 
       days_ago = MigrationGuard.configuration.cleanup_after_days
-      MigrationGuardRecord
+      MigrationGuard::Logger.debug("Starting cleanup of old records", days_ago: days_ago)
+      
+      count = MigrationGuardRecord
         .where(status: "rolled_back")
         .where(created_at: ...days_ago.days.ago)
         .destroy_all
+        .size
+      
+      MigrationGuard::Logger.info("Cleaned up old migration records", count: count) if count > 0
     end
 
     private
@@ -43,15 +54,22 @@ module MigrationGuard
     def track_up_migration(version)
       record = MigrationGuardRecord.find_or_initialize_by(version: version)
 
-      return if record.persisted? && record.status == "applied"
+      if record.persisted? && record.status == "applied"
+        MigrationGuard::Logger.debug("Migration already tracked as applied", version: version)
+        return
+      end
 
-      record.assign_attributes(
+      attributes = {
         status: "applied",
         branch: track_branch? ? current_branch : nil,
         author: track_author? ? current_author : nil
-      )
-
+      }
+      
+      MigrationGuard::Logger.debug("Tracking up migration", version: version, attributes: attributes)
+      record.assign_attributes(attributes)
       record.save!
+      MigrationGuard::Logger.info("Successfully tracked migration", version: version, status: "applied")
+      
       cleanup_old_records
       record
     end
@@ -59,13 +77,17 @@ module MigrationGuard
     def track_down_migration(version)
       record = MigrationGuardRecord.find_or_initialize_by(version: version)
 
-      record.assign_attributes(
+      attributes = {
         status: "rolled_back",
         branch: track_branch? ? current_branch : nil,
         author: track_author? ? current_author : nil
-      )
-
+      }
+      
+      MigrationGuard::Logger.debug("Tracking down migration", version: version, attributes: attributes)
+      record.assign_attributes(attributes)
       record.save!
+      MigrationGuard::Logger.info("Successfully tracked migration rollback", version: version, status: "rolled_back")
+      
       record
     end
 

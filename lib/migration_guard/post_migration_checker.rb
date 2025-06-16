@@ -7,14 +7,24 @@ module MigrationGuard
     def initialize
       @reporter = Reporter.new
       @configuration = MigrationGuard.configuration
+      MigrationGuard::Logger.debug("Initialized PostMigrationChecker")
     end
 
     def check_and_warn
-      return unless should_check?
+      MigrationGuard::Logger.debug("Checking for post-migration warnings")
+      
+      unless should_check?
+        MigrationGuard::Logger.debug("Post-migration warnings disabled or not enabled")
+        return
+      end
 
       orphaned_migrations = @reporter.orphaned_migrations
-      return if orphaned_migrations.empty?
+      if orphaned_migrations.empty?
+        MigrationGuard::Logger.debug("No orphaned migrations found for post-migration check")
+        return
+      end
 
+      MigrationGuard::Logger.warn("Displaying post-migration warnings", count: orphaned_migrations.size)
       output_warning(orphaned_migrations)
     end
 
