@@ -89,4 +89,16 @@ RSpec.describe "migration_guard rake tasks" do
       Rake::Task["db:migration:doctor"].execute
     end
   end
+
+  describe "db:migration:check_branch_change" do
+    it "is defined" do
+      expect(Rake::Task["db:migration:check_branch_change"]).to be_present
+    end
+
+    it "calls MigrationGuard::RakeTasks.check_branch_change with arguments" do
+      expect(MigrationGuard::RakeTasks).to receive(:check_branch_change).with("abc123", "def456", "1")
+
+      Rake::Task["db:migration:check_branch_change"].invoke("abc123", "def456", "1")
+    end
+  end
 end

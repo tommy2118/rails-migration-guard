@@ -133,8 +133,6 @@ module MigrationGuard
       end
 
       def post_checkout_content
-        custom_message = @options[:message] || "Migration status may have changed. Checking..."
-
         <<~HOOK
           #!/bin/sh
           # Rails Migration Guard post-checkout hook
@@ -144,19 +142,8 @@ module MigrationGuard
 
           # Only run on branch checkout (not file checkout)
           if [ "$3" = "1" ]; then
-            echo ""
-            echo "#{custom_message}"
-            echo "Checking migration status..."
-            echo ""
-          #{'  '}
-            # Run migration status check
-            bundle exec rails db:migration:status
-          #{'  '}
-            # Check exit code
-            if [ $? -ne 0 ]; then
-              echo ""
-              echo "⚠️  Migration issues detected. Run 'rails db:migration:rollback_orphaned' to clean up."
-            fi
+            # Run the branch change check with the git hook parameters
+            bundle exec rails db:migration:check_branch_change[$1,$2,$3] 2>/dev/null || true
           fi
         HOOK
       end

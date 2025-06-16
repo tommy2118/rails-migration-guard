@@ -33,5 +33,14 @@ namespace :db do
     task doctor: :environment do
       MigrationGuard::RakeTasks.doctor
     end
+
+    desc "Check for migration changes after branch switch"
+    task :check_branch_change, %i[previous_head new_head is_branch_checkout] => :environment do |_t, args|
+      MigrationGuard::RakeTasks.check_branch_change(
+        args[:previous_head],
+        args[:new_head],
+        args[:is_branch_checkout]
+      )
+    end
   end
 end
