@@ -164,12 +164,8 @@ module RecoveryIntegrationHelpers
         )
       end
 
-      # Restore unique index
-      begin
-        ActiveRecord::Base.connection.add_index(:migration_guard_records, :version, unique: true)
-      rescue StandardError
-        nil
-      end
+      # Don't restore unique index - let the test handle cleanup
+      # The index can't be restored while duplicates exist
     end
   end
 

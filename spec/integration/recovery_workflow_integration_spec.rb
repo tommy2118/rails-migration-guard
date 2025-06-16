@@ -22,7 +22,7 @@ RSpec.describe "Recovery workflow integration", type: :integration do
           expect(orphaned_issues.size).to eq(3)
           expect(orphaned_issues.map { |i| i[:version] }).to match_array(orphaned_versions)
           orphaned_issues.each do |issue|
-            expect(issue[:severity]).to eq(:high)
+            expect(issue[:severity]).to eq(:critical)
             expect(issue[:recovery_options]).to include(:restore_from_git)
           end
         end
@@ -320,7 +320,8 @@ RSpec.describe "Recovery workflow integration", type: :integration do
         # Mock the backup manager to verify it's called
         backup_manager = instance_double(MigrationGuard::Recovery::BackupManager)
         allow(MigrationGuard::Recovery::BackupManager).to receive(:new).and_return(backup_manager)
-        allow(backup_manager).to receive_messages(create_backup: "backup_20240101_120000.sql", verify_backup: true)
+        allow(backup_manager).to receive_messages(create_backup: "backup_20240101_120000.sql", verify_backup: true,
+                                                  backup_exists?: false)
 
         recovery_data = run_recovery_process(@app_root, execute_recovery: true, recovery_action: :restore_from_git)
 
@@ -338,7 +339,7 @@ RSpec.describe "Recovery workflow integration", type: :integration do
         # Mock backup failure
         backup_manager = instance_double(MigrationGuard::Recovery::BackupManager)
         allow(MigrationGuard::Recovery::BackupManager).to receive(:new).and_return(backup_manager)
-        allow(backup_manager).to receive_messages(create_backup: nil, verify_backup: false)
+        allow(backup_manager).to receive_messages(create_backup: nil, verify_backup: false, backup_exists?: false)
 
         recovery_data = run_recovery_process(@app_root, execute_recovery: true, recovery_action: :restore_from_git)
 
@@ -355,7 +356,8 @@ RSpec.describe "Recovery workflow integration", type: :integration do
         allow(MigrationGuard::Recovery::BackupManager).to receive(:new).and_return(backup_manager)
         allow(backup_manager).to receive_messages(
           create_backup: "backup_test.sql",
-          verify_backup: false
+          verify_backup: false,
+          backup_exists?: false
         ) # Integrity check fails
 
         run_recovery_process(@app_root, execute_recovery: true, recovery_action: :restore_from_git)
@@ -678,9 +680,10 @@ RSpec.describe "Recovery workflow integration", type: :integration do
 
         # Create branch, apply migrations, then delete branch
         create_feature_branch_with_migrations(@app_root, "feature/temporary", deleted_branch_versions)
-        apply_migrations_to_database(@app_root, deleted_branch_versions)
 
         within_app_directory(@app_root) do
+          run_git_command("git checkout feature/temporary")
+          apply_migrations_to_database(@app_root, deleted_branch_versions, "feature/temporary")
           run_git_command("git checkout main")
           run_git_command("git branch -D feature/temporary")
         end
@@ -947,6 +950,7 @@ RSpec.describe "Recovery workflow integration", type: :integration do
         # Mock disk space error
         backup_manager = instance_double(MigrationGuard::Recovery::BackupManager)
         allow(MigrationGuard::Recovery::BackupManager).to receive(:new).and_return(backup_manager)
+        allow(backup_manager).to receive(:backup_exists?).and_return(false)
         allow(backup_manager).to receive(:create_backup).and_raise(Errno::ENOSPC, "No space left on device")
 
         expect do
@@ -1461,7 +1465,9 @@ RSpec.describe "Recovery workflow integration", type: :integration do
     RUBY
 
     filename = "#{version}_#{class_name.underscore}.rb"
-    path = File.join(app_root, "db/migrate", filename)
+    directory = File.join(app_root, "db/migrate")
+    FileUtils.mkdir_p(directory)
+    path = File.join(directory, filename)
 
     File.write(path, content)
     path

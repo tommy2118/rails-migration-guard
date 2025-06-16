@@ -24,7 +24,14 @@ module MigrationGuard
       return false if executing_recovery?
 
       @executing_recovery = true
-      create_backup_if_needed
+
+      begin
+        create_backup_if_needed
+      rescue StandardError => e
+        Rails.logger.error "Failed to create backup: #{e.message}"
+        # Continue with recovery even if backup fails
+      end
+
       recovery_method = determine_recovery_method(issue, option)
 
       return false unless recovery_method

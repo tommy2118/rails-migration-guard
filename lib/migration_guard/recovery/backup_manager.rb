@@ -65,9 +65,9 @@ module MigrationGuard
         File.size(file_to_check).positive?
       end
 
-      def cleanup_old_backups(keep_days: 7)
+      def cleanup_old_backups(keep_days: 7) # rubocop:disable Naming/PredicateMethod
         backup_dir = Rails.root.join("db/backups")
-        return unless Dir.exist?(backup_dir)
+        return true unless Dir.exist?(backup_dir)
 
         cutoff_time = keep_days.days.ago
         Dir.glob(File.join(backup_dir, "*.sql")).each do |file|
@@ -76,6 +76,7 @@ module MigrationGuard
             Rails.logger.info "Deleted old backup: #{File.basename(file)}"
           end
         end
+        true
       end
 
       def restore_from_backup(backup_file)
