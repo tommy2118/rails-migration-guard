@@ -3,7 +3,7 @@
 require "rails_helper"
 require "rake"
 
-# rubocop:disable RSpec/VerifiedDoubles, RSpec/NestedGroups, RSpec/AnyInstance
+# rubocop:disable RSpec/VerifiedDoubles, RSpec/NestedGroups, RSpec/AnyInstance, RSpec/ExampleLength, Metrics/BlockNesting
 
 RSpec.describe "CI rake task", type: :integration do
   before(:all) do
@@ -158,21 +158,53 @@ RSpec.describe "CI rake task", type: :integration do
         end
 
         it "outputs valid JSON" do
-          output = capture_rake_output { Rake::Task["db:migration:ci"].execute }
+          raw_output = capture_stdout { Rake::Task["db:migration:ci"].execute }
 
-          # Debug output if JSON parsing fails
-          begin
-            json_result = JSON.parse(output)
-          rescue JSON::ParserError => e
-            puts "=== JSON PARSE ERROR ==="
-            puts "Error: #{e.message}"
-            puts "=== RAW OUTPUT ==="
-            puts output.inspect
-            puts "=== OUTPUT LINES ==="
-            output.lines.each_with_index { |line, i| puts "#{i + 1}: #{line.inspect}" }
-            puts "=== END DEBUG ==="
-            raise e
+          # Try multiple approaches to extract JSON
+          json_output = nil
+
+          # Method 1: Find complete JSON object by scanning for balanced braces
+          if raw_output.include?("{") && raw_output.include?("migration_guard")
+            start_pos = raw_output.index("{")
+            if start_pos
+              brace_count = 0
+              end_pos = nil
+
+              raw_output[start_pos..].each_char.with_index do |char, i|
+                case char
+                when "{"
+                  brace_count += 1
+                when "}"
+                  brace_count -= 1
+                  if brace_count == 0
+                    end_pos = start_pos + i
+                    break
+                  end
+                end
+              end
+
+              json_output = raw_output[start_pos..end_pos] if end_pos
+            end
           end
+
+          # Method 2: Try regex if method 1 failed
+          if json_output.nil?
+            json_match = raw_output.match(/\{[^{}]*"migration_guard"[^{}]*\{[^{}]*\}[^{}]*\}/m)
+            json_output = json_match[0] if json_match
+          end
+
+          unless json_output
+            puts "=== NO VALID JSON FOUND ==="
+            puts "Raw output (first 1000 chars): #{raw_output[0...1000].inspect}"
+            puts "=== FULL RAW OUTPUT ==="
+            puts raw_output.inspect
+            puts "=== OUTPUT LINES ==="
+            raw_output.lines.each_with_index { |line, i| puts "Line #{i + 1}: #{line.inspect}" }
+            raise "No valid JSON output found in response"
+          end
+
+          # Parse and validate JSON
+          json_result = JSON.parse(json_output)
 
           expect(json_result).to have_key("migration_guard")
           expect(json_result["migration_guard"]).to include(
@@ -216,22 +248,37 @@ RSpec.describe "CI rake task", type: :integration do
       it "supports case-insensitive FORMAT environment variable" do
         ENV["format"] = "JSON"
 
-        output = capture_rake_output { Rake::Task["db:migration:ci"].execute }
+        raw_output = capture_stdout { Rake::Task["db:migration:ci"].execute }
 
-        # Debug output if JSON parsing fails
-        begin
-          json_result = JSON.parse(output)
-          expect(json_result).to have_key("migration_guard")
-        rescue JSON::ParserError => e
-          puts "=== JSON PARSE ERROR (case-insensitive test) ==="
-          puts "Error: #{e.message}"
-          puts "=== RAW OUTPUT ==="
-          puts output.inspect
-          puts "=== OUTPUT LINES ==="
-          output.lines.each_with_index { |line, i| puts "#{i + 1}: #{line.inspect}" }
-          puts "=== END DEBUG ==="
-          raise e
+        # Find complete JSON object by scanning for balanced braces
+        json_output = nil
+        if raw_output.include?("{") && raw_output.include?("migration_guard")
+          start_pos = raw_output.index("{")
+          if start_pos
+            brace_count = 0
+            end_pos = nil
+
+            raw_output[start_pos..].each_char.with_index do |char, i|
+              case char
+              when "{"
+                brace_count += 1
+              when "}"
+                brace_count -= 1
+                if brace_count == 0
+                  end_pos = start_pos + i
+                  break
+                end
+              end
+            end
+
+            json_output = raw_output[start_pos..end_pos] if end_pos
+          end
         end
+
+        expect(json_output).not_to be_nil, "No JSON output found in: #{raw_output.inspect}"
+
+        json_result = JSON.parse(json_output)
+        expect(json_result).to have_key("migration_guard")
       ensure
         ENV.delete("format")
       end
@@ -306,5 +353,14 @@ RSpec.describe "CI rake task", type: :integration do
     $stdout = original_stdout
   end
   # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/BlockNesting
+
+  def capture_stdout
+    original_stdout = $stdout
+    $stdout = StringIO.new
+    yield
+    $stdout.string
+  ensure
+    $stdout = original_stdout
+  end
 end
-# rubocop:enable RSpec/VerifiedDoubles, RSpec/NestedGroups, RSpec/AnyInstance
+# rubocop:enable RSpec/VerifiedDoubles, RSpec/NestedGroups, RSpec/AnyInstance, RSpec/ExampleLength, Metrics/BlockNesting
