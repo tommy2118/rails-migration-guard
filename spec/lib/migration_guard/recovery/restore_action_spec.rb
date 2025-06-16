@@ -147,7 +147,7 @@ RSpec.describe MigrationGuard::Recovery::RestoreAction do
 
       it "handles git show failures" do
         expect(restore_action).to receive(:log_info).with("Attempting to restore migration 20240116000001 from git history...")
-        expect(restore_action).to receive(:log_error).with(/Failed to restore from git/)
+        expect(restore_action).to receive(:log_error).with("Failed to restore file: fatal: bad object")
 
         result = restore_action.restore_from_git(issue)
         expect(result).to be false
