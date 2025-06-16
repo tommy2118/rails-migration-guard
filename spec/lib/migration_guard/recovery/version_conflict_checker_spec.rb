@@ -94,8 +94,10 @@ RSpec.describe MigrationGuard::Recovery::VersionConflictChecker do
           expect(issue[:type]).to eq(:version_conflict)
           expect(issue[:version]).to eq("20240116000001")
           expect(issue[:migrations]).to contain_exactly(record1, record2)
-          expect(issue[:description]).to eq("Multiple records exist for the same migration version (2 records)")
-          expect(issue[:severity]).to eq(:high)
+          expect(issue[:description]).to eq(
+            "Version conflict: Multiple records exist for the same migration version (2 records)"
+          )
+          expect(issue[:severity]).to eq(:critical)
           expect(issue[:recovery_options]).to include(:consolidate_records, :remove_duplicates)
         end
       end

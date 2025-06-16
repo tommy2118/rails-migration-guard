@@ -77,11 +77,19 @@ module RecoveryIntegrationHelpers
     within_app_directory(app_root) do
       migration_versions.each do |version|
         # Simulate applying migration to schema_migrations
-        ActiveRecord::Base.connection.execute(
-          "INSERT INTO schema_migrations (version) VALUES ('#{version}')"
-        )
+        existing = ActiveRecord::Base.connection.execute(
+          "SELECT 1 FROM schema_migrations WHERE version = '#{version}'"
+        ).count
 
-        # Create tracking record
+        if existing == 0
+          ActiveRecord::Base.connection.execute(
+            "INSERT INTO schema_migrations (version) VALUES ('#{version}')"
+          )
+        end
+
+        # Create tracking record if it doesn't exist
+        next if MigrationGuard::MigrationGuardRecord.exists?(version: version)
+
         MigrationGuard::MigrationGuardRecord.create!(
           version: version,
           branch: branch_name || current_git_branch,

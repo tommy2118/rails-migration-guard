@@ -254,8 +254,8 @@ RSpec.describe MigrationGuard::Recovery::RestoreAction do
 
         aggregate_failures do
           expect(result).to be true
-          expect(FileUtils).to have_received(:mkdir_p).with("/app/db/migrate")
-          expect(File).to have_received(:write).with("/app/db/migrate/test.rb", "file content")
+          expect(FileUtils).to have_received(:mkdir_p).with(File.dirname(File.join(Dir.pwd, "db/migrate/test.rb")))
+          expect(File).to have_received(:write).with(File.join(Dir.pwd, "db/migrate/test.rb"), "file content")
         end
       end
 

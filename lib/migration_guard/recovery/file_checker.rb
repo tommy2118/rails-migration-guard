@@ -17,7 +17,7 @@ module MigrationGuard
       private
 
       def active_migrations
-        MigrationGuardRecord.where(status: %w[applied rolling_back])
+        MigrationGuardRecord.where(status: %w[applied rolling_back]).order(:version)
       end
 
       def build_issue(record)

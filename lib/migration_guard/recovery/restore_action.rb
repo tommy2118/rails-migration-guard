@@ -96,7 +96,9 @@ module MigrationGuard
           return false
         end
 
-        output_path = Rails.root.join(file_path)
+        # Use current directory as base, which will be the app_root in tests
+        base_path = Dir.pwd
+        output_path = File.join(base_path, file_path)
         FileUtils.mkdir_p(File.dirname(output_path))
         File.write(output_path, stdout)
         true

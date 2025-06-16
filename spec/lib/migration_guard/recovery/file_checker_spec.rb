@@ -23,8 +23,8 @@ RSpec.describe MigrationGuard::Recovery::FileChecker do
         )
 
         # Mock file existence
-        allow(Rails.root).to receive(:glob)
-          .with("db/migrate/20240116000001_*.rb")
+        allow(Dir).to receive(:glob)
+          .with(File.join(Dir.pwd, "db/migrate/20240116000001_*.rb"))
           .and_return(["db/migrate/20240116000001_create_test.rb"])
 
         issues = checker.check
@@ -53,7 +53,7 @@ RSpec.describe MigrationGuard::Recovery::FileChecker do
 
       before do
         # Mock missing files
-        allow(Rails.root).to receive(:glob).and_return([])
+        allow(Dir).to receive(:glob).and_return([])
       end
 
       it "detects missing files for applied migrations" do
@@ -113,12 +113,12 @@ RSpec.describe MigrationGuard::Recovery::FileChecker do
         )
 
         # Mock one file exists, one doesn't
-        allow(Rails.root).to receive(:glob) do |pattern|
+        allow(Dir).to receive(:glob) do |pattern|
           # rubocop:disable Lint/DuplicateBranch
           case pattern
-          when "db/migrate/20240116000001_*.rb"
+          when File.join(Dir.pwd, "db/migrate/20240116000001_*.rb")
             ["db/migrate/20240116000001_create_test.rb"]
-          when "db/migrate/20240116000002_*.rb"
+          when File.join(Dir.pwd, "db/migrate/20240116000002_*.rb")
             # Migration 2 files are missing
             []
           else
@@ -162,7 +162,7 @@ RSpec.describe MigrationGuard::Recovery::FileChecker do
         )
 
         # Mock no files exist
-        allow(Rails.root).to receive(:glob).and_return([])
+        allow(Dir).to receive(:glob).and_return([])
       end
 
       it "only checks applied and rolling_back migrations" do

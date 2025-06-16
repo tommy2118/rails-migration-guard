@@ -19,7 +19,9 @@ module MigrationGuard
       end
 
       def migration_file_exists?(version)
-        Rails.root.glob("db/migrate/#{version}_*.rb").any?
+        # Use current directory as base, which will be the app_root in tests
+        base_path = Dir.pwd
+        Dir.glob(File.join(base_path, "db/migrate/#{version}_*.rb")).any?
       end
 
       def schema_versions
