@@ -12,7 +12,7 @@ Rails Migration Guard helps prevent orphaned database migrations in development 
 Rails Migration Guard supports:
 
 - **Ruby**: 3.0.0 and higher
-- **Rails**: 6.1.0 through 8.2+ (tested up to Rails 8.2)
+- **Rails**: 6.1.0 through 8.0+ (tested up to Rails 8.0.2)
 - **Databases**: SQLite, PostgreSQL, MySQL
 - **Git**: 2.0 and higher
 
