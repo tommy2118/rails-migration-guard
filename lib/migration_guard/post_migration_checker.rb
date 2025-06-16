@@ -12,7 +12,7 @@ module MigrationGuard
 
     def check_and_warn
       MigrationGuard::Logger.debug("Checking for post-migration warnings")
-      
+
       unless should_check?
         MigrationGuard::Logger.debug("Post-migration warnings disabled or not enabled")
         return

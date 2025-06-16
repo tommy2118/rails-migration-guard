@@ -22,18 +22,18 @@ module MigrationGuard
 
     def main_branch
       MigrationGuard::Logger.debug("Searching for main branch")
-      
+
       MigrationGuard.configuration.main_branch_names.each do |branch_name|
         MigrationGuard::Logger.debug("Checking branch", branch: branch_name)
         `git rev-parse --verify #{branch_name} >/dev/null 2>&1`
-        
+
         if $CHILD_STATUS.success?
           MigrationGuard::Logger.debug("Found main branch", branch: branch_name)
           return branch_name
         end
       end
 
-      branches_tried = MigrationGuard.configuration.main_branch_names.join(', ')
+      branches_tried = MigrationGuard.configuration.main_branch_names.join(", ")
       MigrationGuard::Logger.error("No main branch found", branches_tried: branches_tried)
       raise GitError, "No main branch found. Tried: #{branches_tried}"
     end

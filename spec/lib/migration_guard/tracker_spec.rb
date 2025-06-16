@@ -32,7 +32,6 @@ RSpec.describe MigrationGuard::Tracker do
           expect(record.status).to eq("applied")
         end
 
-
         it "records the current branch" do
           allow(tracker).to receive(:current_branch).and_return("feature/new-stuff")
 
@@ -56,7 +55,7 @@ RSpec.describe MigrationGuard::Tracker do
           allow(MigrationGuard.configuration).to receive(:track_author).and_return(false)
 
           expect { track }.to change(MigrationGuard::MigrationGuardRecord, :count).by(1)
-          
+
           record = MigrationGuard::MigrationGuardRecord.last
           expect(record).not_to be_nil
           expect(record.author).to be_nil

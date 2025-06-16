@@ -29,7 +29,7 @@ module MigrationGuard
     def configure
       MigrationGuard::Logger.debug("Configuring MigrationGuard")
       yield(configuration)
-      MigrationGuard::Logger.debug("MigrationGuard configured", 
+      MigrationGuard::Logger.debug("MigrationGuard configured",
                                    enabled_environments: configuration.enabled_environments,
                                    log_level: configuration.log_level)
     end
@@ -41,7 +41,7 @@ module MigrationGuard
       end
 
       enabled = configuration.enabled_environments.include?(Rails.env.to_sym)
-      MigrationGuard::Logger.debug("MigrationGuard enabled check", 
+      MigrationGuard::Logger.debug("MigrationGuard enabled check",
                                    environment: Rails.env,
                                    enabled: enabled)
       enabled

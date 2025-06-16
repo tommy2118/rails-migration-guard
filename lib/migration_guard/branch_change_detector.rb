@@ -11,10 +11,10 @@ module MigrationGuard
     end
 
     def check_branch_change(previous_head, _new_head, is_branch_checkout)
-      MigrationGuard::Logger.debug("Checking branch change", 
+      MigrationGuard::Logger.debug("Checking branch change",
                                    previous_head: previous_head,
                                    is_branch_checkout: is_branch_checkout)
-      
+
       # Only check on actual branch changes, not file checkouts
       return unless is_branch_checkout == "1"
 
@@ -67,10 +67,10 @@ module MigrationGuard
       Rails.logger.info Colorizer.info("Switched from '#{previous_branch}' to '#{current_branch}'")
 
       warning = format_branch_change_warnings
-      if warning
-        MigrationGuard::Logger.warn("Orphaned migrations detected on branch switch")
-        Rails.logger.info warning
-      end
+      return unless warning
+
+      MigrationGuard::Logger.warn("Orphaned migrations detected on branch switch")
+      Rails.logger.info warning
     end
 
     def add_warning_header(output)

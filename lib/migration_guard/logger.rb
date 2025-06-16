@@ -6,15 +6,9 @@ module MigrationGuard
   module Logger
     class << self
       def logger
-        @logger ||= begin
-          if MigrationGuard.configuration.logger
-            MigrationGuard.configuration.logger
-          elsif defined?(Rails) && Rails.logger
-            Rails.logger
-          else
-            ::Logger.new($stdout)
-          end
-        end
+        @logger ||= MigrationGuard.configuration.logger ||
+                    (defined?(Rails) && Rails.logger) ||
+                    ::Logger.new($stdout)
       end
 
       def debug(message, context = {})
@@ -61,7 +55,7 @@ module MigrationGuard
       def format_context(context)
         return "" if context.empty?
 
-        "-- " + context.map { |k, v| "#{k}: #{v}" }.join(", ")
+        "-- #{context.map { |k, v| "#{k}: #{v}" }.join(', ')}"
       end
 
       def timestamp
@@ -95,7 +89,6 @@ module MigrationGuard
         when :warn then ::Logger::WARN
         when :error then ::Logger::ERROR
         when :fatal then ::Logger::FATAL
-        else ::Logger::INFO
         end
       end
     end

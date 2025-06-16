@@ -3,8 +3,8 @@
 require "rails_helper"
 
 RSpec.describe MigrationGuard::Logger do
-  let(:test_logger) { instance_double(::Logger) }
-  
+  let(:test_logger) { instance_double(Logger) }
+
   before do
     # Reset logger instance
     described_class.instance_variable_set(:@logger, nil)
@@ -21,7 +21,7 @@ RSpec.describe MigrationGuard::Logger do
     context "when Rails.logger is available" do
       before do
         allow(MigrationGuard.configuration).to receive(:logger).and_return(nil)
-        stub_const("Rails", double(logger: test_logger))
+        stub_const("Rails", class_double("Rails", logger: test_logger)) # rubocop:disable RSpec/VerifiedDoubleReference
       end
 
       it "uses Rails.logger" do
@@ -36,7 +36,7 @@ RSpec.describe MigrationGuard::Logger do
       end
 
       it "creates a new Logger with stdout" do
-        expect(::Logger).to receive(:new).with($stdout).and_return(test_logger)
+        expect(Logger).to receive(:new).with($stdout).and_return(test_logger)
         expect(described_class.logger).to eq(test_logger)
       end
     end

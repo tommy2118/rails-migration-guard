@@ -22,13 +22,13 @@ module MigrationGuard
 
     def orphaned_from_main_branch
       trunk_versions = @git_integration.migration_versions_in_trunk
-      MigrationGuard::Logger.debug("Checking for orphaned migrations against main branch", 
+      MigrationGuard::Logger.debug("Checking for orphaned migrations against main branch",
                                    trunk_version_count: trunk_versions.size)
 
       orphaned = MigrationGuardRecord
-        .applied
-        .reject { |record| trunk_versions.include?(record.version) }
-      
+                 .applied
+                 .reject { |record| trunk_versions.include?(record.version) }
+
       MigrationGuard::Logger.info("Found orphaned migrations", count: orphaned.size) if orphaned.any?
       orphaned
     end
@@ -41,9 +41,9 @@ module MigrationGuard
                                    total_versions: all_trunk_versions.size)
 
       orphaned = MigrationGuardRecord
-        .applied
-        .reject { |record| all_trunk_versions.include?(record.version) }
-      
+                 .applied
+                 .reject { |record| all_trunk_versions.include?(record.version) }
+
       MigrationGuard::Logger.info("Found orphaned migrations", count: orphaned.size) if orphaned.any?
       orphaned
     end
@@ -74,19 +74,8 @@ module MigrationGuard
       MigrationGuard::Logger.debug("Checking missing migrations across branches",
                                    applied_count: applied_versions.size)
 
-      missing_by_branch = {}
-      branch_versions.each do |branch, versions|
-        next unless versions.is_a?(Array)
-
-        missing = versions - applied_versions
-        if missing.any?
-          missing_by_branch[branch] = missing
-          MigrationGuard::Logger.debug("Missing migrations in branch", branch: branch, count: missing.size)
-        end
-      end
-
-      MigrationGuard::Logger.info("Found missing migrations in branches", 
-                                 branches: missing_by_branch.keys) if missing_by_branch.any?
+      missing_by_branch = calculate_missing_by_branch(branch_versions, applied_versions)
+      log_missing_branches_summary(missing_by_branch)
       missing_by_branch
     end
 
@@ -168,6 +157,27 @@ module MigrationGuard
     end
 
     private
+
+    def calculate_missing_by_branch(branch_versions, applied_versions)
+      missing_by_branch = {}
+      branch_versions.each do |branch, versions|
+        next unless versions.is_a?(Array)
+
+        missing = versions - applied_versions
+        if missing.any?
+          missing_by_branch[branch] = missing
+          MigrationGuard::Logger.debug("Missing migrations in branch", branch: branch, count: missing.size)
+        end
+      end
+      missing_by_branch
+    end
+
+    def log_missing_branches_summary(missing_by_branch)
+      return unless missing_by_branch.any?
+
+      MigrationGuard::Logger.info("Found missing migrations in branches",
+                                  branches: missing_by_branch.keys)
+    end
 
     def synced_count
       if MigrationGuard.configuration.target_branches
