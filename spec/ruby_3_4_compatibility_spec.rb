@@ -15,6 +15,13 @@ RSpec.describe "Ruby 3.4.1 compatibility", type: :integration do
 
   it "can report status without errors" do
     reporter = MigrationGuard::Reporter.new
+
+    # Mock the git integration to avoid git-related errors in test
+    git_integration = instance_double(MigrationGuard::GitIntegration)
+    allow(MigrationGuard::GitIntegration).to receive(:new).and_return(git_integration)
+    allow(git_integration).to receive_messages(main_branch: "master", target_branches: ["master"],
+                                               migration_versions_in_branches: { "master" => [] })
+
     expect { reporter.status_report }.not_to raise_error
   end
 
