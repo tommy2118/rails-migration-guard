@@ -51,7 +51,9 @@ module MigrationGuard
       end
 
       def backup_exists?
-        @backup_path && File.exist?(@backup_path)
+        return false unless @backup_path
+
+        File.exist?(@backup_path)
       end
 
       private
