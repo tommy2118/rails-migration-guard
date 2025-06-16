@@ -85,7 +85,7 @@ RSpec.describe MigrationGuard::Recovery::SchemaAction do
 
       it "runs the migration" do # rubocop:disable RSpec/MultipleExpectations
         # Create a mock migration class
-        migration_class = Class.new(ActiveRecord::Migration[7.0]) do
+        migration_class = Class.new(ActiveRecord::Migration[6.1]) do
           def up
             # Mock migration
           end
@@ -108,7 +108,7 @@ RSpec.describe MigrationGuard::Recovery::SchemaAction do
 
       it "updates migration status after successful re-apply" do
         # Create a mock migration class
-        migration_class = Class.new(ActiveRecord::Migration[7.0])
+        migration_class = Class.new(ActiveRecord::Migration[6.1])
         stub_const("CreateTestTable", migration_class)
 
         allow(schema_action).to receive(:require).with(migration_file)
@@ -127,7 +127,7 @@ RSpec.describe MigrationGuard::Recovery::SchemaAction do
       end
 
       it "handles migration execution errors" do
-        migration_class = Class.new(ActiveRecord::Migration[7.0]) do
+        migration_class = Class.new(ActiveRecord::Migration[6.1]) do
           def up
             raise "Migration failed"
           end
@@ -203,7 +203,7 @@ RSpec.describe MigrationGuard::Recovery::SchemaAction do
     describe "#load_migration_class" do
       it "constantizes the migration class name" do
         migration_file = "20240116000001_create_test_table.rb"
-        test_migration_class = Class.new(ActiveRecord::Migration[7.0])
+        test_migration_class = Class.new(ActiveRecord::Migration[6.1])
 
         expect(schema_action).to receive(:extract_migration_class_name)
           .with(migration_file)
