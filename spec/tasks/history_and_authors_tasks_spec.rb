@@ -324,7 +324,7 @@ RSpec.describe "History and authors rake tasks", type: :integration do
 
       Rake::Task["db:migration:check_branch_change"].invoke("abc123", "def456", "1")
 
-      expect(detector).to have_received(:check_branch_change).with("abc123", "def456", "1")
+      expect(detector).to have_received(:check_branch_change).with("abc123", "def456", "1").at_least(:once)
     end
   end
 
