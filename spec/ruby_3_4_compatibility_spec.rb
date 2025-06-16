@@ -31,7 +31,7 @@ RSpec.describe "Ruby 3.4.1 compatibility", type: :integration do
       skip "Not running on Ruby 3.4+" unless RUBY_VERSION >= "3.4.0"
 
       expect(defined?(Logger)).to be_truthy
-      expect(defined?(Mutex_m)).to be_truthy
+      expect { require "mutex_m" }.not_to raise_error
     end
   end
 end
