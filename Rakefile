@@ -34,7 +34,7 @@ begin
   end
 
   # Define :environment task if it doesn't exist
-  task environment: :environment do
+  task :environment do
     # Minimal environment setup for gem development
     require "active_record"
     require "active_support/all"
