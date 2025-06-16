@@ -25,7 +25,7 @@ begin
     # Preload logger gem for Ruby 3.4+ compatibility
     require "logger" if RUBY_VERSION >= "3.4.0"
     require "rails"
-    require_relative "lib/rails_migration_guard"
+    # Don't load rails_migration_guard here - it gets loaded by the rake tasks
 
     # Define a minimal Rails.root for task testing
     Rails.define_singleton_method(:root) { Pathname.new(File.expand_path(".", __dir__)) } unless Rails.respond_to?(:root)
