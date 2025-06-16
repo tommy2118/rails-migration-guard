@@ -21,6 +21,7 @@ require_relative "migration_guard/recovery_executor"
 require_relative "migration_guard/branch_change_detector"
 require_relative "migration_guard/post_migration_checker"
 require_relative "migration_guard/diagnostic_runner"
+require_relative "migration_guard/ci_runner"
 require_relative "migration_guard/rake_tasks"
 
 require_relative "migration_guard/railtie" if defined?(Rails::Railtie)

@@ -82,5 +82,22 @@ namespace :db do
       ensure_migration_guard_loaded
       MigrationGuard::RakeTasks.recover
     end
+
+    desc "Run migration checks for CI/CD environments"
+    task ci: :environment do
+      ensure_migration_guard_loaded
+
+      format = ENV["FORMAT"] || ENV["format"] || "text"
+      strict = ENV["STRICT"] == "true" || ENV["strict"] == "true"
+      strictness = ENV["STRICTNESS"] || ENV.fetch("strictness", nil)
+
+      exit_code = MigrationGuard::RakeTasks.ci(
+        format: format,
+        strict: strict,
+        strictness: strictness
+      )
+
+      exit(exit_code) if exit_code != 0
+    end
   end
 end

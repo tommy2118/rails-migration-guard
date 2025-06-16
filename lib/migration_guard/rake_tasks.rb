@@ -107,6 +107,37 @@ module MigrationGuard
         log_recovery_completion(executor)
       end
 
+      # rubocop:disable Metrics/MethodLength
+      def ci(format: "text", strict: false, strictness: nil)
+        # CI command doesn't use check_enabled as it needs to run in all environments
+        # and report the disabled status explicitly
+
+        runner = MigrationGuard::CiRunner.new(
+          format: format,
+          strict: strict,
+          strictness: strictness
+        )
+
+        runner.run
+      rescue StandardError => e
+        # Handle initialization or runtime errors
+        error_output = if format.to_s.downcase == "json"
+                         JSON.pretty_generate(
+                           migration_guard: {
+                             status: "error",
+                             error: e.message,
+                             exit_code: MigrationGuard::CiRunner::EXIT_ERROR
+                           }
+                         )
+                       else
+                         "❌ Error running Migration Guard CI check:\n   #{e.message}"
+                       end
+
+        puts error_output # rubocop:disable Rails/Output
+        MigrationGuard::CiRunner::EXIT_ERROR
+      end
+      # rubocop:enable Metrics/MethodLength
+
       private
 
       def create_recovery_executor
