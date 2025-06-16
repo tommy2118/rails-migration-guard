@@ -35,3 +35,27 @@ jobs:
     
     - name: Run linter
       run: bundle exec rubocop
+
+  edge-case-tests:
+    runs-on: ubuntu-latest
+    name: Edge Case Tests
+    strategy:
+      matrix:
+        rails-version: ['7.2', '8.0']
+    env:
+      RAILS_VERSION: ${{ matrix.rails-version }}
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.4'
+        bundler-cache: true
+    
+    - name: Run Git Integration Edge Case Tests
+      run: bundle exec rspec spec/lib/migration_guard/git_integration_edge_cases_spec.rb --format documentation
+    
+    - name: Run Integration Test Script
+      run: ruby test_git_integration.rb
+      if: false # Disabled for now since the file is not committed
