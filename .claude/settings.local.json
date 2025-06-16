@@ -17,7 +17,8 @@
       "Bash(bundle exec rubocop:*)",
       "Bash(git push:*)",
       "Bash(gh pr view:*)",
-      "Bash(gh run view:*)"
+      "Bash(gh run view:*)",
+      "Bash(gh pr checks:*)"
     ],
     "deny": []
   }
