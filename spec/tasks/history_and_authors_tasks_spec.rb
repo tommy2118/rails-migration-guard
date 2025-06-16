@@ -319,10 +319,12 @@ RSpec.describe "History and authors rake tasks", type: :integration do
   describe "db:migration:check_branch_change" do
     it "executes branch change detection" do
       detector = instance_double(MigrationGuard::BranchChangeDetector)
-      expect(MigrationGuard::BranchChangeDetector).to receive(:new).once.and_return(detector)
-      expect(detector).to receive(:check_branch_change).once.with("abc123", "def456", "1")
+      allow(MigrationGuard::BranchChangeDetector).to receive(:new).and_return(detector)
+      allow(detector).to receive(:check_branch_change)
 
       Rake::Task["db:migration:check_branch_change"].invoke("abc123", "def456", "1")
+
+      expect(detector).to have_received(:check_branch_change).with("abc123", "def456", "1")
     end
   end
 

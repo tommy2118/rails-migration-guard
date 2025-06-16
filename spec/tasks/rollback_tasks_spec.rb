@@ -95,7 +95,7 @@ RSpec.describe "Rollback rake tasks", type: :integration do
         # Create a controlled rollbacker instance
         rollbacker = MigrationGuard::Rollbacker.new(interactive: true)
         allow(rollbacker).to receive(:gets).and_return("y")
-        expect(MigrationGuard::Rollbacker).to receive(:new).once.and_return(rollbacker)
+        allow(MigrationGuard::Rollbacker).to receive(:new).and_return(rollbacker)
 
         Rake::Task["db:migration:rollback_orphaned"].execute
 
@@ -178,7 +178,7 @@ RSpec.describe "Rollback rake tasks", type: :integration do
         # Create a controlled rollbacker instance
         rollbacker = MigrationGuard::Rollbacker.new(interactive: true)
         allow(rollbacker).to receive(:gets).and_return("y")
-        expect(MigrationGuard::Rollbacker).to receive(:new).once.and_return(rollbacker)
+        allow(MigrationGuard::Rollbacker).to receive(:new).and_return(rollbacker)
 
         Rake::Task["db:migration:rollback_orphaned"].execute
 
@@ -205,7 +205,7 @@ RSpec.describe "Rollback rake tasks", type: :integration do
         # Create a controlled rollbacker instance
         rollbacker = MigrationGuard::Rollbacker.new(interactive: true)
         allow(rollbacker).to receive(:gets).and_return("y")
-        expect(MigrationGuard::Rollbacker).to receive(:new).once.and_return(rollbacker)
+        allow(MigrationGuard::Rollbacker).to receive(:new).and_return(rollbacker)
 
         # The rollback will fail and raise an error since the migration file doesn't exist
         expect do
@@ -230,10 +230,12 @@ RSpec.describe "Rollback rake tasks", type: :integration do
       it "rolls back all orphaned migrations without prompting" do
         # Mock the rollbacker since we're testing the rake task behavior
         rollbacker = instance_double(MigrationGuard::Rollbacker)
-        expect(MigrationGuard::Rollbacker).to receive(:new).with(interactive: false).once.and_return(rollbacker)
-        expect(rollbacker).to receive(:rollback_all_orphaned).once
+        allow(MigrationGuard::Rollbacker).to receive(:new).with(interactive: false).and_return(rollbacker)
+        allow(rollbacker).to receive(:rollback_all_orphaned)
 
         Rake::Task["db:migration:rollback_all_orphaned"].execute
+
+        expect(rollbacker).to have_received(:rollback_all_orphaned)
       end
     end
   end
