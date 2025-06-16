@@ -87,7 +87,13 @@ module MigrationGuard
 
     def create_migration_context
       migration_paths = migrations_paths
-      ActiveRecord::MigrationContext.new(migration_paths)
+
+      # Rails 6.1 requires schema_migration argument, later versions make it optional
+      if ActiveRecord::MigrationContext.instance_method(:initialize).arity == 2
+        ActiveRecord::MigrationContext.new(migration_paths, ActiveRecord::SchemaMigration)
+      else
+        ActiveRecord::MigrationContext.new(migration_paths)
+      end
     end
 
     def validate_migration_applied(context, version, version_string)
