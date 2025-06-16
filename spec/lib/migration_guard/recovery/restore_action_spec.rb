@@ -49,7 +49,7 @@ RSpec.describe MigrationGuard::Recovery::RestoreAction do
     end
 
     it "handles errors during restoration" do
-      allow(restore_action).to receive(:execute_schema_insertion).and_raise(StandardError, "Database error")
+      allow(restore_action).to receive(:add_to_schema_if_missing).and_raise(StandardError, "Database error")
       expect(restore_action).to receive(:log_info).with("Restoring migration #{migration.version}...")
       expect(restore_action).to receive(:log_error).with("✗ Failed to restore migration: Database error")
 

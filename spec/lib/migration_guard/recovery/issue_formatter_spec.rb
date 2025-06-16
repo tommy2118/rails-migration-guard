@@ -19,9 +19,9 @@ RSpec.describe MigrationGuard::Recovery::IssueFormatter do
     # Clear existing data
     MigrationGuard::MigrationGuardRecord.delete_all
     # Mock Colorizer methods to return simple strings for testing
-    allow(Colorizer).to receive(:error) { |text| "ERROR: #{text}" }
-    allow(Colorizer).to receive(:warning) { |text| "WARNING: #{text}" }
-    allow(Colorizer).to receive(:info) { |text| "INFO: #{text}" }
+    allow(MigrationGuard::Colorizer).to receive(:error) { |text| "ERROR: #{text}" }
+    allow(MigrationGuard::Colorizer).to receive(:warning) { |text| "WARNING: #{text}" }
+    allow(MigrationGuard::Colorizer).to receive(:info) { |text| "INFO: #{text}" }
   end
 
   describe ".format" do

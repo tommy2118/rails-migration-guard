@@ -12,6 +12,13 @@ RSpec.describe MigrationGuard::Recovery::VersionConflictChecker do
     MigrationGuard::MigrationGuardRecord.delete_all
     # Mock time for consistent tests
     allow(Time).to receive(:current).and_return(Time.zone.parse("2024-01-16 12:00:00"))
+    # Temporarily remove unique index for version conflicts testing
+    ActiveRecord::Base.connection.remove_index(:migration_guard_records, :version) rescue nil
+  end
+
+  after do
+    # Restore unique index after test
+    ActiveRecord::Base.connection.add_index(:migration_guard_records, :version, unique: true) rescue nil
   end
 
   describe "#check" do
@@ -47,6 +54,7 @@ RSpec.describe MigrationGuard::Recovery::VersionConflictChecker do
 
     context "when duplicate versions exist" do
       let!(:record1) do
+        # Create first record normally
         MigrationGuard::MigrationGuardRecord.create!(
           version: "20240116000001",
           status: "applied",
@@ -56,12 +64,15 @@ RSpec.describe MigrationGuard::Recovery::VersionConflictChecker do
       end
 
       let!(:record2) do
-        MigrationGuard::MigrationGuardRecord.create!(
-          version: "20240116000001",
-          status: "rolled_back",
-          branch: "feature/test",
-          metadata: { "source" => "duplicate" }
+        # Create duplicate by bypassing validation with direct SQL insert
+        ActiveRecord::Base.connection.execute(
+          ActiveRecord::Base.sanitize_sql([
+            "INSERT INTO migration_guard_records (version, status, branch, metadata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+            "20240116000001", "rolled_back", "feature/test", { "source" => "duplicate" }.to_json, Time.current, Time.current
+          ])
         )
+        # Find the record we just created
+        MigrationGuard::MigrationGuardRecord.where(version: "20240116000001", status: "rolled_back").first
       end
 
       it "detects version conflicts" do
@@ -83,39 +94,23 @@ RSpec.describe MigrationGuard::Recovery::VersionConflictChecker do
 
     context "when multiple versions have conflicts" do
       before do
-        # First conflicted version
-        MigrationGuard::MigrationGuardRecord.create!(
-          version: "20240116000001",
-          status: "applied",
-          branch: "main",
-          metadata: {}
-        )
-        MigrationGuard::MigrationGuardRecord.create!(
-          version: "20240116000001",
-          status: "rolled_back",
-          branch: "feature/test1",
-          metadata: {}
-        )
-
-        # Second conflicted version
-        MigrationGuard::MigrationGuardRecord.create!(
-          version: "20240116000002",
-          status: "applied",
-          branch: "feature/test2",
-          metadata: {}
-        )
-        MigrationGuard::MigrationGuardRecord.create!(
-          version: "20240116000002",
-          status: "rolling_back",
-          branch: "feature/test3",
-          metadata: {}
-        )
-        MigrationGuard::MigrationGuardRecord.create!(
-          version: "20240116000002",
-          status: "applied",
-          branch: "hotfix/urgent",
-          metadata: {}
-        )
+        # Create conflicts using direct SQL to bypass uniqueness validation
+        records_data = [
+          ["20240116000001", "applied", "main", {}],
+          ["20240116000001", "rolled_back", "feature/test1", {}],
+          ["20240116000002", "applied", "feature/test2", {}],
+          ["20240116000002", "rolling_back", "feature/test3", {}],
+          ["20240116000002", "applied", "hotfix/urgent", {}]
+        ]
+        
+        records_data.each do |version, status, branch, metadata|
+          ActiveRecord::Base.connection.execute(
+            ActiveRecord::Base.sanitize_sql([
+              "INSERT INTO migration_guard_records (version, status, branch, metadata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+              version, status, branch, metadata.to_json, Time.current, Time.current
+            ])
+          )
+        end
 
         # Unique version (should not be reported)
         MigrationGuard::MigrationGuardRecord.create!(
@@ -145,20 +140,19 @@ RSpec.describe MigrationGuard::Recovery::VersionConflictChecker do
 
     context "when records have different metadata" do
       before do
-        MigrationGuard::MigrationGuardRecord.create!(
-          version: "20240116000001",
-          status: "applied",
-          branch: "main",
-          created_at: 1.day.ago,
-          metadata: { "migration_time" => "fast" }
+        # Create duplicates with different metadata using direct SQL
+        ActiveRecord::Base.connection.execute(
+          ActiveRecord::Base.sanitize_sql([
+            "INSERT INTO migration_guard_records (version, status, branch, metadata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+            "20240116000001", "applied", "main", { "migration_time" => "fast" }.to_json, 1.day.ago, 1.day.ago
+          ])
         )
 
-        MigrationGuard::MigrationGuardRecord.create!(
-          version: "20240116000001",
-          status: "applied",
-          branch: "feature/duplicate",
-          created_at: 1.hour.ago,
-          metadata: { "migration_time" => "slow" }
+        ActiveRecord::Base.connection.execute(
+          ActiveRecord::Base.sanitize_sql([
+            "INSERT INTO migration_guard_records (version, status, branch, metadata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+            "20240116000001", "applied", "feature/duplicate", { "migration_time" => "slow" }.to_json, 1.hour.ago, 1.hour.ago
+          ])
         )
       end
 
@@ -182,13 +176,13 @@ RSpec.describe MigrationGuard::Recovery::VersionConflictChecker do
 
     context "when checking edge case numbers" do
       it "handles large numbers of duplicates" do
-        # Create 5 duplicate records
+        # Create 5 duplicate records using direct SQL
         5.times do |i|
-          MigrationGuard::MigrationGuardRecord.create!(
-            version: "20240116000001",
-            status: "applied",
-            branch: "branch_#{i}",
-            metadata: { "index" => i }
+          ActiveRecord::Base.connection.execute(
+            ActiveRecord::Base.sanitize_sql([
+              "INSERT INTO migration_guard_records (version, status, branch, metadata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+              "20240116000001", "applied", "branch_#{i}", { "index" => i }.to_json, Time.current, Time.current
+            ])
           )
         end
 
@@ -205,17 +199,19 @@ RSpec.describe MigrationGuard::Recovery::VersionConflictChecker do
 
     context "when records have same version but different casing" do
       before do
-        # Create records - versions should be treated as strings
-        MigrationGuard::MigrationGuardRecord.create!(
-          version: "20240116000001",
-          status: "applied",
-          metadata: {}
+        # Create duplicate records using direct SQL
+        ActiveRecord::Base.connection.execute(
+          ActiveRecord::Base.sanitize_sql([
+            "INSERT INTO migration_guard_records (version, status, branch, metadata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+            "20240116000001", "applied", "main", {}.to_json, Time.current, Time.current
+          ])
         )
 
-        MigrationGuard::MigrationGuardRecord.create!(
-          version: "20240116000001",
-          status: "applied",
-          metadata: {}
+        ActiveRecord::Base.connection.execute(
+          ActiveRecord::Base.sanitize_sql([
+            "INSERT INTO migration_guard_records (version, status, branch, metadata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+            "20240116000001", "applied", "feature", {}.to_json, Time.current, Time.current
+          ])
         )
       end
 
