@@ -169,7 +169,7 @@ RSpec.describe MigrationGuard::MigrationExtension do
           "20240115999999"
         end
 
-        def version
+        def version # rubocop:disable Rails/Delegate
           self.class.version
         end
 
