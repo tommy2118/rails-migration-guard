@@ -1,29 +1,33 @@
 ===============================================================================
 
-Rails Migration Guard has been successfully installed!
+🎉 Rails Migration Guard has been successfully installed!
+
+⏱️  Installation completed in under 2 minutes!
 
 Next steps:
 
-1. Run the migration to create the migration_guard_records table:
+1. 🏃‍♂️ Complete setup (run the migration):
    
    rails db:migrate
 
-2. Review and customize the configuration in:
+2. ⚙️ Review and customize configuration (optional):
    
    config/initializers/migration_guard.rb
 
-3. The following commands are now available:
+3. 🚀 You're ready to go! These commands are now available:
 
    rails db:migration:status         # Show migration status
    rails db:migration:rollback_orphaned  # Roll back orphaned migrations
    rails db:migration:check          # Check for migration issues
 
-4. To track migrations automatically, they will be monitored when you run:
+4. 🔄 Automatic tracking is enabled! Migrations will be monitored when you run:
    
    rails db:migrate
    rails db:rollback
 
-For more information, visit:
-https://github.com/tommy2118/rails-migration-guard
+✅ Rails Migration Guard is now protecting your development environment!
+
+📖 For more information, visit:
+   https://github.com/tommy2118/rails-migration-guard
 
 ===============================================================================

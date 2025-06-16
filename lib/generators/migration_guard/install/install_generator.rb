@@ -12,6 +12,13 @@ module MigrationGuard
 
       desc "Creates a MigrationGuard initializer and migration for your application"
 
+      def check_rails_version
+        return if Rails.version >= "6.1.0"
+
+        say_status :error, "Rails Migration Guard requires Rails 6.1 or higher. Current version: #{Rails.version}", :red
+        raise Thor::Error, "Rails version requirement not met"
+      end
+
       def self.next_migration_number(dirname)
         next_migration_number = current_migration_number(dirname) + 1
         ActiveRecord::Migration.next_migration_number(next_migration_number)

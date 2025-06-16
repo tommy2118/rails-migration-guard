@@ -1,12 +1,15 @@
-require:
+plugins:
   - rubocop-rails
-  - rubocop-rspec
   - rubocop-capybara
   - rubocop-factory_bot
+
+require:
+  - rubocop-rspec
 
 AllCops:
   TargetRubyVersion: 3.0
   NewCops: enable
+  SuggestExtensions: false
   Exclude:
     - 'bin/**/*'
     - 'db/**/*'
