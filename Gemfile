@@ -26,7 +26,11 @@ group :development, :test do
   gem "rubocop-rails", "~> 2.28"
   gem "rubocop-rspec", "~> 3.3"
   gem "simplecov", "~> 0.22"
-  gem "sqlite3", "~> 1.4"
+  if rails_version.to_f >= 8.0
+    gem "sqlite3", "~> 2.1"
+  else
+    gem "sqlite3", "~> 1.4"
+  end
 end
 
 # Suppress Ruby 3.5 deprecation warning

@@ -13,6 +13,12 @@ module MigrationGuard
         if MigrationGuard.enabled? && respond_to?(:version)
           tracker = MigrationGuard::Tracker.new
           tracker.track_migration(version.to_s, direction)
+
+          # Check for orphaned migrations after running up migrations
+          if direction == :up
+            checker = MigrationGuard::PostMigrationChecker.new
+            checker.check_and_warn
+          end
         end
 
         result
@@ -25,6 +31,12 @@ module MigrationGuard
       if MigrationGuard.enabled? && respond_to?(:version)
         tracker = MigrationGuard::Tracker.new
         tracker.track_migration(version.to_s, direction)
+
+        # Check for orphaned migrations after running up migrations
+        if direction == :up
+          checker = MigrationGuard::PostMigrationChecker.new
+          checker.check_and_warn
+        end
       end
 
       result

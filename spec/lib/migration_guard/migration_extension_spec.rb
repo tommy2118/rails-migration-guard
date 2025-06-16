@@ -27,12 +27,14 @@ RSpec.describe MigrationGuard::MigrationExtension do
 
   let(:migration_instance) { test_migration_class.new }
   let(:tracker) { instance_double(MigrationGuard::Tracker, track_migration: nil) }
+  let(:post_migration_checker) { instance_double(MigrationGuard::PostMigrationChecker, check_and_warn: nil) }
 
   before do
     # Ensure the extension is loaded
     test_migration_class.prepend(described_class)
     allow(MigrationGuard).to receive(:enabled?).and_return(true)
     allow(MigrationGuard::Tracker).to receive(:new).and_return(tracker)
+    allow(MigrationGuard::PostMigrationChecker).to receive(:new).and_return(post_migration_checker)
     allow(tracker).to receive(:track_migration)
   end
 
@@ -52,6 +54,16 @@ RSpec.describe MigrationGuard::MigrationExtension do
         # Just verify it doesn't raise an error
         expect { test_migration_class.migrate(:up) }.not_to raise_error
       end
+
+      it "checks for orphaned migrations after running up" do
+        expect(post_migration_checker).to receive(:check_and_warn)
+        test_migration_class.migrate(:up)
+      end
+
+      it "does not check for orphaned migrations after running down" do
+        expect(post_migration_checker).not_to receive(:check_and_warn)
+        test_migration_class.migrate(:down)
+      end
     end
 
     context "when using instance method" do
@@ -62,6 +74,16 @@ RSpec.describe MigrationGuard::MigrationExtension do
 
       it "tracks migration when running down" do
         expect(tracker).to receive(:track_migration).with("20240115123456", :down)
+        migration_instance.migrate(:down)
+      end
+
+      it "checks for orphaned migrations after running up" do
+        expect(post_migration_checker).to receive(:check_and_warn)
+        migration_instance.migrate(:up)
+      end
+
+      it "does not check for orphaned migrations after running down" do
+        expect(post_migration_checker).not_to receive(:check_and_warn)
         migration_instance.migrate(:down)
       end
     end

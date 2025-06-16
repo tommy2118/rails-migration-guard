@@ -53,16 +53,19 @@ RSpec.describe MigrationGuard::Configuration do
     it "has sensible defaults" do
       expect(config.sandbox_mode).to be false
       expect(config.warn_on_switch).to be true
+      expect(config.warn_after_migration).to be true
       expect(config.block_deploy_with_orphans).to be false
     end
 
     it "can be customized" do
       config.sandbox_mode = true
       config.warn_on_switch = false
+      config.warn_after_migration = false
       config.block_deploy_with_orphans = true
 
       expect(config.sandbox_mode).to be true
       expect(config.warn_on_switch).to be false
+      expect(config.warn_after_migration).to be false
       expect(config.block_deploy_with_orphans).to be true
     end
   end
@@ -110,6 +113,7 @@ RSpec.describe MigrationGuard::Configuration do
         track_timestamp: true,
         sandbox_mode: false,
         warn_on_switch: true,
+        warn_after_migration: true,
         block_deploy_with_orphans: false,
         auto_cleanup: false,
         cleanup_after_days: 30,
