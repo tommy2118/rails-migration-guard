@@ -133,7 +133,7 @@ module MigrationGuard
                          "❌ Error running Migration Guard CI check:\n   #{e.message}"
                        end
 
-        Rails.logger.debug error_output
+        puts error_output # rubocop:disable Rails/Output
         MigrationGuard::CiRunner::EXIT_ERROR
       end
       # rubocop:enable Metrics/MethodLength
