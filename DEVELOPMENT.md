@@ -25,18 +25,19 @@ RAILS_VERSION=7.2 bundle exec rspec
 
 ## Running Rake Tasks
 
-The gem's rake tasks are available in the development environment:
+The gem's rake tasks are automatically loaded in Rails applications. In the gem development environment, they need a Rails app context to run properly.
+
+To test rake tasks during development:
+
+1. Create a test Rails app (see [Manual Testing](#manual-testing) section)
+2. Add the gem using local path
+3. Run the rake tasks within that Rails app
 
 ```bash
-# List all available tasks
-bundle exec rake -T
-
-# Run specific tasks
-bundle exec rake db:migration:status
-bundle exec rake db:migration:doctor
+# In a test Rails app with the gem installed
+rails db:migration:status
+rails db:migration:doctor
 ```
-
-Note: When running in the gem development environment, some tasks may report missing tables or database connections. This is expected behavior as the gem development environment doesn't have a full Rails application setup.
 
 ## Testing Against Multiple Rails Versions
 
