@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "migration_guard/rake_tasks"
+require "rails_migration_guard"
 
 namespace :db do
   namespace :migration do
