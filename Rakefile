@@ -46,8 +46,8 @@ begin
       database: ":memory:"
     )
 
-    # Load migration guard
-    require_relative "lib/rails_migration_guard"
+    # Don't load migration guard here - let the rake tasks load it
+    # This prevents model loading issues in test environment
   end
   # rubocop:enable Rails/RakeEnvironment
 
