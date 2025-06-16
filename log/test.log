@@ -397,3 +397,105 @@ Git command not found
 [2025-06-16 04:14:51.238] INFO MigrationGuard -- Found orphaned migrations -- count: 2
 [2025-06-16 04:14:51.239] INFO MigrationGuard -- Found missing migrations -- count: 1
 [2025-06-16 04:14:51.241] INFO MigrationGuard -- Found orphaned migrations -- count: 1
+[2025-06-16 04:19:21.677] INFO MigrationGuard -- Found orphaned migrations -- count: 1
+[2025-06-16 04:19:21.677] INFO MigrationGuard -- Found missing migrations -- count: 1
+[2025-06-16 04:19:21.681] INFO MigrationGuard -- Found missing migrations -- count: 1
+[2025-06-16 04:19:21.682] INFO MigrationGuard -- Found orphaned migrations -- count: 1
+[2025-06-16 04:19:21.684] INFO MigrationGuard -- Found missing migrations -- count: 1
+[2025-06-16 04:19:21.689] INFO MigrationGuard -- Found orphaned migrations -- count: 1
+[2025-06-16 04:19:21.690] INFO MigrationGuard -- Found orphaned migrations -- count: 1
+[2025-06-16 04:19:21.691] INFO MigrationGuard -- Found orphaned migrations -- count: 2
+[2025-06-16 04:19:21.695] INFO MigrationGuard -- Found missing migrations -- count: 2
+Orphaned migrations detected on branch switch
+Orphaned migrations detected on branch switch
+Orphaned migrations detected on branch switch
+[2025-06-16 04:19:21.862] INFO MigrationGuard -- No main branch found -- branches_tried: main, master
+[2025-06-16 04:19:21.892] INFO MigrationGuard -- Failed to determine current branch -- output: fatal: not a git repository
+
+Git command not found
+[2025-06-16 04:19:21.951] INFO MigrationGuard -- Displaying post-migration warnings -- count: 2
+[2025-06-16 04:19:21.952] INFO MigrationGuard -- Displaying post-migration warnings -- count: 2
+[2025-06-16 04:19:21.952] INFO MigrationGuard -- Displaying post-migration warnings -- count: 2
+[2025-06-16 04:19:21.952] INFO MigrationGuard -- Displaying post-migration warnings -- count: 2
+[2025-06-16 04:19:21.953] INFO MigrationGuard -- Displaying post-migration warnings -- count: 2
+[2025-06-16 04:19:21.960] INFO MigrationGuard -- Cleaned up old migration records -- count: 1
+[2025-06-16 04:19:21.961] INFO MigrationGuard -- Cleaned up old migration records -- count: 1
+[2025-06-16 04:19:21.964] INFO MigrationGuard -- Cleaned up old migration records -- count: 1
+[MigrationGuard] Running migration 20240115123456 in sandbox mode...
+[MigrationGuard] Running migration 20240115123456 in sandbox mode...
+[MigrationGuard] Migration would succeed. Rolling back sandbox...
+[MigrationGuard] Running migration 20240115123456 in sandbox mode...
+[MigrationGuard] Running migration 20240115123456 in sandbox mode...
+[MigrationGuard] Migration would succeed. Rolling back sandbox...
+[2025-06-16 04:19:22.166] INFO MigrationGuard -- Successfully tracked migration -- version: 20240115999999, status: applied
+[2025-06-16 04:19:22.190] INFO MigrationGuard -- Successfully tracked migration -- version: 20240115999999, status: rolled_back
+[2025-06-16 04:19:22.212] INFO MigrationGuard -- Successfully tracked migration -- version: 20240115999999, status: rolled_back
+[2025-06-16 04:19:22.233] INFO MigrationGuard -- Successfully tracked migration -- version: 20240115999999, status: rolled_back
+[2025-06-16 04:19:22.255] INFO MigrationGuard -- Successfully tracked migration -- version: 20240115999999, status: rolled_back
+[2025-06-16 04:19:22.275] INFO MigrationGuard -- Found missing migrations -- count: 1
+[2025-06-16 04:19:22.279] INFO MigrationGuard -- Found orphaned migrations -- count: 1
+[2025-06-16 04:19:22.288] INFO MigrationGuard -- Found orphaned migrations -- count: 1
+[2025-06-16 04:19:22.295] INFO MigrationGuard -- Found orphaned migrations -- count: 2
+[2025-06-16 04:19:22.298] INFO MigrationGuard -- Found orphaned migrations -- count: 2
+[2025-06-16 04:19:22.346] INFO MigrationGuard -- Migration already rolled back -- version: 20240102000002
+[2025-06-16 04:19:22.347] INFO MigrationGuard -- Migration already rolled back -- version: 20240102000002
+[2025-06-16 04:19:22.360] INFO MigrationGuard -- Found missing migrations in branches -- branches: ["main", "develop"]
+[2025-06-16 04:19:22.362] INFO MigrationGuard -- Found missing migrations in branches -- branches: ["develop", "staging"]
+[2025-06-16 04:19:22.362] INFO MigrationGuard -- Found missing migrations in branches -- branches: ["main", "develop", "staging"]
+[2025-06-16 04:19:22.365] INFO MigrationGuard -- Found missing migrations in branches -- branches: ["main", "develop"]
+[2025-06-16 04:19:22.365] INFO MigrationGuard -- Found orphaned migrations -- count: 1
+[2025-06-16 04:19:22.367] INFO MigrationGuard -- Found missing migrations in branches -- branches: ["main", "develop"]
+[2025-06-16 04:19:22.369] INFO MigrationGuard -- Found orphaned migrations -- count: 1
+[2025-06-16 04:19:22.371] INFO MigrationGuard -- Found orphaned migrations -- count: 1
+[2025-06-16 04:19:50.506] INFO MigrationGuard -- Migration already rolled back -- version: 20240102000002
+[2025-06-16 04:19:50.507] INFO MigrationGuard -- Migration already rolled back -- version: 20240102000002
+[2025-06-16 04:20:11.950] INFO MigrationGuard -- Migration already rolled back -- version: 20240102000002
+[2025-06-16 04:20:11.951] INFO MigrationGuard -- Migration already rolled back -- version: 20240102000002
+Orphaned migrations detected on branch switch
+Orphaned migrations detected on branch switch
+Orphaned migrations detected on branch switch
+[2025-06-16 04:20:12.024] INFO MigrationGuard -- Found orphaned migrations -- count: 1
+[2025-06-16 04:20:12.026] INFO MigrationGuard -- Found orphaned migrations -- count: 2
+[2025-06-16 04:20:12.028] INFO MigrationGuard -- Found orphaned migrations -- count: 2
+[2025-06-16 04:20:12.030] INFO MigrationGuard -- Found missing migrations -- count: 1
+[2025-06-16 04:20:12.032] INFO MigrationGuard -- Found orphaned migrations -- count: 1
+[2025-06-16 04:20:12.039] INFO MigrationGuard -- Found missing migrations in branches -- branches: ["main", "develop"]
+[2025-06-16 04:20:12.042] INFO MigrationGuard -- Found orphaned migrations -- count: 1
+[2025-06-16 04:20:12.042] INFO MigrationGuard -- Found missing migrations in branches -- branches: ["main", "develop"]
+[2025-06-16 04:20:12.045] INFO MigrationGuard -- Found missing migrations in branches -- branches: ["develop", "staging"]
+[2025-06-16 04:20:12.045] INFO MigrationGuard -- Found missing migrations in branches -- branches: ["main", "develop", "staging"]
+[2025-06-16 04:20:12.046] INFO MigrationGuard -- Found missing migrations in branches -- branches: ["main", "develop"]
+[2025-06-16 04:20:12.047] INFO MigrationGuard -- Found orphaned migrations -- count: 1
+[2025-06-16 04:20:12.049] INFO MigrationGuard -- Found orphaned migrations -- count: 1
+[2025-06-16 04:20:12.068] INFO MigrationGuard -- Found missing migrations -- count: 2
+[2025-06-16 04:20:12.069] INFO MigrationGuard -- Found orphaned migrations -- count: 1
+[2025-06-16 04:20:12.069] INFO MigrationGuard -- Found missing migrations -- count: 1
+[2025-06-16 04:20:12.070] INFO MigrationGuard -- Found missing migrations -- count: 1
+[2025-06-16 04:20:12.073] INFO MigrationGuard -- Found orphaned migrations -- count: 1
+[2025-06-16 04:20:12.074] INFO MigrationGuard -- Found orphaned migrations -- count: 2
+[2025-06-16 04:20:12.075] INFO MigrationGuard -- Found missing migrations -- count: 1
+[2025-06-16 04:20:12.076] INFO MigrationGuard -- Found orphaned migrations -- count: 1
+[2025-06-16 04:20:12.078] INFO MigrationGuard -- Found orphaned migrations -- count: 1
+[2025-06-16 04:20:12.082] INFO MigrationGuard -- Cleaned up old migration records -- count: 1
+[2025-06-16 04:20:12.084] INFO MigrationGuard -- Cleaned up old migration records -- count: 1
+[2025-06-16 04:20:12.085] INFO MigrationGuard -- Cleaned up old migration records -- count: 1
+[2025-06-16 04:20:12.201] INFO MigrationGuard -- Failed to determine current branch -- output: fatal: not a git repository
+
+Git command not found
+[2025-06-16 04:20:12.243] INFO MigrationGuard -- No main branch found -- branches_tried: main, master
+[MigrationGuard] Running migration 20240115123456 in sandbox mode...
+[MigrationGuard] Running migration 20240115123456 in sandbox mode...
+[MigrationGuard] Migration would succeed. Rolling back sandbox...
+[MigrationGuard] Running migration 20240115123456 in sandbox mode...
+[MigrationGuard] Running migration 20240115123456 in sandbox mode...
+[MigrationGuard] Migration would succeed. Rolling back sandbox...
+[2025-06-16 04:20:12.364] INFO MigrationGuard -- Successfully tracked migration -- version: 20240115999999, status: applied
+[2025-06-16 04:20:12.379] INFO MigrationGuard -- Successfully tracked migration -- version: 20240115999999, status: rolled_back
+[2025-06-16 04:20:12.393] INFO MigrationGuard -- Successfully tracked migration -- version: 20240115999999, status: rolled_back
+[2025-06-16 04:20:12.406] INFO MigrationGuard -- Successfully tracked migration -- version: 20240115999999, status: rolled_back
+[2025-06-16 04:20:12.420] INFO MigrationGuard -- Successfully tracked migration -- version: 20240115999999, status: rolled_back
+[2025-06-16 04:20:12.431] INFO MigrationGuard -- Displaying post-migration warnings -- count: 2
+[2025-06-16 04:20:12.431] INFO MigrationGuard -- Displaying post-migration warnings -- count: 2
+[2025-06-16 04:20:12.432] INFO MigrationGuard -- Displaying post-migration warnings -- count: 2
+[2025-06-16 04:20:12.432] INFO MigrationGuard -- Displaying post-migration warnings -- count: 2
+[2025-06-16 04:20:12.432] INFO MigrationGuard -- Displaying post-migration warnings -- count: 2

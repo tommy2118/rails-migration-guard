@@ -4,10 +4,10 @@ require "rails_helper"
 
 # Helper methods for mocking migration rollback
 module RollbackSpecHelpers
-  def setup_migration_context_mocks(versions = [20240102000002, 20240103000003])
+  def setup_migration_context_mocks(versions = [20_240_102_000_002, 20_240_103_000_003])
     @mock_context = instance_double(ActiveRecord::MigrationContext)
     @mock_migrations = {}
-    
+
     # Create mock migrations for each version
     versions.each do |version|
       mock_migration = instance_double(ActiveRecord::Migration)
@@ -15,27 +15,26 @@ module RollbackSpecHelpers
       allow(mock_migration).to receive(:migrate)
       @mock_migrations[version] = mock_migration
     end
-    
+
     if defined?(Rails) && Rails.respond_to?(:application)
-      allow(Rails.application.config).to receive(:paths).and_return({"db/migrate" => ["db/migrate"]})
+      allow(Rails.application.config).to receive(:paths).and_return({ "db/migrate" => ["db/migrate"] })
     end
     allow(ActiveRecord::MigrationContext).to receive(:new).and_return(@mock_context)
-    allow(@mock_context).to receive(:get_all_versions).and_return(versions)
-    allow(@mock_context).to receive(:migrations).and_return(@mock_migrations.values)
+    allow(@mock_context).to receive_messages(get_all_versions: versions, migrations: @mock_migrations.values)
   end
-  
+
   def expect_migration_rollback(version)
     version_int = version.to_i
     migration = @mock_migrations[version_int]
     expect(migration).to have_received(:migrate).with(:down) if migration
   end
-  
+
   def expect_no_migration_rollback
-    @mock_migrations.values.each do |migration|
+    @mock_migrations.each_value do |migration|
       expect(migration).not_to have_received(:migrate)
     end
   end
-  
+
   def simulate_rollback_error(error_message = "Migration error", version = nil)
     if version
       migration = @mock_migrations[version.to_i]
@@ -46,7 +45,7 @@ module RollbackSpecHelpers
       end
     end
   end
-  
+
   def simulate_missing_migration(version)
     version_int = version.to_i
     # Remove the migration from the context but keep it in applied versions
@@ -57,7 +56,7 @@ end
 
 RSpec.describe MigrationGuard::Rollbacker do
   include RollbackSpecHelpers
-  
+
   before do
     # Disable colorization for testing
     allow(MigrationGuard::Colorizer).to receive(:colorize_output?).and_return(false)
@@ -322,7 +321,7 @@ RSpec.describe MigrationGuard::Rollbacker do
       before do
         allow(rollbacker).to receive(:gets).and_return("y\n")
         setup_migration_context_mocks
-        simulate_missing_migration(20240103000003)
+        simulate_missing_migration(20_240_103_000_003)
       end
 
       it "continues with other migrations" do
