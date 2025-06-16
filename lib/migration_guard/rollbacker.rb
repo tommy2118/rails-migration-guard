@@ -3,6 +3,7 @@
 require_relative "colorizer"
 
 module MigrationGuard
+  # rubocop:disable Metrics/ClassLength
   class Rollbacker
     def initialize(interactive: true)
       @interactive = interactive
@@ -215,4 +216,5 @@ module MigrationGuard
       end
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end

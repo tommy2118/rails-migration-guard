@@ -4,6 +4,7 @@ require "rails_helper"
 
 # Helper methods for mocking migration rollback
 module RollbackSpecHelpers
+  # rubocop:disable Metrics/AbcSize
   def setup_migration_context_mocks(versions = [20_240_102_000_002, 20_240_103_000_003])
     @mock_context = instance_double(ActiveRecord::MigrationContext)
     @mock_migrations = {}
@@ -22,6 +23,7 @@ module RollbackSpecHelpers
     allow(ActiveRecord::MigrationContext).to receive(:new).and_return(@mock_context)
     allow(@mock_context).to receive_messages(get_all_versions: versions, migrations: @mock_migrations.values)
   end
+  # rubocop:enable Metrics/AbcSize
 
   def expect_migration_rollback(version)
     version_int = version.to_i
