@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module MigrationGuard
-  module RakeTasks
+  module RakeTasks # rubocop:disable Metrics/ModuleLength
     class << self
       def check_enabled
         return true if MigrationGuard.enabled?
@@ -88,7 +88,55 @@ module MigrationGuard
         Rails.logger.info author_reporter.format_authors_report
       end
 
+      def recover
+        return unless check_enabled
+
+        analyzer = MigrationGuard::RecoveryAnalyzer.new
+        issues = analyzer.analyze
+
+        if issues.empty?
+          Rails.logger.info analyzer.format_analysis_report
+          return
+        end
+
+        Rails.logger.info analyzer.format_analysis_report
+        Rails.logger.info "\n"
+
+        executor = create_recovery_executor
+        process_recovery_issues(issues, executor)
+        log_recovery_completion(executor)
+      end
+
       private
+
+      def create_recovery_executor
+        if ENV["AUTO"] == "true"
+          Rails.logger.info Colorizer.info("Running in automatic mode...")
+          MigrationGuard::RecoveryExecutor.new(interactive: false)
+        else
+          Rails.logger.info Colorizer.info("Running in interactive mode...")
+          Rails.logger.info "Use AUTO=true to automatically apply first recovery option for each issue"
+          MigrationGuard::RecoveryExecutor.new(interactive: true)
+        end
+      end
+
+      def process_recovery_issues(issues, executor)
+        issues.each do |issue|
+          Rails.logger.info "\n#{Colorizer.info("Processing: #{issue[:type].to_s.humanize}")}"
+          success = executor.execute_recovery(issue)
+
+          if success
+            Rails.logger.info Colorizer.success("✓ Issue resolved")
+          else
+            Rails.logger.info Colorizer.warning("⚠ Issue not resolved - manual intervention may be required")
+          end
+        end
+      end
+
+      def log_recovery_completion(executor)
+        Rails.logger.info "\n#{Colorizer.info('Recovery process completed.')}"
+        Rails.logger.info "Backup saved at: #{executor.backup_path}" if executor.backup_path
+      end
 
       def check_git_integration
         git_integration = MigrationGuard::GitIntegration.new

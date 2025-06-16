@@ -66,7 +66,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Complete API reference with code examples and usage patterns
   - Installation guides and troubleshooting resources
   - Multi-page navigation with clean Jekyll structure
-- Rails 8.0 compatibility documentation and testing
+- **Rails 8.2 Compatibility**:
+  - Full support for Rails 8.2
+  - Updated CI matrix to test against Rails 8.0 and 8.2
+  - Fixed deprecated `connection_config` method (now using `connection_db_config`)
+  - Added Rails 8 compatibility test suite
+  - Updated dependencies for Rails 8.x support
 - Debug logging enhancements with visible output options
 - Initial release of Rails Migration Guard
 - Core migration tracking functionality
