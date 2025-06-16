@@ -2,18 +2,60 @@
 
 require "rails_helper"
 
-# Mock ActiveRecord::Migration for testing
-unless defined?(ActiveRecord::Migration.execute_down)
-  module ActiveRecord
-    class Migration
-      def self.execute_down(version)
-        # Mock implementation
+# Helper methods for mocking migration rollback
+module RollbackSpecHelpers
+  def setup_migration_context_mocks(versions = [20240102000002, 20240103000003])
+    @mock_context = instance_double(ActiveRecord::MigrationContext)
+    @mock_migrations = {}
+    
+    # Create mock migrations for each version
+    versions.each do |version|
+      mock_migration = instance_double(ActiveRecord::Migration)
+      allow(mock_migration).to receive(:version).and_return(version)
+      allow(mock_migration).to receive(:migrate)
+      @mock_migrations[version] = mock_migration
+    end
+    
+    allow(Rails.application.config).to receive(:paths).and_return({"db/migrate" => ["db/migrate"]})
+    allow(ActiveRecord::MigrationContext).to receive(:new).and_return(@mock_context)
+    allow(@mock_context).to receive(:get_all_versions).and_return(versions)
+    allow(@mock_context).to receive(:migrations).and_return(@mock_migrations.values)
+  end
+  
+  def expect_migration_rollback(version)
+    version_int = version.to_i
+    migration = @mock_migrations[version_int]
+    expect(migration).to have_received(:migrate).with(:down) if migration
+  end
+  
+  def expect_no_migration_rollback
+    @mock_migrations.values.each do |migration|
+      expect(migration).not_to have_received(:migrate)
+    end
+  end
+  
+  def simulate_rollback_error(error_message = "Migration error", version = nil)
+    if version
+      migration = @mock_migrations[version.to_i]
+      allow(migration).to receive(:migrate).and_raise(StandardError, error_message) if migration
+    else
+      @mock_migrations.values.first&.tap do |migration|
+        allow(migration).to receive(:migrate).and_raise(StandardError, error_message)
       end
     end
+  end
+  
+  def simulate_missing_migration(version)
+    version_int = version.to_i
+    # Remove the migration from the context but keep it in applied versions
+    @mock_migrations.delete(version_int)
+    allow(@mock_context).to receive(:migrations).and_return(@mock_migrations.values)
   end
 end
 
 RSpec.describe MigrationGuard::Rollbacker do
+  include RollbackSpecHelpers
+  
   before do
     # Disable colorization for testing
     allow(MigrationGuard::Colorizer).to receive(:colorize_output?).and_return(false)
@@ -52,13 +94,13 @@ RSpec.describe MigrationGuard::Rollbacker do
       context "when user confirms rollback" do
         before do
           allow(rollbacker).to receive(:gets).and_return("y\n")
-          allow(ActiveRecord::Migration).to receive(:execute_down)
+          setup_migration_context_mocks
         end
 
         it "rolls back the migration" do
           rollbacker.rollback_orphaned
 
-          expect(ActiveRecord::Migration).to have_received(:execute_down).with("20240102000002")
+          expect_migration_rollback("20240102000002")
         end
 
         it "updates the migration record status" do
@@ -85,13 +127,13 @@ RSpec.describe MigrationGuard::Rollbacker do
       context "when user declines rollback" do
         before do
           allow(rollbacker).to receive(:gets).and_return("n\n")
-          allow(ActiveRecord::Migration).to receive(:execute_down)
+          setup_migration_context_mocks
         end
 
         it "does not roll back the migration" do
           rollbacker.rollback_orphaned
 
-          expect(ActiveRecord::Migration).not_to have_received(:execute_down)
+          expect_no_migration_rollback
         end
 
         it "displays cancellation message" do
@@ -104,7 +146,8 @@ RSpec.describe MigrationGuard::Rollbacker do
       context "when rollback fails" do
         before do
           allow(rollbacker).to receive(:gets).and_return("y\n")
-          allow(ActiveRecord::Migration).to receive(:execute_down).and_raise(StandardError, "Migration error")
+          setup_migration_context_mocks
+          simulate_rollback_error("Migration error")
         end
 
         it "raises RollbackError" do
@@ -141,14 +184,14 @@ RSpec.describe MigrationGuard::Rollbacker do
 
       before do
         orphaned_migration
-        allow(ActiveRecord::Migration).to receive(:execute_down)
+        setup_migration_context_mocks
         allow(rollbacker).to receive(:gets)
       end
 
       it "rolls back without confirmation" do
         rollbacker.rollback_orphaned
 
-        expect(ActiveRecord::Migration).to have_received(:execute_down).with("20240102000002")
+        expect_migration_rollback("20240102000002")
         expect(rollbacker).not_to have_received(:gets)
       end
     end
@@ -165,13 +208,13 @@ RSpec.describe MigrationGuard::Rollbacker do
       end
 
       before do
-        allow(ActiveRecord::Migration).to receive(:execute_down)
+        setup_migration_context_mocks
       end
 
       it "rolls back the specific migration" do
         rollbacker.rollback_specific("20240102000002")
 
-        expect(ActiveRecord::Migration).to have_received(:execute_down).with("20240102000002")
+        expect_migration_rollback("20240102000002")
       end
 
       it "updates the migration status" do
@@ -213,11 +256,11 @@ RSpec.describe MigrationGuard::Rollbacker do
       end
 
       it "does not execute rollback" do
-        allow(ActiveRecord::Migration).to receive(:execute_down)
+        setup_migration_context_mocks
 
         rollbacker.rollback_specific("20240102000002")
 
-        expect(ActiveRecord::Migration).not_to have_received(:execute_down)
+        expect_no_migration_rollback
       end
     end
   end
@@ -241,14 +284,14 @@ RSpec.describe MigrationGuard::Rollbacker do
     context "when user confirms" do
       before do
         allow(rollbacker).to receive(:gets).and_return("y\n")
-        allow(ActiveRecord::Migration).to receive(:execute_down)
+        setup_migration_context_mocks
       end
 
       it "rolls back all orphaned migrations" do
         rollbacker.rollback_all_orphaned
 
-        expect(ActiveRecord::Migration).to have_received(:execute_down).with("20240102000002")
-        expect(ActiveRecord::Migration).to have_received(:execute_down).with("20240103000003")
+        expect_migration_rollback("20240102000002")
+        expect_migration_rollback("20240103000003")
       end
 
       it "updates all migration statuses" do
@@ -276,15 +319,14 @@ RSpec.describe MigrationGuard::Rollbacker do
     context "when one rollback fails" do
       before do
         allow(rollbacker).to receive(:gets).and_return("y\n")
-        allow(ActiveRecord::Migration).to receive(:execute_down).with("20240102000002")
-        allow(ActiveRecord::Migration).to receive(:execute_down).with("20240103000003")
-                                                                .and_raise(StandardError, "Migration error")
+        setup_migration_context_mocks
+        simulate_missing_migration(20240103000003)
       end
 
       it "continues with other migrations" do
         rollbacker.rollback_all_orphaned
 
-        expect(ActiveRecord::Migration).to have_received(:execute_down).with("20240102000002")
+        expect_migration_rollback("20240102000002")
       end
 
       it "reports partial success" do
@@ -293,7 +335,7 @@ RSpec.describe MigrationGuard::Rollbacker do
         output = io.string
         aggregate_failures do
           expect(output).to include("Failed to roll back 20240103000003:")
-          expect(output).to include("Migration error")
+          expect(output).to include("Migration file for version 20240103000003 not found")
           expect(output).to include("Rolled back 1 migration(s) with 1 failure(s)")
         end
       end

@@ -18,7 +18,9 @@
       "Bash(git push:*)",
       "Bash(gh pr view:*)",
       "Bash(gh run view:*)",
-      "Bash(gh pr checks:*)"
+      "Bash(gh pr checks:*)",
+      "WebFetch(domain:api.rubyonrails.org)",
+      "Bash(gh issue close:*)"
     ],
     "deny": []
   }

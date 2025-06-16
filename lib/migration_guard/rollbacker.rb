@@ -70,8 +70,33 @@ module MigrationGuard
     end
 
     def execute_migration_rollback(migration)
-      ActiveRecord::Migration.execute_down(migration.version)
+      version = migration.version.to_i
+
+      # Get migrations path
+      migrations_paths = Rails.application.config.paths["db/migrate"].to_a
+
+      # Create migration context
+      context = ActiveRecord::MigrationContext.new(migrations_paths)
+
+      # Check if migration is currently applied
+      applied_versions = context.get_all_versions
+      unless applied_versions.include?(version)
+        raise RollbackError, "Migration #{migration.version} is not currently applied"
+      end
+
+      # Find the migration and run its down method
+      target_migration = context.migrations.find { |m| m.version == version }
+      if target_migration
+        target_migration.migrate(:down) if target_migration.respond_to?(:migrate)
+      else
+        raise RollbackError, "Migration file for version #{migration.version} not found"
+      end
+
       MigrationGuard::Logger.debug("Down migration executed successfully", version: migration.version)
+    rescue RollbackError
+      raise
+    rescue StandardError => e
+      raise RollbackError, "Failed to execute down migration for #{migration.version}: #{e.message}"
     end
 
     def update_migration_status(migration)
