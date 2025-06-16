@@ -61,5 +61,8 @@ RSpec.configure do |config|
     if ActiveRecord::Base.connection.table_exists?(:schema_migrations)
       ActiveRecord::Base.connection.execute("DELETE FROM schema_migrations")
     end
+
+    # Reset logger instance
+    MigrationGuard::Logger.instance_variable_set(:@logger, nil)
   end
 end

@@ -33,4 +33,11 @@ MigrationGuard.configure do |config|
   # instead of just the main branch. This is useful for teams that use
   # multiple long-lived branches (e.g., develop, staging, production)
   # config.target_branches = %w[main develop staging]
+  
+  # Logging configuration
+  # config.log_level = :info  # :debug, :info, :warn, :error, :fatal
+  # config.logger = Rails.logger  # or Logger.new('log/migration_guard.log')
+  
+  # Enable debug logging via environment variable
+  # ENV['MIGRATION_GUARD_DEBUG'] = 'true'
 end

@@ -8,12 +8,19 @@ module MigrationGuard
       @interactive = interactive
       @git_integration = GitIntegration.new
       @reporter = Reporter.new
+      MigrationGuard::Logger.debug("Initialized Rollbacker", interactive: interactive)
     end
 
     def rollback_orphaned
+      MigrationGuard::Logger.info("Starting rollback of orphaned migrations")
       orphaned = @reporter.orphaned_migrations
-      return display_no_orphaned_migrations if orphaned.empty?
 
+      if orphaned.empty?
+        MigrationGuard::Logger.debug("No orphaned migrations found")
+        return display_no_orphaned_migrations
+      end
+
+      MigrationGuard::Logger.debug("Found orphaned migrations", count: orphaned.size)
       display_orphaned_list(orphaned)
       return unless confirm_rollback?("Do you want to roll back these migrations? (y/n): ")
 
@@ -22,11 +29,16 @@ module MigrationGuard
     end
 
     def rollback_specific(version)
+      MigrationGuard::Logger.info("Starting rollback of specific migration", version: version)
       migration = MigrationGuardRecord.find_by(version: version)
 
-      raise MigrationNotFoundError, "Migration #{version} not found" unless migration
+      unless migration
+        MigrationGuard::Logger.error("Migration not found", version: version)
+        raise MigrationNotFoundError, "Migration #{version} not found"
+      end
 
       if migration.rolled_back?
+        MigrationGuard::Logger.warn("Migration already rolled back", version: version)
         output_message Colorizer.warning("Migration #{version} is already rolled back.")
         return
       end
@@ -49,15 +61,27 @@ module MigrationGuard
 
     def rollback_migration(migration)
       output_message Colorizer.info("Rolling back #{migration.version}...")
-      begin
-        # Execute the down migration
-        ActiveRecord::Migration.execute_down(migration.version)
+      MigrationGuard::Logger.debug("Executing rollback", version: migration.version)
 
-        # Update the record status
-        migration.update!(status: "rolled_back")
-      rescue StandardError => e
-        raise RollbackError, "Failed to roll back migration #{migration.version}: #{e.message}"
-      end
+      execute_migration_rollback(migration)
+      update_migration_status(migration)
+    rescue StandardError => e
+      handle_rollback_error(migration, e)
+    end
+
+    def execute_migration_rollback(migration)
+      ActiveRecord::Migration.execute_down(migration.version)
+      MigrationGuard::Logger.debug("Down migration executed successfully", version: migration.version)
+    end
+
+    def update_migration_status(migration)
+      migration.update!(status: "rolled_back")
+      MigrationGuard::Logger.info("Migration rolled back successfully", version: migration.version)
+    end
+
+    def handle_rollback_error(migration, error)
+      MigrationGuard::Logger.error("Rollback failed", version: migration.version, error: error.message)
+      raise RollbackError, "Failed to roll back migration #{migration.version}: #{error.message}"
     end
 
     def pluralize_migration(count)
