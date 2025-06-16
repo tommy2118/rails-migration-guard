@@ -375,6 +375,25 @@ Pin action versions:
 - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608  # v4.1.0
 ```
 
+### Minimum Permissions
+
+The following permissions are required for different features:
+
+```yaml
+permissions:
+  contents: read        # Required: Read repository code
+  pull-requests: write  # Required only if comment-on-pr is true
+  issues: write        # Optional: Only if creating issues
+  actions: read        # Optional: For workflow status checks
+```
+
+For read-only operations (no PR comments):
+
+```yaml
+permissions:
+  contents: read
+```
+
 ## Migration to GitHub Actions
 
 From other CI systems:
