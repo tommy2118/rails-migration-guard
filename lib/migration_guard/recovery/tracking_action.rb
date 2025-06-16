@@ -77,16 +77,25 @@ module MigrationGuard
         others = records.where.not(id: keeper.id)
 
         metadata = build_consolidated_metadata(records)
-        keeper.update!(metadata: metadata)
+
+        # Skip validation to allow updating duplicate version records
+        keeper.metadata = metadata
+        keeper.save!(validate: false)
+
         others.destroy_all
       end
 
       def build_consolidated_metadata(records)
         merged_metadata = {}
         records.each { |r| merged_metadata.merge!(r.metadata || {}) }
+
+        # Track which records were consolidated
+        consolidated_from = records.map { |r| { "id" => r.id, "branch" => r.branch } }
+
         merged_metadata.merge(
           "consolidated_at" => Time.current.iso8601,
-          "consolidated_from_count" => records.count.to_s
+          "consolidated_from_count" => records.count.to_s,
+          "consolidated_from" => consolidated_from
         )
       end
 

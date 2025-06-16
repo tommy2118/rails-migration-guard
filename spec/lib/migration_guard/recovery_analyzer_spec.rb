@@ -235,7 +235,7 @@ RSpec.describe MigrationGuard::RecoveryAnalyzer do
           expect(report).to include("Partial rollback")
           expect(report).to include("20240101000001")
           expect(report).to include("stuck in rollback state")
-          expect(report).to include("Severity: HIGH")
+          expect(report).to include("   Severity: HIGH")
           expect(report).to include("Recovery options:")
           expect(report).to include("rails db:migration:recover")
         end

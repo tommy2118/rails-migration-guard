@@ -39,7 +39,7 @@ RSpec.describe MigrationGuard::PostMigrationChecker do
         end
 
         it "shows the correct count" do
-          expect { checker.check_and_warn }.to output(/2 migrations that are not in the main branch/).to_stderr
+          expect { checker.check_and_warn }.to output(/You have 2 migrations that are not in the main branch/).to_stderr
         end
 
         it "provides suggestions" do

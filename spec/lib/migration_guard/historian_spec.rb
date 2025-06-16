@@ -176,7 +176,7 @@ RSpec.describe MigrationGuard::Historian do
         output = historian.format_history_output
         expect(output).to include("📊 Summary:")
         expect(output).to include("Total records: 1")
-        expect(output).to include("Applied: 1")
+        expect(output).to include("  Applied: 1")
       end
 
       it "shows no records message when empty" do

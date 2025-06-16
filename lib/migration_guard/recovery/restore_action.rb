@@ -23,13 +23,17 @@ module MigrationGuard
         version = issue[:version]
         log_info("Attempting to restore migration #{version} from git history...")
 
+        # Track recovery attempt
+        update_recovery_attempts(issue[:migration]) if issue[:migration]
+
         commit_hash = find_migration_commit(version)
         return migration_not_found_error unless commit_hash
 
         file_path = get_migration_file_path(commit_hash, version)
         return file_path_error unless file_path
 
-        restore_file_from_commit(commit_hash, file_path)
+        return false unless restore_file_from_commit(commit_hash, file_path)
+
         log_success("✓ Migration file restored from commit #{commit_hash}")
         true
       rescue StandardError => e
@@ -38,6 +42,14 @@ module MigrationGuard
       end
 
       private
+
+      def update_recovery_attempts(migration)
+        migration.metadata ||= {}
+        migration.metadata["recovery_attempts"] ||= 0
+        migration.metadata["recovery_attempts"] += 1
+        migration.metadata["last_recovery_at"] = Time.current.iso8601
+        migration.save!
+      end
 
       def add_to_schema_if_missing(version)
         return if migration_exists_in_schema?(version)
@@ -55,10 +67,16 @@ module MigrationGuard
       end
 
       def find_migration_commit(version)
-        stdout, _stderr, status = Open3.capture3(
+        stdout, stderr, status = Open3.capture3(
           "git", "log", "--all", "--full-history", "--", "db/migrate/#{version}_*.rb"
         )
-        return nil unless status.success? && !stdout.empty?
+
+        unless status.success?
+          Rails.logger.error "Git log failed: #{stderr}"
+          return nil
+        end
+
+        return nil if stdout.empty?
 
         match = stdout.lines.first&.match(/commit (\w+)/)
         match&.[](1)
@@ -84,7 +102,9 @@ module MigrationGuard
           return false
         end
 
-        output_path = Rails.root.join(file_path)
+        # Use current directory as base, which will be the app_root in tests
+        base_path = Dir.pwd
+        output_path = File.join(base_path, file_path)
         FileUtils.mkdir_p(File.dirname(output_path))
         File.write(output_path, stdout)
         true

@@ -3,6 +3,7 @@
 module MigrationGuard
   module Recovery
     # Manages database backups for recovery operations
+    # rubocop:disable Metrics/ClassLength
     class BackupManager
       attr_reader :backup_path
 
@@ -54,6 +55,41 @@ module MigrationGuard
         return false unless @backup_path
 
         File.exist?(@backup_path)
+      end
+
+      def verify_backup(backup_file = nil)
+        file_to_check = backup_file || @backup_path
+        return false unless file_to_check && File.exist?(file_to_check)
+
+        # Basic verification - check file is not empty
+        File.size(file_to_check).positive?
+      end
+
+      def cleanup_old_backups(keep_days: 7) # rubocop:disable Naming/PredicateMethod
+        backup_dir = Rails.root.join("db/backups")
+        return true unless Dir.exist?(backup_dir)
+
+        cutoff_time = keep_days.days.ago
+        Dir.glob(File.join(backup_dir, "*.sql")).each do |file|
+          if File.mtime(file) < cutoff_time
+            File.delete(file)
+            Rails.logger.info "Deleted old backup: #{File.basename(file)}"
+          end
+        end
+        true
+      end
+
+      def restore_from_backup(backup_file)
+        return false unless File.exist?(backup_file)
+
+        adapter_name = ActiveRecord::Base.connection.adapter_name
+        case adapter_name
+        when /sqlite/i
+          restore_sqlite_backup(backup_file)
+        else
+          Rails.logger.error "Restore not implemented for #{adapter_name}"
+          false
+        end
       end
 
       private
@@ -157,6 +193,23 @@ module MigrationGuard
       def database_config
         ActiveRecord::Base.connection_db_config.configuration_hash
       end
+
+      def restore_sqlite_backup(backup_file)
+        config = database_config
+        target_path = config[:database]
+
+        return false if memory_database?(target_path)
+
+        begin
+          FileUtils.cp(backup_file, target_path)
+          Rails.logger.info "Restored database from #{backup_file}"
+          true
+        rescue StandardError => e
+          Rails.logger.error "Failed to restore backup: #{e.message}"
+          false
+        end
+      end
     end
+    # rubocop:enable Metrics/ClassLength
   end
 end

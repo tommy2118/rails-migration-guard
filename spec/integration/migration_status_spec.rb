@@ -89,7 +89,7 @@ RSpec.describe "Migration status checking", type: :integration do
       expect(output).to include("main branch")
 
       # Check for summary counts
-      expect(output).to include("✓ Synced:")
+      expect(output).to include("✓ Synced: 2 migrations")
       expect(output).to include("2 migrations")
       expect(output).to include("⚠ Orphaned:")
       expect(output).to include("2 migrations")
@@ -116,7 +116,7 @@ RSpec.describe "Migration status checking", type: :integration do
       expect(report[:missing_count]).to eq(0)
 
       output = reporter.format_status_output
-      expect(output).to include("✓ All migrations synced with main")
+      expect(output).to include("✓ All migrations synced with main: 0 migrations")
     end
 
     it "identifies missing migrations from trunk" do
@@ -143,7 +143,7 @@ RSpec.describe "Migration status checking", type: :integration do
       expect(report[:missing_migrations]).to include("20240103000001")
 
       output = reporter.format_status_output
-      expect(output).to include("✗ Missing:")
+      expect(output).to include("✗ Missing: 1 migration")
       expect(output).to include("1 migration")
       expect(output).to include("20240103000001")
     end

@@ -154,9 +154,9 @@ RSpec.describe MigrationGuard::Reporter do
         aggregate_failures do
           expect(output).to include("Migration Status (branches: main, develop, staging)")
           expect(output).to include("Missing Migrations by Branch:")
-          expect(output).to include("main:")
-          expect(output).to include("002")
-          expect(output).to include("develop:")
+          expect(output).to include("  main:")
+          expect(output).to include("    002")
+          expect(output).to include("  develop:")
           expect(output).to include("003")
           expect(output).to include("✗ Missing: 2 migrations (in target branches, not local)")
         end
@@ -178,7 +178,7 @@ RSpec.describe MigrationGuard::Reporter do
       it "displays synced status" do
         output = reporter.format_status_output
 
-        expect(output).to include("✓ All migrations synced with main, develop, staging")
+        expect(output).to include("✓ All migrations synced with main, develop, staging: 2 migrations")
       end
     end
 

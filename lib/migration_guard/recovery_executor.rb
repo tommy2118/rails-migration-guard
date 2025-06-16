@@ -17,15 +17,32 @@ module MigrationGuard
       @interactive = interactive
       @backup_manager = Recovery::BackupManager.new
       @actions = initialize_actions
+      @executing_recovery = false
     end
 
     def execute_recovery(issue, option = nil)
-      create_backup_if_needed
+      return false if executing_recovery?
+
+      @executing_recovery = true
+
+      begin
+        create_backup_if_needed
+      rescue StandardError => e
+        Rails.logger.error "Failed to create backup: #{e.message}"
+        # Continue with recovery even if backup fails
+      end
+
       recovery_method = determine_recovery_method(issue, option)
 
       return false unless recovery_method
 
       execute_action(recovery_method, issue)
+    ensure
+      @executing_recovery = false
+    end
+
+    def executing_recovery?
+      @executing_recovery
     end
 
     delegate :create_backup, to: :@backup_manager

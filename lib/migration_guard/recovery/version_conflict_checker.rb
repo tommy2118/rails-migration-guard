@@ -25,8 +25,8 @@ module MigrationGuard
           type: :version_conflict,
           version: version,
           migrations: records,
-          description: "Multiple records exist for the same migration version (#{count} records)",
-          severity: :high,
+          description: "Version conflict: Multiple records exist for the same migration version (#{count} records)",
+          severity: :critical,
           recovery_options: %i[consolidate_records remove_duplicates]
         }
       end
