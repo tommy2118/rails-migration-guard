@@ -138,25 +138,11 @@ class DevHelper
     end
     
     # Mock git integration for demo
-    module MigrationGuard
-      class GitIntegration
-        def current_branch
-          "feature/demo"
-        end
-        
-        def main_branch
-          "main"
-        end
-        
-        def author_email
-          "demo@example.com"
-        end
-        
-        def migration_versions_in_trunk
-          []
-        end
-      end
-    end
+    git_integration = MigrationGuard::GitIntegration.new
+    git_integration.define_singleton_method(:current_branch) { "feature/demo" }
+    git_integration.define_singleton_method(:main_branch) { "main" }
+    git_integration.define_singleton_method(:author_email) { "demo@example.com" }
+    git_integration.define_singleton_method(:migration_versions_in_trunk) { [] }
     
     # Demo scenarios
     puts "\n1. Tracking a new migration:"

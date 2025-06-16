@@ -1,0 +1,254 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "bundler/setup"
+require_relative "../lib/rails_migration_guard"
+
+# Load pry for a better console experience
+begin
+  require "pry"
+  console_class = Pry
+rescue LoadError
+  require "irb"
+  console_class = IRB
+end
+
+# Setup test environment if available
+begin
+  require "active_record"
+  require "sqlite3"
+
+  # Configure ActiveRecord with in-memory database for testing
+  ActiveRecord::Base.establish_connection(
+    adapter: "sqlite3",
+    database: ":memory:"
+  )
+
+  # Create migration guard table if not exists
+  unless ActiveRecord::Base.connection.table_exists?(:migration_guard_records)
+    ActiveRecord::Schema.define do
+      create_table :migration_guard_records do |t|
+        t.string :version, null: false
+        t.string :branch
+        t.string :author
+        t.string :status
+        t.json :metadata
+        t.timestamps
+
+        t.index :version, unique: true
+        t.index :status
+        t.index :created_at
+      end
+    end
+    puts "📦 Created migration_guard_records table in memory"
+  end
+
+  # Mock schema_migrations table for Rails compatibility
+  unless ActiveRecord::Base.connection.table_exists?(:schema_migrations)
+    ActiveRecord::Schema.define do
+      create_table :schema_migrations, id: false do |t|
+        t.string :version, null: false, primary_key: true
+      end
+    end
+  end
+
+  # Create some sample data for testing
+  sample_migrations = [
+    { version: "20240101000001", branch: "main", status: "synced", author: "developer@example.com" },
+    { version: "20240102000001", branch: "feature/users", status: "orphaned", author: "developer@example.com" },
+    { version: "20240103000001", branch: "feature/posts", status: "orphaned", author: "other@example.com" }
+  ]
+
+  sample_migrations.each do |migration_data|
+    MigrationGuard::MigrationGuardRecord.find_or_create_by(version: migration_data[:version]) do |record|
+      record.assign_attributes(migration_data)
+    end
+  end
+
+  puts "🔧 Loaded #{sample_migrations.size} sample migration records"
+  puts "💎 ActiveRecord connected with in-memory SQLite database"
+
+rescue LoadError => e
+  puts "⚠️  ActiveRecord not available: #{e.message}"
+  puts "   Console will work but database features will be limited"
+end
+
+# Mock git integration for development
+module MigrationGuard
+  class GitIntegration
+    def current_branch
+      @current_branch ||= begin
+        # Try to get real branch, fallback to mock
+        `git rev-parse --abbrev-ref HEAD 2>/dev/null`.strip.presence || "feature/console-test"
+      rescue StandardError
+        "feature/console-test"
+      end
+    end
+
+    def main_branch
+      @main_branch ||= "main"
+    end
+
+    def author_email
+      @author_email ||= begin
+        `git config user.email 2>/dev/null`.strip.presence || "developer@example.com"
+      rescue StandardError
+        "developer@example.com"
+      end
+    end
+
+    def migration_versions_in_trunk
+      @trunk_versions ||= ["20240101000001"] # Only first migration is in trunk
+    end
+
+    def repository_root
+      Dir.pwd
+    end
+  end
+end
+
+puts <<~BANNER
+  
+  🛡️  Rails Migration Guard Console
+  ===================================
+  
+  Welcome to the interactive development console!
+  
+  Available objects and methods:
+  
+    # Core classes
+    reporter = MigrationGuard::Reporter.new
+    tracker = MigrationGuard::Tracker.new
+    git = MigrationGuard::GitIntegration.new
+    diagnostic = MigrationGuard::DiagnosticRunner.new
+    
+    # Quick commands
+    puts reporter.format_status_output
+    tracker.track_migration('20240115123456', :up)
+    diagnostic.run_all_checks
+    
+    # View sample data
+    MigrationGuard::MigrationGuardRecord.all
+    
+    # Test git integration (see below for git object)
+    
+  Type 'help' or 'h' for more commands, 'exit' to quit.
+  
+BANNER
+
+# Helper methods for the console
+def help
+  puts <<~HELP
+    🛡️  Rails Migration Guard Console Help
+    ====================================
+    
+    Core Classes:
+      reporter    - Generate migration status reports
+      tracker     - Track and manage migration records  
+      git         - Git integration and branch info
+      diagnostic  - Run system diagnostics
+      config      - View/modify configuration
+    
+    Quick Commands:
+      status      - Show migration status report
+      track(v,d)  - Track migration (version, direction)
+      clean       - Clean up test records
+      mock_git    - Reconfigure git mock data
+      demo        - Run feature demonstration
+    
+    Examples:
+      status                           # Show current status
+      track('20240115123456', :up)     # Track a migration
+      reporter.orphaned_migrations     # Get orphaned migrations
+      git.current_branch              # Show current branch
+      diagnostic.run_all_checks       # Run diagnostics
+      
+    ActiveRecord (if available):
+      MigrationGuard::MigrationGuardRecord.all
+      MigrationGuard::MigrationGuardRecord.where(status: 'orphaned')
+      
+  HELP
+end
+
+# Console shortcuts
+def h
+  help
+end
+
+def status
+  reporter = MigrationGuard::Reporter.new
+  puts reporter.format_status_output
+end
+
+def track(version, direction = :up)
+  tracker = MigrationGuard::Tracker.new
+  tracker.track_migration(version.to_s, direction)
+  puts "✓ Tracked migration #{version} (#{direction})"
+end
+
+def clean
+  if defined?(MigrationGuard::MigrationGuardRecord)
+    count = MigrationGuard::MigrationGuardRecord.count
+    MigrationGuard::MigrationGuardRecord.delete_all
+    puts "🧹 Cleaned up #{count} migration records"
+  else
+    puts "⚠️  No ActiveRecord available for cleanup"
+  end
+end
+
+def mock_git(current_branch: "feature/console-test", trunk_versions: ["20240101000001"])
+  git_integration = MigrationGuard::GitIntegration.new
+  git_integration.instance_variable_set(:@current_branch, current_branch)
+  git_integration.instance_variable_set(:@trunk_versions, trunk_versions)
+  puts "🔧 Updated git mock: branch=#{current_branch}, trunk_versions=#{trunk_versions}"
+end
+
+def demo
+  puts "\n🎯 Rails Migration Guard Demo"
+  puts "=" * 40
+  
+  # Show initial state
+  puts "\n1. Initial migration status:"
+  status
+  
+  # Track a new migration
+  puts "\n2. Tracking a new migration:"
+  track("20240115123456", :up)
+  
+  # Show updated status
+  puts "\n3. Updated status:"
+  status
+  
+  # Run diagnostics
+  puts "\n4. System diagnostics:"
+  if defined?(MigrationGuard::DiagnosticRunner)
+    diagnostic = MigrationGuard::DiagnosticRunner.new
+    diagnostic.run_all_checks
+  else
+    puts "   Diagnostic runner not available"
+  end
+  
+  puts "\n✨ Demo complete!"
+end
+
+# Initialize convenient objects
+reporter = MigrationGuard::Reporter.new
+tracker = MigrationGuard::Tracker.new
+git = MigrationGuard::GitIntegration.new
+
+if defined?(MigrationGuard::DiagnosticRunner)
+  diagnostic = MigrationGuard::DiagnosticRunner.new
+end
+
+if defined?(MigrationGuard.configuration)
+  config = MigrationGuard.configuration
+end
+
+# Start the appropriate console
+if console_class == Pry
+  puts "🚀 Starting Pry console (type 'help' for Migration Guard commands)"
+  Pry.start
+else
+  puts "🚀 Starting IRB console (type 'help' for Migration Guard commands)"
+  IRB.start
+end
