@@ -163,6 +163,11 @@ MigrationGuard.configure do |config|
   # long-lived branches (e.g., develop, staging, production)
   # config.target_branches = %w[main develop staging]
   
+  # Git integration settings (see TROUBLESHOOTING.md for edge cases)
+  # config.git_timeout = 5.seconds
+  # config.handle_git_errors = true  # Continue without git on errors
+  # config.sanitize_git_input = true  # Clean branch names automatically
+  
   # Logging configuration
   # config.log_level = :info  # :debug, :info, :warn, :error, :fatal
   # config.logger = Rails.logger  # or Logger.new('log/migration_guard.log')
@@ -230,7 +235,8 @@ For comprehensive troubleshooting information, see our [Troubleshooting Guide](T
 
 Common issues:
 - **"Migration not found" errors**: Usually means you have orphaned migrations. Run `rails db:migration:status` to identify them.
-- **Git integration not working**: Ensure you're in a git repository and have git installed.
+- **Git integration not working**: Ensure you're in a git repository and have git installed. See [Git Integration Edge Cases](TROUBLESHOOTING.md#git-integration-edge-cases) for advanced scenarios.
+- **Special branch names**: Branch names with spaces, special characters, or unicode may need special handling. See the troubleshooting guide.
 - **Performance concerns**: The gem has minimal overhead. Set `git_integration_level: :off` to disable git operations if needed.
 
 ## Development

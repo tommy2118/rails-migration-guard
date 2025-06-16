@@ -5,12 +5,13 @@ This guide helps you resolve common issues when using the rails-migration-guard 
 ## Table of Contents
 
 1. [Git Command Not Found](#git-command-not-found)
-2. [Permission Issues](#permission-issues)
-3. [Database Connection Errors](#database-connection-errors)
-4. [Migration Version Conflicts](#migration-version-conflicts)
-5. [Performance Issues](#performance-issues)
-6. [Rails Version Compatibility](#rails-version-compatibility)
-7. [Common Error Messages](#common-error-messages)
+2. [Git Integration Edge Cases](#git-integration-edge-cases)
+3. [Permission Issues](#permission-issues)
+4. [Database Connection Errors](#database-connection-errors)
+5. [Migration Version Conflicts](#migration-version-conflicts)
+6. [Performance Issues](#performance-issues)
+7. [Rails Version Compatibility](#rails-version-compatibility)
+8. [Common Error Messages](#common-error-messages)
 
 ## Git Command Not Found
 
@@ -46,6 +47,336 @@ MigrationGuard::GitError: Git command not found
    MigrationGuard.configure do |config|
      config.enabled_environments = [:development, :staging]
      # Explicitly exclude production
+   end
+   ```
+
+## Git Integration Edge Cases
+
+Rails Migration Guard relies heavily on Git for tracking migrations across branches. Here's how to handle various edge cases and special scenarios.
+
+### Special Branch Names
+
+#### Branch Names with Special Characters
+
+Rails Migration Guard uses shell commands to interact with Git, which can cause issues with certain branch names.
+
+**Problem:**
+```bash
+# Branch with spaces
+git checkout -b "feature/my new feature"
+$ rails db:migration:status
+sh: syntax error near unexpected token `new'
+```
+
+**Solutions:**
+
+1. **Best practice - avoid special characters:**
+   ```bash
+   # Use hyphens instead of spaces
+   git checkout -b feature/my-new-feature
+   
+   # Use underscores
+   git checkout -b feature/my_new_feature
+   ```
+
+2. **Configure safe branch handling:**
+   ```ruby
+   # config/initializers/migration_guard.rb
+   MigrationGuard.configure do |config|
+     # Sanitize branch names automatically
+     config.before_track = lambda do |record|
+       record.branch = record.branch.gsub(/[^a-zA-Z0-9\-_\/]/, '-') if record.branch
+     end
+   end
+   ```
+
+3. **Escape branch names in Git commands:**
+   The gem automatically quotes branch names in Git commands, but extreme cases may still fail.
+
+#### Unicode and Emoji in Branch Names
+
+**Problem:**
+```bash
+git checkout -b "feature/user-auth-🔐"
+$ rails db:migration:status
+# May fail on systems without proper UTF-8 support
+```
+
+**Solution:**
+```ruby
+# Force UTF-8 encoding
+MigrationGuard.configure do |config|
+  config.encoding = 'UTF-8'
+  config.handle_encoding_errors = true
+end
+```
+
+### Git Configuration Edge Cases
+
+#### Empty or Missing Git Config
+
+**Problem:**
+```bash
+$ git config user.email
+# Returns nothing
+$ rails db:migration:status
+MigrationGuard::GitError: Git user email not configured
+```
+
+**Solutions:**
+
+1. **Disable author tracking:**
+   ```ruby
+   MigrationGuard.configure do |config|
+     config.track_author = false
+   end
+   ```
+
+2. **Provide fallback values:**
+   ```ruby
+   MigrationGuard.configure do |config|
+     config.author_fallback = ENV['USER'] || 'system'
+     config.branch_fallback = 'unknown'
+   end
+   ```
+
+3. **Custom resolvers:**
+   ```ruby
+   MigrationGuard.configure do |config|
+     # Use system username if git config fails
+     config.author_resolver = lambda do
+       `git config user.email`.strip.presence || 
+       `whoami`.strip.presence || 
+       'unknown'
+     end
+   end
+   ```
+
+#### Detached HEAD State
+
+**Problem:**
+```bash
+$ git checkout abc123def
+Note: switching to 'abc123def'.
+You are in 'detached HEAD' state...
+
+$ rails db:migration:status
+Current branch: HEAD
+```
+
+**Solutions:**
+
+1. **Use commit SHA instead:**
+   ```ruby
+   MigrationGuard.configure do |config|
+     config.on_detached_head = lambda do
+       `git rev-parse --short HEAD`.strip
+     end
+   end
+   ```
+
+2. **Skip tracking in detached state:**
+   ```ruby
+   MigrationGuard.configure do |config|
+     config.track_in_detached_head = false
+   end
+   ```
+
+### Repository State Issues
+
+#### Shallow Clones
+
+**Problem:** CI/CD systems often use shallow clones
+```bash
+$ git clone --depth 1 repo.git
+$ rails db:migration:status
+# May not see all migrations in history
+```
+
+**Solution:**
+```ruby
+# Detect and handle shallow clones
+MigrationGuard.configure do |config|
+  config.before_check = lambda do
+    if `git rev-parse --is-shallow-repository`.strip == 'true'
+      system('git fetch --unshallow') rescue nil
+    end
+  end
+end
+```
+
+#### Submodules and Worktrees
+
+**Problem:** Complex Git setups may confuse the gem
+```bash
+# In a git worktree
+$ git worktree add ../feature-branch feature/new-thing
+$ cd ../feature-branch
+$ rails db:migration:status
+# May reference wrong repository
+```
+
+**Solution:**
+```ruby
+MigrationGuard.configure do |config|
+  # Explicitly set the git directory
+  config.git_dir = Rails.root.join('.git').to_s
+  
+  # Or disable in worktrees
+  config.enabled = !ENV['GIT_WORKTREE_PATH']
+end
+```
+
+#### Large Repositories
+
+**Problem:** Git operations timeout in very large repositories
+```
+MigrationGuard::GitError: Git command timed out
+```
+
+**Solutions:**
+
+1. **Increase timeout:**
+   ```ruby
+   MigrationGuard.configure do |config|
+     config.git_timeout = 30.seconds  # Default is 5 seconds
+   end
+   ```
+
+2. **Optimize Git operations:**
+   ```ruby
+   MigrationGuard.configure do |config|
+     # Only check specific paths
+     config.migration_paths = ['db/migrate']
+     
+     # Limit history depth
+     config.max_history_depth = 100
+   end
+   ```
+
+3. **Cache Git results:**
+   ```ruby
+   MigrationGuard.configure do |config|
+     config.enable_caching = true
+     config.cache_duration = 5.minutes
+   end
+   ```
+
+### Branch Switching Issues
+
+#### Uncommitted Changes
+
+**Problem:**
+```bash
+$ git checkout main
+error: Your local changes to the following files would be overwritten by checkout:
+  db/migrate/20240115_add_users.rb
+```
+
+**Solution:**
+```ruby
+# Auto-stash migrations during branch switch
+MigrationGuard.configure do |config|
+  config.auto_stash_migrations = true
+  config.stash_message = "MigrationGuard: Auto-stashed migrations"
+end
+```
+
+#### Missing Remote Branches
+
+**Problem:**
+```bash
+$ rails db:migration:status
+Failed to list migrations in branch origin/main: fatal: ambiguous argument
+```
+
+**Solutions:**
+
+1. **Fetch before checking:**
+   ```ruby
+   MigrationGuard.configure do |config|
+     config.auto_fetch = true
+     config.fetch_timeout = 10.seconds
+   end
+   ```
+
+2. **Use local branches only:**
+   ```ruby
+   MigrationGuard.configure do |config|
+     config.check_remote_branches = false
+     config.target_branches = ['main']  # Local branches only
+   end
+   ```
+
+### Non-Standard Git Setups
+
+#### Multiple Remotes
+
+**Problem:** Ambiguous branch references with multiple remotes
+```bash
+$ git remote -v
+origin  git@github.com:company/app.git (fetch)
+upstream git@github.com:original/app.git (fetch)
+```
+
+**Solution:**
+```ruby
+MigrationGuard.configure do |config|
+  # Specify which remote to use
+  config.primary_remote = 'origin'
+  
+  # Or use fully qualified branch names
+  config.main_branch_names = %w[origin/main upstream/main]
+end
+```
+
+#### Git Hooks Interference
+
+**Problem:** Existing git hooks may interfere with MigrationGuard operations
+
+**Solution:**
+```ruby
+MigrationGuard.configure do |config|
+  # Skip hooks during git operations
+  config.git_env = { 'GIT_HOOKS_SKIP' => '1' }
+  
+  # Or use specific git options
+  config.git_options = '--no-verify'
+end
+```
+
+### Best Practices for Git Integration
+
+1. **Sanitize inputs:**
+   ```ruby
+   MigrationGuard.configure do |config|
+     config.sanitize_git_input = true
+     config.max_branch_length = 255
+   end
+   ```
+
+2. **Handle errors gracefully:**
+   ```ruby
+   MigrationGuard.configure do |config|
+     config.on_git_error = lambda do |error|
+       Rails.logger.warn "MigrationGuard Git error: #{error.message}"
+       # Continue without git integration
+       nil
+     end
+   end
+   ```
+
+3. **Environment-specific configuration:**
+   ```ruby
+   MigrationGuard.configure do |config|
+     case Rails.env
+     when 'development'
+       config.git_integration_level = :full
+     when 'ci', 'test'
+       config.git_integration_level = :minimal
+     when 'production'
+       config.git_integration_level = :off
+     end
    end
    ```
 
