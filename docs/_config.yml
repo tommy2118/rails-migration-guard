@@ -1,0 +1,15 @@
+# GitHub Pages configuration
+theme: null
+plugins: []
+
+# Site settings
+title: Rails Migration Guard
+description: Prevent orphaned Rails migrations in development and staging environments
+url: https://tommy2118.github.io
+baseurl: /rails-migration-guard
+
+# Exclude files from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - vendor
