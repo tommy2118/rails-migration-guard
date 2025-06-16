@@ -14,6 +14,7 @@ module MigrationGuard
       @branch_filter = options[:branch]
       @days_filter = options[:days]
       @version_filter = options[:version]
+      @author_filter = options[:author]
       @limit = options[:limit] || DEFAULT_LIMIT
       @format = options[:format] || "table"
 
@@ -61,6 +62,7 @@ module MigrationGuard
       query = query.for_branch(@branch_filter) if @branch_filter
       query = query.within_days(@days_filter) if @days_filter
       query = query.for_version(@version_filter) if @version_filter
+      query = query.for_author(@author_filter) if @author_filter
 
       query
     end
@@ -127,6 +129,7 @@ module MigrationGuard
       title = "📜 Migration History"
       title += " (#{@branch_filter})" if @branch_filter
       title += " (#{@version_filter})" if @version_filter
+      title += " (#{@author_filter})" if @author_filter
       title += " (last #{@days_filter} days)" if @days_filter
 
       Colorizer.info(title)
@@ -210,6 +213,7 @@ module MigrationGuard
       info << Colorizer.info("🔍 Active Filters:")
       info << "  Branch: #{@branch_filter}" if @branch_filter
       info << "  Version: #{@version_filter}" if @version_filter
+      info << "  Author: #{@author_filter}" if @author_filter
       info << "  Days: #{@days_filter}" if @days_filter
       info << "  Limit: #{@limit}" if @limit != DEFAULT_LIMIT
 
@@ -276,13 +280,14 @@ module MigrationGuard
       filters = {}
       filters[:branch] = @branch_filter if @branch_filter
       filters[:version] = @version_filter if @version_filter
+      filters[:author] = @author_filter if @author_filter
       filters[:days] = @days_filter if @days_filter
       filters[:limit] = @limit if @limit != DEFAULT_LIMIT
       filters
     end
 
     def filters_applied?
-      @branch_filter || @version_filter || @days_filter || (@limit != DEFAULT_LIMIT)
+      @branch_filter || @version_filter || @author_filter || @days_filter || (@limit != DEFAULT_LIMIT)
     end
 
     def truncate_string(string, length)

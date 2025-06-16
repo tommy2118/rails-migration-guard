@@ -64,10 +64,17 @@ namespace :db do
       options[:branch] = ENV["BRANCH"] if ENV["BRANCH"]
       options[:days] = ENV["DAYS"].to_i if ENV["DAYS"]
       options[:version] = ENV["VERSION"] if ENV["VERSION"]
+      options[:author] = ENV["AUTHOR"] if ENV["AUTHOR"]
       options[:limit] = ENV["LIMIT"].to_i if ENV["LIMIT"]
       options[:format] = ENV["FORMAT"] if ENV["FORMAT"]
 
       MigrationGuard::RakeTasks.history(options)
+    end
+
+    desc "Show migration authors and their contribution summary"
+    task authors: :environment do
+      ensure_migration_guard_loaded
+      MigrationGuard::RakeTasks.authors_report
     end
   end
 end

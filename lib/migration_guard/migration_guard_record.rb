@@ -10,6 +10,7 @@ module MigrationGuard
     scope :orphaned, -> { where(status: "orphaned") }
     scope :recent, -> { where("created_at > ?", 7.days.ago) }
     scope :for_branch, ->(branch) { where(branch: branch) }
+    scope :for_author, ->(author) { where("author LIKE ?", "%#{author}%") }
     scope :applied, -> { where(status: "applied") }
     scope :rolled_back, -> { where(status: "rolled_back") }
     scope :history_ordered, -> { order(created_at: :desc) }
