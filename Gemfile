@@ -22,3 +22,6 @@ group :development, :test do
   gem "simplecov", "~> 0.22"
   gem "sqlite3", "~> 1.4"
 end
+
+# Suppress Ruby 3.5 deprecation warning
+gem "benchmark"

@@ -39,12 +39,12 @@ RSpec.describe MigrationGuard::MigrationExtension do
   describe "automatic tracking on migrate" do
     context "when using class method" do
       it "tracks migration when running up" do
-        expect(tracker).to receive(:track_migration).with("20240115123456", :up) # rubocop:disable RSpec/MessageSpies
+        expect(tracker).to receive(:track_migration).with("20240115123456", :up)
         test_migration_class.migrate(:up)
       end
 
       it "tracks migration when running down" do
-        expect(tracker).to receive(:track_migration).with("20240115123456", :down) # rubocop:disable RSpec/MessageSpies
+        expect(tracker).to receive(:track_migration).with("20240115123456", :down)
         test_migration_class.migrate(:down)
       end
 
@@ -56,12 +56,12 @@ RSpec.describe MigrationGuard::MigrationExtension do
 
     context "when using instance method" do
       it "tracks migration when running up" do
-        expect(tracker).to receive(:track_migration).with("20240115123456", :up) # rubocop:disable RSpec/MessageSpies
+        expect(tracker).to receive(:track_migration).with("20240115123456", :up)
         migration_instance.migrate(:up)
       end
 
       it "tracks migration when running down" do
-        expect(tracker).to receive(:track_migration).with("20240115123456", :down) # rubocop:disable RSpec/MessageSpies
+        expect(tracker).to receive(:track_migration).with("20240115123456", :down)
         migration_instance.migrate(:down)
       end
     end
@@ -72,7 +72,7 @@ RSpec.describe MigrationGuard::MigrationExtension do
       end
 
       it "does not track migration" do
-        expect(tracker).not_to receive(:track_migration) # rubocop:disable RSpec/MessageSpies
+        expect(tracker).not_to receive(:track_migration)
         test_migration_class.migrate(:up)
       end
 
@@ -131,12 +131,12 @@ RSpec.describe MigrationGuard::MigrationExtension do
     it "logs sandbox operation" do
       allow(connection).to receive(:transaction).and_yield
 
-      expect(Rails.logger).to receive(:debug).at_least(:once) # rubocop:disable RSpec/MessageSpies
+      expect(Rails.logger).to receive(:debug).at_least(:once)
       expect { migration_instance.exec_migration(connection, :up) }.to raise_error(ActiveRecord::Rollback)
     end
 
     it "does not rollback when running down migrations" do
-      expect(connection).not_to receive(:transaction) # rubocop:disable RSpec/MessageSpies
+      expect(connection).not_to receive(:transaction)
       migration_instance.exec_migration(connection, :down)
     end
 
@@ -146,7 +146,7 @@ RSpec.describe MigrationGuard::MigrationExtension do
       end
 
       it "executes migration normally" do
-        expect(connection).not_to receive(:transaction) # rubocop:disable RSpec/MessageSpies
+        expect(connection).not_to receive(:transaction)
         expect { migration_instance.exec_migration(connection, :up) }.not_to raise_error
       end
     end
