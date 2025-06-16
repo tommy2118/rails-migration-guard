@@ -72,8 +72,12 @@ module MigrationGuard
     def execute_migration_rollback(migration)
       version = migration.version.to_i
 
-      # Get migrations path
-      migrations_paths = Rails.application.config.paths["db/migrate"].to_a
+      # Get migrations path - handle different Rails versions
+      migrations_paths = if defined?(Rails) && Rails.respond_to?(:application)
+                           Rails.application.config.paths["db/migrate"].to_a
+                         else
+                           ["db/migrate"]
+                         end
 
       # Create migration context
       context = ActiveRecord::MigrationContext.new(migrations_paths)

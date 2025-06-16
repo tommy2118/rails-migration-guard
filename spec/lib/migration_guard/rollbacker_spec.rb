@@ -16,7 +16,9 @@ module RollbackSpecHelpers
       @mock_migrations[version] = mock_migration
     end
     
-    allow(Rails.application.config).to receive(:paths).and_return({"db/migrate" => ["db/migrate"]})
+    if defined?(Rails) && Rails.respond_to?(:application)
+      allow(Rails.application.config).to receive(:paths).and_return({"db/migrate" => ["db/migrate"]})
+    end
     allow(ActiveRecord::MigrationContext).to receive(:new).and_return(@mock_context)
     allow(@mock_context).to receive(:get_all_versions).and_return(versions)
     allow(@mock_context).to receive(:migrations).and_return(@mock_migrations.values)
