@@ -1,0 +1,249 @@
+name: 'Rails Migration Guard Check'
+description: 'Check for orphaned and missing Rails migrations'
+author: 'Rails Migration Guard'
+
+inputs:
+  working-directory:
+    description: 'Working directory for the Rails app'
+    required: false
+    default: '.'
+  
+  rails-env:
+    description: 'Rails environment to use'
+    required: false
+    default: 'test'
+  
+  database-url:
+    description: 'Database URL for the test database'
+    required: false
+    default: ''
+  
+  strict:
+    description: 'Run in strict mode (fail on warnings)'
+    required: false
+    default: 'false'
+  
+  format:
+    description: 'Output format (text or json)'
+    required: false
+    default: 'json'
+  
+  comment-on-pr:
+    description: 'Comment on PR with results'
+    required: false
+    default: 'true'
+  
+  github-token:
+    description: 'GitHub token for PR comments'
+    required: false
+    default: ${{ github.token }}
+  
+  timeout-minutes:
+    description: 'Timeout for migration check (in minutes)'
+    required: false
+    default: '10'
+
+outputs:
+  status:
+    description: 'Check status (success, warning, or error)'
+    value: ${{ steps.check.outputs.status }}
+  
+  exit-code:
+    description: 'Exit code from the check'
+    value: ${{ steps.check.outputs.exit_code }}
+  
+  orphaned-count:
+    description: 'Number of orphaned migrations found'
+    value: ${{ steps.parse.outputs.orphaned_count }}
+  
+  missing-count:
+    description: 'Number of missing migrations found'
+    value: ${{ steps.parse.outputs.missing_count }}
+  
+  results-file:
+    description: 'Path to the results file'
+    value: ${{ steps.check.outputs.results_file }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup environment
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        echo "Setting up Rails Migration Guard check..."
+        echo "RAILS_ENV=${{ inputs.rails-env }}" >> $GITHUB_ENV
+        if [ -n "${{ inputs.database-url }}" ]; then
+          echo "DATABASE_URL=${{ inputs.database-url }}" >> $GITHUB_ENV
+        fi
+    
+    - name: Run migration check
+      id: check
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        FORMAT: ${{ inputs.format }}
+        STRICT: ${{ inputs.strict }}
+      run: |
+        set +e  # Don't fail immediately
+        
+        # Run the check and capture output
+        output=$(timeout ${{ inputs.timeout-minutes }}m bundle exec rails db:migration:ci 2>&1)
+        exit_code=$?
+        
+        # Check for timeout
+        if [ $exit_code -eq 124 ]; then
+          echo "Error: Migration check timed out after ${{ inputs.timeout-minutes }} minutes" >&2
+          echo "status=error" >> $GITHUB_OUTPUT
+          echo "exit_code=2" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        
+        # Check for command not found or other execution errors
+        if [ $exit_code -eq 127 ]; then
+          echo "Error: Command not found. Make sure Rails is properly installed." >&2
+          echo "status=error" >> $GITHUB_OUTPUT
+          echo "exit_code=2" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        
+        # Save output (properly quoted to handle special characters)
+        echo "$output" > migration_guard_results.json
+        echo "results_file=${{ inputs.working-directory }}/migration_guard_results.json" >> $GITHUB_OUTPUT
+        echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
+        
+        # Determine status
+        if [ $exit_code -eq 0 ]; then
+          echo "status=success" >> $GITHUB_OUTPUT
+        elif [ $exit_code -eq 1 ]; then
+          echo "status=warning" >> $GITHUB_OUTPUT
+        else
+          echo "status=error" >> $GITHUB_OUTPUT
+        fi
+        
+        # Don't fail here, let the caller decide
+        exit 0
+    
+    - name: Parse results
+      id: parse
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        if [ "${{ inputs.format }}" == "json" ] && [ -f migration_guard_results.json ]; then
+          orphaned_count=$(jq -r '.migration_guard.orphaned_migrations // [] | length' migration_guard_results.json 2>/dev/null || echo "0")
+          missing_count=$(jq -r '.migration_guard.missing_migrations // [] | length' migration_guard_results.json 2>/dev/null || echo "0")
+          
+          echo "orphaned_count=$orphaned_count" >> $GITHUB_OUTPUT
+          echo "missing_count=$missing_count" >> $GITHUB_OUTPUT
+        else
+          echo "orphaned_count=0" >> $GITHUB_OUTPUT
+          echo "missing_count=0" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Generate summary
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        if [ "${{ steps.check.outputs.status }}" == "success" ]; then
+          echo "✅ Migration Guard Check Passed" >> $GITHUB_STEP_SUMMARY
+          echo "No migration issues found." >> $GITHUB_STEP_SUMMARY
+        else
+          if [ "${{ steps.check.outputs.status }}" == "warning" ]; then
+            echo "⚠️ Migration Guard Check - Warnings" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Migration Guard Check - Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Orphaned Migrations:** ${{ steps.parse.outputs.orphaned_count }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Missing Migrations:** ${{ steps.parse.outputs.missing_count }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "See the [full report](migration_guard_results.json) for details." >> $GITHUB_STEP_SUMMARY
+        fi
+    
+    - name: Comment on PR
+      if: inputs.comment-on-pr == 'true' && github.event_name == 'pull_request' && steps.check.outputs.status != 'success'
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          
+          const resultsPath = path.join('${{ inputs.working-directory }}', 'migration_guard_results.json');
+          const output = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
+          const guard = output.migration_guard;
+          
+          let comment = '## ';
+          if ('${{ steps.check.outputs.status }}' === 'warning') {
+            comment += '⚠️ Migration Guard Check - Warnings\n\n';
+          } else {
+            comment += '❌ Migration Guard Check - Failed\n\n';
+          }
+          
+          comment += 'Found issues with migrations in this PR:\n\n';
+          
+          if (guard.orphaned_migrations && guard.orphaned_migrations.length > 0) {
+            comment += '### 🔍 Orphaned Migrations\n';
+            comment += 'These migrations exist in your database but not in the codebase:\n\n';
+            guard.orphaned_migrations.forEach(m => {
+              comment += `- \`${m.version}\` - Branch: ${m.branch}`;
+              if (m.author) comment += ` - Author: ${m.author}`;
+              comment += '\n';
+            });
+            comment += '\n**Suggested Action:** Roll back these migrations or commit the migration files.\n\n';
+          }
+          
+          if (guard.missing_migrations && guard.missing_migrations.length > 0) {
+            comment += '### 📥 Missing Migrations\n';
+            comment += 'These migrations exist in the target branch but not in your database:\n\n';
+            guard.missing_migrations.forEach(m => {
+              comment += `- \`${m.version || m}\`\n`;
+            });
+            comment += '\n**Suggested Action:** Pull latest changes and run `rails db:migrate`.\n\n';
+          }
+          
+          comment += '---\n';
+          comment += '*Run `bundle exec rails db:migration:status` locally for more details.*\n';
+          comment += '*This comment updates automatically when issues are resolved.*';
+          
+          // Find and update or create comment
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+          
+          const botComment = comments.find(comment => 
+            comment.user.type === 'Bot' && 
+            comment.body.includes('Migration Guard Check') &&
+            comment.body.includes('migration issues')
+          );
+          
+          if (botComment) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: botComment.id,
+              body: comment
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+          }
+    
+    - name: Check exit code
+      shell: bash
+      run: |
+        # Exit with the original exit code if strict mode is enabled
+        if [ "${{ inputs.strict }}" == "true" ] && [ "${{ steps.check.outputs.exit_code }}" != "0" ]; then
+          exit ${{ steps.check.outputs.exit_code }}
+        fi
+        # Otherwise only fail on errors (exit code 2)
+        if [ "${{ steps.check.outputs.exit_code }}" == "2" ]; then
+          exit 2
+        fi
