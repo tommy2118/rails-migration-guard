@@ -15,7 +15,11 @@ group :development, :test do
   gem "pry-byebug" if RUBY_VERSION >= "3.0"
   gem "rake", "~> 13.0"
   gem "rspec", "~> 3.13"
-  gem "rspec-rails", "~> 7.0"
+  if rails_version.to_f >= 7.0
+    gem "rspec-rails", "~> 7.0"
+  else
+    gem "rspec-rails", "~> 6.0"
+  end
   gem "rubocop", "~> 1.69"
   gem "rubocop-capybara", "~> 2.21"
   gem "rubocop-factory_bot", "~> 2.26"

@@ -56,3 +56,7 @@ Gemfile.lock
 # .rubocop-https?--*
 
 .claude/settings.local.json
+
+# Log files
+log/
+*.log
