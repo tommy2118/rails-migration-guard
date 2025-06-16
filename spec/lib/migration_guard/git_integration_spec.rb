@@ -227,9 +227,9 @@ RSpec.describe MigrationGuard::GitIntegration do
       result = git_integration.migrations_in_branches
 
       expect(result).to eq({
-        "main" => ["001_create_users.rb", "002_add_email.rb"],
-        "develop" => ["001_create_users.rb", "003_add_profile.rb"]
-      })
+                             "main" => ["001_create_users.rb", "002_add_email.rb"],
+                             "develop" => ["001_create_users.rb", "003_add_profile.rb"]
+                           })
     end
 
     it "handles errors for specific branches" do
@@ -247,7 +247,8 @@ RSpec.describe MigrationGuard::GitIntegration do
       result = git_integration.migrations_in_branches
 
       expect(result["main"]).to eq(["001_create_users.rb"])
-      expect(result["develop"]).to eq({ error: "Failed to list migrations in branch develop: fatal: Not a valid object name develop\n" })
+      error_msg = "Failed to list migrations in branch develop: fatal: Not a valid object name develop\n"
+      expect(result["develop"]).to eq({ error: error_msg })
     end
   end
 
@@ -271,9 +272,9 @@ RSpec.describe MigrationGuard::GitIntegration do
       result = git_integration.migration_versions_in_branches
 
       expect(result).to eq({
-        "main" => %w[20240101000001 20240102000002],
-        "develop" => %w[20240101000001 20240103000003]
-      })
+                             "main" => %w[20240101000001 20240102000002],
+                             "develop" => %w[20240101000001 20240103000003]
+                           })
     end
   end
 end

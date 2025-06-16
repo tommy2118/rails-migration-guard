@@ -2,19 +2,17 @@
 
 require "rails_helper"
 
-RSpec.describe MigrationGuard::Reporter, "multi-branch support" do
+RSpec.describe MigrationGuard::Reporter do
   let(:reporter) { described_class.new }
   let(:git_integration) { instance_double(MigrationGuard::GitIntegration) }
 
   before do
     allow(MigrationGuard::GitIntegration).to receive(:new).and_return(git_integration)
-    allow(git_integration).to receive(:main_branch).and_return("main")
-    
+
     # Enable multi-branch mode
     allow(MigrationGuard.configuration).to receive(:target_branches)
       .and_return(%w[main develop staging])
-    allow(git_integration).to receive(:target_branches)
-      .and_return(%w[main develop staging])
+    allow(git_integration).to receive_messages(main_branch: "main", target_branches: %w[main develop staging])
   end
 
   def create_migration_guard_record(attributes = {})
@@ -29,10 +27,10 @@ RSpec.describe MigrationGuard::Reporter, "multi-branch support" do
     context "with multiple target branches" do
       before do
         allow(git_integration).to receive(:migration_versions_in_branches).and_return({
-          "main" => %w[001 002],
-          "develop" => %w[001 002 003],
-          "staging" => %w[001 002]
-        })
+                                                                                        "main" => %w[001 002],
+                                                                                        "develop" => %w[001 002 003],
+                                                                                        "staging" => %w[001 002]
+                                                                                      })
       end
 
       it "considers migrations orphaned only if missing from all branches" do
@@ -61,10 +59,10 @@ RSpec.describe MigrationGuard::Reporter, "multi-branch support" do
     context "with multiple target branches" do
       before do
         allow(git_integration).to receive(:migration_versions_in_branches).and_return({
-          "main" => %w[001 002],
-          "develop" => %w[001 002 003],
-          "staging" => %w[001 002 004]
-        })
+                                                                                        "main" => %w[001 002],
+                                                                                        "develop" => %w[001 002 003],
+                                                                                        "staging" => %w[001 002 004]
+                                                                                      })
       end
 
       it "returns missing migrations by branch" do
@@ -73,10 +71,10 @@ RSpec.describe MigrationGuard::Reporter, "multi-branch support" do
         missing = reporter.missing_migrations
 
         expect(missing).to eq({
-          "main" => %w[002],
-          "develop" => %w[002 003],
-          "staging" => %w[002 004]
-        })
+                                "main" => %w[002],
+                                "develop" => %w[002 003],
+                                "staging" => %w[002 004]
+                              })
       end
 
       it "excludes branches with no missing migrations" do
@@ -86,9 +84,9 @@ RSpec.describe MigrationGuard::Reporter, "multi-branch support" do
         missing = reporter.missing_migrations
 
         expect(missing).to eq({
-          "develop" => %w[003],
-          "staging" => %w[004]
-        })
+                                "develop" => %w[003],
+                                "staging" => %w[004]
+                              })
       end
 
       it "returns empty hash when all migrations are applied" do
@@ -106,12 +104,11 @@ RSpec.describe MigrationGuard::Reporter, "multi-branch support" do
   describe "#status_report" do
     context "with multiple target branches" do
       before do
-        allow(git_integration).to receive(:current_branch).and_return("feature/test")
-        allow(git_integration).to receive(:migration_versions_in_branches).and_return({
-          "main" => %w[001 002],
-          "develop" => %w[001 002 003]
-        })
-        
+        allow(git_integration).to receive_messages(current_branch: "feature/test", migration_versions_in_branches: {
+                                                     "main" => %w[001 002],
+                                                     "develop" => %w[001 002 003]
+                                                   })
+
         create_migration_guard_record(version: "001", status: "applied")
         create_migration_guard_record(version: "004", status: "applied")
       end
@@ -127,9 +124,9 @@ RSpec.describe MigrationGuard::Reporter, "multi-branch support" do
             synced_count: 1
           )
           expect(report[:missing_by_branch]).to eq({
-            "main" => %w[002],
-            "develop" => %w[002 003]
-          })
+                                                     "main" => %w[002],
+                                                     "develop" => %w[002 003]
+                                                   })
           expect(report[:missing_migrations]).to contain_exactly("002", "003")
         end
       end
@@ -144,10 +141,10 @@ RSpec.describe MigrationGuard::Reporter, "multi-branch support" do
     context "with missing migrations in multiple branches" do
       before do
         allow(git_integration).to receive(:migration_versions_in_branches).and_return({
-          "main" => %w[001 002],
-          "develop" => %w[001 002 003]
-        })
-        
+                                                                                        "main" => %w[001 002],
+                                                                                        "develop" => %w[001 002 003]
+                                                                                      })
+
         create_migration_guard_record(version: "001", status: "applied")
       end
 
@@ -169,11 +166,11 @@ RSpec.describe MigrationGuard::Reporter, "multi-branch support" do
     context "with clean status across all branches" do
       before do
         allow(git_integration).to receive(:migration_versions_in_branches).and_return({
-          "main" => %w[001 002],
-          "develop" => %w[001 002],
-          "staging" => %w[001 002]
-        })
-        
+                                                                                        "main" => %w[001 002],
+                                                                                        "develop" => %w[001 002],
+                                                                                        "staging" => %w[001 002]
+                                                                                      })
+
         create_migration_guard_record(version: "001", status: "applied")
         create_migration_guard_record(version: "002", status: "applied")
       end
@@ -188,11 +185,11 @@ RSpec.describe MigrationGuard::Reporter, "multi-branch support" do
     context "with orphaned migrations" do
       before do
         allow(git_integration).to receive(:migration_versions_in_branches).and_return({
-          "main" => %w[001],
-          "develop" => %w[001],
-          "staging" => %w[001]
-        })
-        
+                                                                                        "main" => %w[001],
+                                                                                        "develop" => %w[001],
+                                                                                        "staging" => %w[001]
+                                                                                      })
+
         create_migration_guard_record(version: "001", status: "applied")
         create_migration_guard_record(version: "002", status: "applied", branch: "feature/test")
       end
@@ -217,10 +214,10 @@ RSpec.describe MigrationGuard::Reporter, "multi-branch support" do
     context "with missing migrations from multiple branches" do
       before do
         allow(git_integration).to receive(:migration_versions_in_branches).and_return({
-          "main" => %w[001 002],
-          "develop" => %w[001 002 003]
-        })
-        
+                                                                                        "main" => %w[001 002],
+                                                                                        "develop" => %w[001 002 003]
+                                                                                      })
+
         create_migration_guard_record(version: "001", status: "applied")
       end
 
@@ -234,11 +231,11 @@ RSpec.describe MigrationGuard::Reporter, "multi-branch support" do
     context "with clean status across all branches" do
       before do
         allow(git_integration).to receive(:migration_versions_in_branches).and_return({
-          "main" => %w[001],
-          "develop" => %w[001],
-          "staging" => %w[001]
-        })
-        
+                                                                                        "main" => %w[001],
+                                                                                        "develop" => %w[001],
+                                                                                        "staging" => %w[001]
+                                                                                      })
+
         create_migration_guard_record(version: "001", status: "applied")
       end
 
