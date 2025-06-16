@@ -46,6 +46,7 @@ module MigrationGuard
     end
 
     delegate :create_backup, to: :@backup_manager
+    delegate :backup_path, to: :@backup_manager
 
     private
 
@@ -55,10 +56,6 @@ module MigrationGuard
 
     def backup_exists?
       @backup_manager.backup_exists?
-    end
-
-    def backup_path
-      @backup_manager.backup_path
     end
 
     def create_backup_if_needed
