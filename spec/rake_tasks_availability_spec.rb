@@ -7,9 +7,16 @@ require "rake"
 RSpec.describe "Rake tasks availability", type: :integration do
   # rubocop:disable RSpec/BeforeAfterAll, RSpec/InstanceVariable
   before(:all) do
+    # Enable rake task loading for this test
+    ENV["TEST_RAKE_TASKS"] = "true"
+
     # Use the global Rake instance that has tasks loaded
     @rake = Rake.application
     @rake.load_rakefile if @rake.tasks.empty?
+  end
+
+  after(:all) do
+    ENV.delete("TEST_RAKE_TASKS")
   end
 
   let(:rake) { @rake }

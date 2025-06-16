@@ -20,39 +20,42 @@ end
 # Load migration_guard tasks in development environment
 # This allows testing rake tasks without a full Rails app
 begin
-  # Preload logger gem for Ruby 3.4+ compatibility
-  require "logger" if RUBY_VERSION >= "3.4.0"
-  require "rails"
-  require_relative "lib/rails_migration_guard"
+  # Skip loading in test environment to avoid conflicts (unless testing rake tasks)
+  if ENV["RAILS_ENV"] != "test" || ENV["TEST_RAKE_TASKS"]
+    # Preload logger gem for Ruby 3.4+ compatibility
+    require "logger" if RUBY_VERSION >= "3.4.0"
+    require "rails"
+    require_relative "lib/rails_migration_guard"
 
-  # Define a minimal Rails.root for task testing
-  Rails.define_singleton_method(:root) { Pathname.new(File.expand_path(".", __dir__)) } unless Rails.respond_to?(:root)
+    # Define a minimal Rails.root for task testing
+    Rails.define_singleton_method(:root) { Pathname.new(File.expand_path(".", __dir__)) } unless Rails.respond_to?(:root)
 
-  # Define a minimal Rails.env for task testing
-  unless Rails.respond_to?(:env)
-    Rails.define_singleton_method(:env) { ActiveSupport::StringInquirer.new("development") }
+    # Define a minimal Rails.env for task testing
+    unless Rails.respond_to?(:env)
+      Rails.define_singleton_method(:env) { ActiveSupport::StringInquirer.new("development") }
+    end
+
+    # Define :environment task if it doesn't exist
+    # rubocop:disable Rails/RakeEnvironment
+    task :environment do
+      # Minimal environment setup for gem development
+      require "active_record"
+      require "active_support/all"
+
+      # Setup database connection for testing
+      ActiveRecord::Base.establish_connection(
+        adapter: "sqlite3",
+        database: ":memory:"
+      )
+
+      # Don't load migration guard here - let the rake tasks load it
+      # This prevents model loading issues in test environment
+    end
+    # rubocop:enable Rails/RakeEnvironment
+
+    # Load the rake tasks
+    load "lib/tasks/migration_guard.rake"
   end
-
-  # Define :environment task if it doesn't exist
-  # rubocop:disable Rails/RakeEnvironment
-  task :environment do
-    # Minimal environment setup for gem development
-    require "active_record"
-    require "active_support/all"
-
-    # Setup database connection for testing
-    ActiveRecord::Base.establish_connection(
-      adapter: "sqlite3",
-      database: ":memory:"
-    )
-
-    # Don't load migration guard here - let the rake tasks load it
-    # This prevents model loading issues in test environment
-  end
-  # rubocop:enable Rails/RakeEnvironment
-
-  # Load the rake tasks
-  load "lib/tasks/migration_guard.rake"
 rescue LoadError => e
   # Rails not available, skip loading migration tasks
   puts "Skipping migration_guard tasks: #{e.message}" if ENV["DEBUG"]
