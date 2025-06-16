@@ -30,9 +30,9 @@ RSpec.describe MigrationGuard::Generators::InstallGenerator do
     it "fails with Rails < 6.1" do
       allow(Rails).to receive(:version).and_return("6.0.0")
 
-      expect {
+      expect do
         generator.check_rails_version
-      }.to raise_error(Thor::Error, "Rails version requirement not met")
+      end.to raise_error(Thor::Error, "Rails version requirement not met")
     end
   end
 
