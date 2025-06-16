@@ -7,7 +7,7 @@ module MigrationGuard
 
     attr_accessor :enabled_environments, :track_branch, :track_author, :track_timestamp, :sandbox_mode,
                   :warn_on_switch, :warn_after_migration, :block_deploy_with_orphans, :auto_cleanup,
-                  :main_branch_names, :colorize_output, :target_branches, :logger
+                  :main_branch_names, :colorize_output, :target_branches, :logger, :visible_debug
     attr_reader :git_integration_level, :cleanup_after_days, :log_level
 
     def initialize
@@ -49,6 +49,7 @@ module MigrationGuard
       @colorize_output = true
       @log_level = ENV["MIGRATION_GUARD_DEBUG"] == "true" ? :debug : :info
       @logger = nil # Will default to Rails.logger or Logger.new(STDOUT)
+      @visible_debug = ENV["MIGRATION_GUARD_DEBUG"] == "true" || ENV["MIGRATION_GUARD_VISIBLE"] == "true"
     end
 
     public

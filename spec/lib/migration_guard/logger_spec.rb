@@ -150,8 +150,54 @@ RSpec.describe MigrationGuard::Logger do
 
     it "defaults to info level when env var is not set" do
       allow(ENV).to receive(:[]).with("MIGRATION_GUARD_DEBUG").and_return(nil)
+      allow(ENV).to receive(:[]).with("MIGRATION_GUARD_VISIBLE").and_return(nil)
       config = MigrationGuard::Configuration.new
       expect(config.log_level).to eq(:info)
+    end
+  end
+
+  describe "visible debug configuration" do
+    it "enables visible debug when MIGRATION_GUARD_DEBUG is true" do
+      allow(ENV).to receive(:[]).with("MIGRATION_GUARD_DEBUG").and_return("true")
+      allow(ENV).to receive(:[]).with("MIGRATION_GUARD_VISIBLE").and_return(nil)
+      config = MigrationGuard::Configuration.new
+      expect(config.visible_debug).to be true
+    end
+
+    it "enables visible debug when MIGRATION_GUARD_VISIBLE is true" do
+      allow(ENV).to receive(:[]).with("MIGRATION_GUARD_DEBUG").and_return(nil)
+      allow(ENV).to receive(:[]).with("MIGRATION_GUARD_VISIBLE").and_return("true")
+      config = MigrationGuard::Configuration.new
+      expect(config.visible_debug).to be true
+    end
+
+    it "defaults to false when neither env var is set" do
+      allow(ENV).to receive(:[]).with("MIGRATION_GUARD_DEBUG").and_return(nil)
+      allow(ENV).to receive(:[]).with("MIGRATION_GUARD_VISIBLE").and_return(nil)
+      config = MigrationGuard::Configuration.new
+      expect(config.visible_debug).to be false
+    end
+  end
+
+  describe ".visible_logger" do
+    it "creates a stdout logger with debug level" do
+      logger = described_class.visible_logger
+      expect(logger).to be_a(Logger)
+      expect(logger.level).to eq(Logger::DEBUG)
+    end
+
+    it "has a custom formatter" do
+      logger = described_class.visible_logger
+      expect(logger.formatter).to be_a(Proc)
+    end
+  end
+
+  describe ".file_logger" do
+    it "creates a file logger with specified path" do
+      path = "test.log"
+      logger = described_class.file_logger(path)
+      expect(logger).to be_a(Logger)
+      expect(logger.level).to eq(Logger::DEBUG)
     end
   end
 end

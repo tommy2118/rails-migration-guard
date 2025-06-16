@@ -37,7 +37,22 @@ MigrationGuard.configure do |config|
   # Logging configuration
   # config.log_level = :info  # :debug, :info, :warn, :error, :fatal
   # config.logger = Rails.logger  # or Logger.new('log/migration_guard.log')
+  # config.visible_debug = true   # Show debug output in console/STDOUT
   
-  # Enable debug logging via environment variable
-  # ENV['MIGRATION_GUARD_DEBUG'] = 'true'
+  # Enable debug logging via environment variables
+  # ENV['MIGRATION_GUARD_DEBUG'] = 'true'     # Enables debug level + visible output
+  # ENV['MIGRATION_GUARD_VISIBLE'] = 'true'   # Shows debug output in console
+  
+  # Examples for different logging scenarios:
+  # 
+  # 1. Development - visible debug output
+  # config.log_level = :debug
+  # config.visible_debug = true
+  #
+  # 2. Production - log to dedicated file  
+  # config.logger = MigrationGuard::Logger.file_logger('log/migration_guard.log')
+  # config.log_level = :info
+  #
+  # 3. Troubleshooting - visible output
+  # config.logger = MigrationGuard::Logger.visible_logger
 end
