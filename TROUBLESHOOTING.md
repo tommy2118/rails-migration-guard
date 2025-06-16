@@ -152,6 +152,55 @@ MigrationGuard::GitError: Git user email not configured
    end
    ```
 
+#### Author Tracking Issues
+
+**Problem: Author not showing in reports**
+```bash
+$ rails db:migration:authors
+# Shows empty or missing authors
+```
+
+**Solutions:**
+
+1. **Verify git configuration:**
+   ```bash
+   $ git config user.email
+   $ git config user.name
+   ```
+
+2. **Check if author tracking is enabled:**
+   ```ruby
+   # In rails console
+   MigrationGuard.configuration.track_author
+   # Should return true
+   ```
+
+3. **For CI/CD environments, set git config:**
+   ```bash
+   git config user.email "ci@example.com"
+   git config user.name "CI System"
+   ```
+
+**Problem: Author filtering not working**
+```bash
+$ rails db:migration:history AUTHOR=alice
+# Returns no results despite having migrations by alice
+```
+
+**Solutions:**
+
+1. **Use partial matching:**
+   ```bash
+   $ rails db:migration:history AUTHOR=alice
+   # This will match alice@example.com, alice.smith@company.com, etc.
+   ```
+
+2. **Check exact author values in database:**
+   ```ruby
+   # In rails console
+   MigrationGuard::MigrationGuardRecord.pluck(:author).uniq
+   ```
+
 #### Detached HEAD State
 
 **Problem:**

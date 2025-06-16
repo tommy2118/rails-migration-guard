@@ -105,6 +105,16 @@ $ rails db:migration:rollback_orphaned
 
 # Check for issues (useful in CI/CD)
 $ rails db:migration:check
+
+# View migration history with filtering
+$ rails db:migration:history                    # All recent migrations
+$ rails db:migration:history BRANCH=main        # Filter by branch
+$ rails db:migration:history DAYS=7             # Last 7 days
+$ rails db:migration:history AUTHOR=dev@example # Filter by author
+$ rails db:migration:history FORMAT=json        # JSON output
+
+# View author statistics and contributions
+$ rails db:migration:authors                    # Author report
 ```
 
 ### Automatic Tracking
@@ -115,6 +125,39 @@ Migrations are automatically tracked when you run:
 $ rails db:migrate    # Tracks as 'applied'
 $ rails db:rollback   # Tracks as 'rolled_back'
 ```
+
+### Author Tracking
+
+Rails Migration Guard automatically captures author information from git when tracking migrations:
+
+```bash
+# View author statistics
+$ rails db:migration:authors
+
+👥 Migration Authors Report (main)
+Author                           Total    Applied  Orphaned  Rolled Back  Latest Migration    
+-----------------------------------------------------------------------------------------------
+alice@example.com                    12        8         2            2    2024-06-15 14:23
+bob@example.com                       7        5         1            1    2024-06-14 09:15
+charlie@example.com                   3        3         0            0    2024-06-13 16:42
+-----------------------------------------------------------------------------------------------
+
+📊 Authors Summary:
+  Total authors: 3
+  Total tracked migrations: 22
+  Most active: alice@example.com (12 migrations)
+  Average per author: 7.3
+  Your rank: #1 (12 migrations)
+
+# Filter history by author
+$ rails db:migration:history AUTHOR=alice
+```
+
+Author tracking helps teams:
+- Identify who created specific migrations
+- Track migration patterns per developer
+- Find the right person to ask about a migration
+- Monitor team migration activity
 
 ### Sandbox Mode
 
@@ -143,7 +186,7 @@ MigrationGuard.configure do |config|
 
   # Track additional information
   config.track_branch = true
-  config.track_author = true
+  config.track_author = true      # Captures git user.email
   config.track_timestamp = true
 
   # Behavior options

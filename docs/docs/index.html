@@ -155,6 +155,11 @@ MigrationGuard.configure do |config|
   config.auto_cleanup = false
   config.cleanup_after_days = 30
   
+  # Tracking options
+  config.track_author = true       # Capture git user.email with migrations
+  config.track_branch = true       # Track which branch created the migration
+  config.track_timestamp = true    # Record execution timestamps
+  
   # Logging
   config.log_level = :info
   config.colorize_output = true
@@ -191,6 +196,11 @@ end</code></pre>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">warn_on_switch</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">true</td>
                                     <td class="px-6 py-4 text-sm text-gray-500">Show warnings when switching branches</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">track_author</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">true</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">Capture git user.email when tracking migrations</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -232,6 +242,25 @@ end</code></pre>
                                 <pre><code class="language-bash text-gray-100">$ rails db:migration:cleanup FORCE=true</code></pre>
                             </div>
                             <p class="text-gray-600">Removes old tracking records based on your cleanup policy. Use FORCE=true to actually perform the cleanup.</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">View Migration History</h3>
+                            <div class="code-block rounded-lg p-6 mb-4">
+                                <pre><code class="language-bash text-gray-100">$ rails db:migration:history              # View recent history
+$ rails db:migration:history BRANCH=main  # Filter by branch
+$ rails db:migration:history DAYS=7       # Last 7 days
+$ rails db:migration:history AUTHOR=alice # Filter by author</code></pre>
+                            </div>
+                            <p class="text-gray-600">Shows detailed migration execution history with filtering options.</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">View Author Statistics</h3>
+                            <div class="code-block rounded-lg p-6 mb-4">
+                                <pre><code class="language-bash text-gray-100">$ rails db:migration:authors</code></pre>
+                            </div>
+                            <p class="text-gray-600">Displays comprehensive author statistics showing who created migrations and their contribution breakdown.</p>
                         </div>
                     </div>
                 </section>
@@ -479,6 +508,22 @@ end</code></pre>
                                     <p class="text-sm text-gray-600 mb-3">Clean up old tracking records</p>
                                     <div class="code-block rounded p-3">
                                         <code class="text-xs text-gray-100">rails db:migration:cleanup FORCE=true</code>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="font-semibold text-gray-900 mb-2">db:migration:history</h4>
+                                    <p class="text-sm text-gray-600 mb-3">View migration execution history</p>
+                                    <div class="code-block rounded p-3">
+                                        <code class="text-xs text-gray-100">rails db:migration:history AUTHOR=email</code>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="font-semibold text-gray-900 mb-2">db:migration:authors</h4>
+                                    <p class="text-sm text-gray-600 mb-3">View author statistics and contributions</p>
+                                    <div class="code-block rounded p-3">
+                                        <code class="text-xs text-gray-100">rails db:migration:authors</code>
                                     </div>
                                 </div>
                             </div>
