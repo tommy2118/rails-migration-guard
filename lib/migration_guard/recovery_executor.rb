@@ -17,15 +17,25 @@ module MigrationGuard
       @interactive = interactive
       @backup_manager = Recovery::BackupManager.new
       @actions = initialize_actions
+      @executing_recovery = false
     end
 
     def execute_recovery(issue, option = nil)
+      return false if executing_recovery?
+
+      @executing_recovery = true
       create_backup_if_needed
       recovery_method = determine_recovery_method(issue, option)
 
       return false unless recovery_method
 
       execute_action(recovery_method, issue)
+    ensure
+      @executing_recovery = false
+    end
+
+    def executing_recovery?
+      @executing_recovery
     end
 
     delegate :create_backup, to: :@backup_manager

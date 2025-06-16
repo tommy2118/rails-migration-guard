@@ -27,7 +27,7 @@ module MigrationGuard
           migration: record,
           description: "Migration file is missing",
           severity: :critical,
-          recovery_options: %i[restore_from_git mark_as_resolved create_placeholder]
+          recovery_options: %i[restore_from_git mark_as_rolled_back mark_as_resolved create_placeholder]
         }
       end
     end

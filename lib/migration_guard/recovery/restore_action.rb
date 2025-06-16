@@ -23,6 +23,9 @@ module MigrationGuard
         version = issue[:version]
         log_info("Attempting to restore migration #{version} from git history...")
 
+        # Track recovery attempt
+        update_recovery_attempts(issue[:migration]) if issue[:migration]
+
         commit_hash = find_migration_commit(version)
         return migration_not_found_error unless commit_hash
 
@@ -39,6 +42,14 @@ module MigrationGuard
       end
 
       private
+
+      def update_recovery_attempts(migration)
+        migration.metadata ||= {}
+        migration.metadata["recovery_attempts"] ||= 0
+        migration.metadata["recovery_attempts"] += 1
+        migration.metadata["last_recovery_at"] = Time.current.iso8601
+        migration.save!
+      end
 
       def add_to_schema_if_missing(version)
         return if migration_exists_in_schema?(version)
