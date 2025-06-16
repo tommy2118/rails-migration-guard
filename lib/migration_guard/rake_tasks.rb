@@ -69,6 +69,13 @@ module MigrationGuard
         show_configuration
       end
 
+      def check_branch_change(previous_head, new_head, is_branch_checkout)
+        return unless check_enabled
+
+        detector = MigrationGuard::BranchChangeDetector.new
+        detector.check_branch_change(previous_head, new_head, is_branch_checkout)
+      end
+
       private
 
       def check_git_integration

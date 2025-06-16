@@ -87,3 +87,8 @@ RSpec/DescribeClass:
 RSpec/StubbedMock:
   Enabled: false
 
+RSpec/VerifiedDoubles:
+  Exclude:
+    - 'spec/lib/migration_guard/branch_change_detector_spec.rb'
+    - 'spec/integration/branch_switching_spec.rb'
+

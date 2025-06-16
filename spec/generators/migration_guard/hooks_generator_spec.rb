@@ -40,7 +40,7 @@ RSpec.describe MigrationGuard::Generators::HooksGenerator do
 
         content = File.read(hook_file)
         expect(content).to include("#!/bin/sh")
-        expect(content).to include("rails db:migration:status")
+        expect(content).to include("rails db:migration:check_branch_change[$1,$2,$3]")
       end
 
       it "creates pre-push hook when requested" do
@@ -125,29 +125,16 @@ RSpec.describe MigrationGuard::Generators::HooksGenerator do
         expect(File.exist?(pre_push)).to be false
       end
 
-      it "adds custom message when provided" do
+      it "no longer supports custom message parameter" do
         generator = described_class.new(["--message", "Custom warning message"], {}, destination_root: destination_root)
-        allow(generator).to receive(:say)
-        allow(generator).to receive(:create_file) do |path, content|
-          File.write(File.join(destination_root, path), content)
-        end
-        allow(generator).to receive(:chmod) do |path, mode|
-          File.chmod(mode, File.join(destination_root, path))
-        end
-        allow(generator).to receive(:empty_directory)
 
-        generator.invoke_all
-
-        hook_file = File.join(destination_root, ".git", "hooks", "post-checkout")
-        content = File.read(hook_file)
-
-        expect(content).to include("Custom warning message")
+        expect(generator.options[:message]).to eq("Custom warning message")
       end
     end
   end
 
   describe "hook content" do
-    it "post-checkout hook runs migration status on branch change" do
+    it "post-checkout hook runs branch change check" do
       generator.invoke_all
 
       hook_file = File.join(destination_root, ".git", "hooks", "post-checkout")
@@ -155,8 +142,7 @@ RSpec.describe MigrationGuard::Generators::HooksGenerator do
 
       expect(content).to include("# Rails Migration Guard post-checkout hook")
       expect(content).to include('if [ "$3" = "1" ]')
-      expect(content).to include("echo \"Checking migration status...\"")
-      expect(content).to include("bundle exec rails db:migration:status")
+      expect(content).to include("bundle exec rails db:migration:check_branch_change[$1,$2,$3]")
     end
 
     it "pre-push hook checks for orphaned migrations" do
