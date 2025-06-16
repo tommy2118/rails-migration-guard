@@ -70,12 +70,12 @@ module MigrationGuard
         stdout, stderr, status = Open3.capture3(
           "git", "log", "--all", "--full-history", "--", "db/migrate/#{version}_*.rb"
         )
-        
+
         unless status.success?
           Rails.logger.error "Git log failed: #{stderr}"
           return nil
         end
-        
+
         return nil if stdout.empty?
 
         match = stdout.lines.first&.match(/commit (\w+)/)
