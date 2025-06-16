@@ -1,0 +1,221 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "optparse"
+require "fileutils"
+require "bundler/setup"
+
+# Development helper script for Rails Migration Guard
+class DevHelper
+  COMMANDS = {
+    "console" => "Start interactive console with test data",
+    "test" => "Run test suite",
+    "lint" => "Run RuboCop linter",
+    "clean" => "Clean up test artifacts",
+    "demo" => "Run a demo showing gem features",
+    "doctor" => "Run diagnostics",
+    "help" => "Show this help message"
+  }.freeze
+
+  def initialize(args)
+    @args = args
+    @options = {}
+  end
+
+  def run
+    parse_options!
+    command = @args.shift || "help"
+    
+    case command
+    when "console"
+      run_console
+    when "test"
+      run_tests
+    when "lint"
+      run_lint
+    when "clean"
+      run_clean
+    when "demo"
+      run_demo
+    when "doctor"
+      run_doctor
+    when "help", "--help", "-h"
+      show_help
+    else
+      puts "Unknown command: #{command}"
+      show_help
+      exit 1
+    end
+  end
+
+  private
+
+  def parse_options!
+    OptionParser.new do |opts|
+      opts.banner = "Usage: bin/dev [command] [options]"
+      
+      opts.on("-v", "--verbose", "Enable verbose output") do
+        @options[:verbose] = true
+      end
+      
+      opts.on("-h", "--help", "Show help") do
+        show_help
+        exit 0
+      end
+    end.parse!(@args)
+  end
+
+  def show_help
+    puts "Rails Migration Guard Development Helper"
+    puts "\nCommands:"
+    COMMANDS.each do |cmd, desc|
+      puts "  #{cmd.ljust(10)} #{desc}"
+    end
+    puts "\nExamples:"
+    puts "  bin/dev console    # Start interactive console"
+    puts "  bin/dev test       # Run full test suite"
+    puts "  bin/dev demo       # See the gem in action"
+  end
+
+  def run_console
+    puts "Starting Rails Migration Guard console..."
+    exec "bin/console"
+  end
+
+  def run_tests
+    puts "Running test suite..."
+    if @args.any?
+      # Run specific test file or pattern
+      exec "bundle", "exec", "rspec", *@args
+    else
+      # Run full suite
+      exec "bundle", "exec", "rspec"
+    end
+  end
+
+  def run_lint
+    puts "Running RuboCop..."
+    args = @options[:verbose] ? ["--display-cop-names"] : []
+    exec "bundle", "exec", "rubocop", *args
+  end
+
+  def run_clean
+    puts "Cleaning up test artifacts..."
+    system "bundle", "exec", "rake", "test:clean"
+  end
+
+  def run_demo
+    puts "Rails Migration Guard Demo"
+    puts "=" * 50
+    
+    # Setup demo environment
+    require_relative "../lib/rails_migration_guard"
+    require "active_record"
+    require "rainbow"
+    
+    # Setup in-memory database
+    ActiveRecord::Base.establish_connection(
+      adapter: "sqlite3",
+      database: ":memory:"
+    )
+    
+    # Create tables
+    ActiveRecord::Schema.define do
+      create_table :migration_guard_records do |t|
+        t.string :version, null: false
+        t.string :branch
+        t.string :author
+        t.string :status
+        t.json :metadata
+        t.timestamps
+        
+        t.index :version, unique: true
+      end
+      
+      create_table :schema_migrations do |t|
+        t.string :version, null: false
+      end
+    end
+    
+    # Mock git integration for demo
+    module MigrationGuard
+      class GitIntegration
+        def current_branch
+          "feature/demo"
+        end
+        
+        def main_branch
+          "main"
+        end
+        
+        def author_email
+          "demo@example.com"
+        end
+        
+        def migration_versions_in_trunk
+          []
+        end
+      end
+    end
+    
+    # Demo scenarios
+    puts "\n1. Tracking a new migration:"
+    tracker = MigrationGuard::Tracker.new
+    tracker.track_migration("20240115123456", :up)
+    puts Rainbow("✓ Tracked migration 20240115123456").green
+    
+    puts "\n2. Checking migration status:"
+    reporter = MigrationGuard::Reporter.new
+    puts reporter.format_status_output
+    
+    puts "\n3. Running diagnostics:"
+    diagnostic = MigrationGuard::DiagnosticRunner.new
+    diagnostic.run_all_checks
+    
+    puts "\nDemo complete! Use 'bin/console' for interactive exploration."
+  end
+
+  def run_doctor
+    puts "Running diagnostics..."
+    
+    # Check Ruby version
+    puts "\nRuby Version: #{RUBY_VERSION}"
+    puts "✓ Ruby 3.0+ required" if RUBY_VERSION >= "3.0.0"
+    
+    # Check Rails presence
+    begin
+      require "rails/version"
+      puts "\nRails Version: #{Rails.version}"
+    rescue LoadError
+      puts "\n⚠ Rails not found (this is OK for gem development)"
+    end
+    
+    # Check git
+    git_version = `git --version 2>&1`.strip
+    if $?.success?
+      puts "\nGit: #{git_version}"
+    else
+      puts "\n✗ Git not found"
+    end
+    
+    # Check test database
+    test_db = File.join(Dir.pwd, "tmp", "test.db")
+    puts "\nTest Database: #{File.exist?(test_db) ? 'Present' : 'Not created yet'}"
+    
+    # Check for required files
+    required_files = %w[
+      lib/rails_migration_guard.rb
+      spec/spec_helper.rb
+      config/database.yml
+    ]
+    
+    puts "\nRequired Files:"
+    required_files.each do |file|
+      status = File.exist?(file) ? "✓" : "✗"
+      puts "  #{status} #{file}"
+    end
+  end
+end
+
+# Run the helper
+DevHelper.new(ARGV).run
