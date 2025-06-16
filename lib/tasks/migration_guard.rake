@@ -2,7 +2,10 @@
 
 # Lazy load to avoid loading ActiveRecord models before database setup
 def ensure_migration_guard_loaded
-  require "rails_migration_guard" unless defined?(MigrationGuard)
+  return if defined?(MigrationGuard::RakeTasks)
+
+  require "rails_migration_guard"
+  require "migration_guard/rake_tasks"
 end
 
 namespace :db do
