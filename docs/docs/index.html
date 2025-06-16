@@ -58,7 +58,7 @@ title: Documentation
                     
                     <h3 class="text-xl font-semibold text-gray-900 mb-4">Requirements</h3>
                     <ul class="list-disc list-inside mb-6">
-                        <li>Rails 6.1+ or Rails 7.x</li>
+                        <li>Rails 6.1+ (including Rails 8.0)</li>
                         <li>Ruby 3.0+</li>
                         <li>Git (for branch tracking)</li>
                     </ul>
@@ -226,6 +226,25 @@ end</code></pre>
                                 <pre><code class="language-bash text-gray-100">$ rails db:migration:rollback_orphaned</code></pre>
                             </div>
                             <p class="text-gray-600">Interactively rollback migrations that exist locally but not in the main branch. You'll be prompted to confirm each rollback.</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Recovery Tools</h3>
+                            <div class="code-block rounded-lg p-6 mb-4">
+                                <pre><code class="language-bash text-gray-100"># Analyze and recover from inconsistent migration states
+$ rails db:migration:recover
+
+# Run in automatic mode (for CI/CD)
+$ AUTO=true rails db:migration:recover</code></pre>
+                            </div>
+                            <p class="text-gray-600 mb-4">Comprehensive tools for recovering from failed rollbacks and inconsistent migration states. Detects and fixes:</p>
+                            <ul class="list-disc list-inside text-gray-600 space-y-1 mb-4">
+                                <li>Partial rollbacks stuck in "rolling_back" state</li>
+                                <li>Orphaned schema changes without tracking records</li>
+                                <li>Missing migration files for applied migrations</li>
+                                <li>Version conflicts and duplicate records</li>
+                            </ul>
+                            <p class="text-gray-600">Includes automatic database backup before recovery operations for safety.</p>
                         </div>
                         
                         <div>
@@ -516,6 +535,14 @@ end</code></pre>
                                     <p class="text-sm text-gray-600 mb-3">View migration execution history</p>
                                     <div class="code-block rounded p-3">
                                         <code class="text-xs text-gray-100">rails db:migration:history AUTHOR=email</code>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="font-semibold text-gray-900 mb-2">db:migration:recover</h4>
+                                    <p class="text-sm text-gray-600 mb-3">Analyze and recover from inconsistent migration states</p>
+                                    <div class="code-block rounded p-3">
+                                        <code class="text-xs text-gray-100">rails db:migration:recover</code>
                                     </div>
                                 </div>
                                 
