@@ -244,6 +244,23 @@ $ bundle exec rubocop      # Check code style
 $ bundle exec rake         # Run default tasks
 ```
 
+## Known Issues
+
+### Ruby 3.4.1 Compatibility
+
+When using Ruby 3.4.1 with Rails 7.0.x, you may see warnings like:
+
+```
+warning: method redefined; discarding old to_s
+warning: previous definition of to_s was here
+```
+
+These warnings come from ActiveSupport 7.0.x itself and do not affect the functionality of Rails Migration Guard. The warnings are resolved in Rails 7.1+ and Rails 8.0+. If the warnings are bothersome, consider:
+
+1. Upgrading to Rails 7.1 or later
+2. Using Ruby 3.3.x until you can upgrade Rails
+3. Suppressing warnings with `RUBYOPT="-W0"` (not recommended for development)
+
 ## Contributing
 
 1. Fork it (https://github.com/tommy2118/rails-migration-guard/fork)
