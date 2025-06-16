@@ -34,6 +34,30 @@ module MigrationGuard
       migrations_in_branch(main_branch).map { |filename| filename.split("_").first }
     end
 
+    def target_branches
+      MigrationGuard.configuration.effective_target_branches
+    end
+
+    def migrations_in_branches(branches = target_branches)
+      branches.each_with_object({}) do |branch, result|
+        result[branch] = migrations_in_branch(branch)
+      rescue GitError => e
+        result[branch] = { error: e.message }
+      end
+    end
+
+    def migration_versions_in_branches(branches = target_branches)
+      branch_migrations = migrations_in_branches(branches)
+
+      branches.index_with do |branch|
+        if branch_migrations[branch].is_a?(Array)
+          branch_migrations[branch].map { |filename| filename.split("_").first }
+        else
+          branch_migrations[branch]
+        end
+      end
+    end
+
     def author_email
       output = `git config user.email 2>&1`
 

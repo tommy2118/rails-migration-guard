@@ -147,6 +147,12 @@ MigrationGuard.configure do |config|
 
   # Main branch names to check against
   config.main_branch_names = %w[main master trunk]
+  
+  # Target branches to compare migrations against (optional)
+  # When set, migrations will be compared against all specified branches
+  # instead of just the main branch. Useful for teams with multiple
+  # long-lived branches (e.g., develop, staging, production)
+  # config.target_branches = %w[main develop staging]
 end
 ```
 
@@ -183,14 +189,12 @@ end
 
 ## Troubleshooting
 
-### "Migration not found" errors
-This usually means you have orphaned migrations. Run `rails db:migration:status` to identify them.
+For comprehensive troubleshooting information, see our [Troubleshooting Guide](TROUBLESHOOTING.md).
 
-### Git integration not working
-Ensure you're in a git repository and have git installed. The gem gracefully degrades without git.
-
-### Performance concerns
-The gem has minimal overhead and only runs in development/staging. Set `git_integration_level: :off` to disable git operations.
+Common issues:
+- **"Migration not found" errors**: Usually means you have orphaned migrations. Run `rails db:migration:status` to identify them.
+- **Git integration not working**: Ensure you're in a git repository and have git installed.
+- **Performance concerns**: The gem has minimal overhead. Set `git_integration_level: :off` to disable git operations if needed.
 
 ## Development
 
