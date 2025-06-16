@@ -60,7 +60,6 @@ RSpec.describe MigrationGuard::RecoveryAnalyzer do
           )
         )
       end
-
       it "ignores recent rolling_back states" do
         # Create migration file so it doesn't report as missing
         allow(Dir).to receive(:glob).and_return(["db/migrate/20240101000001_test.rb"])
