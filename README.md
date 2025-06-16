@@ -37,6 +37,8 @@ Rails Migration Guard solves these issues by tracking which migrations belong to
 - 📊 **Status reports** showing migration state relative to trunk
 - 🚫 **Production safe** - automatically disabled in production
 - ⚙️ **Highly configurable** with sensible defaults
+- 🤖 **CI/CD integration** with exit codes and JSON output
+- 🔄 **GitHub Actions support** with PR comments and status checks
 
 ## Installation
 
@@ -271,16 +273,69 @@ end
 
 ## CI/CD Integration
 
-Add to your deployment pipeline:
+Rails Migration Guard provides comprehensive CI/CD support with dedicated commands and integrations.
 
-```yaml
-# .github/workflows/deploy.yml
-- name: Check for orphaned migrations
-  run: bundle exec rails db:migration:check
+### Quick Start
+
+```bash
+# CI-specific command with proper exit codes
+bundle exec rails db:migration:ci
+
+# Strict mode - fail on any issues
+bundle exec rails db:migration:ci STRICT=true
+
+# JSON output for parsing
+bundle exec rails db:migration:ci FORMAT=json
 ```
 
+### GitHub Actions
+
+Rails Migration Guard includes native GitHub Actions support with:
+- 🔄 Ready-to-use workflow files
+- 💬 Automatic PR comments
+- ✅ Status checks
+- 📊 Job summaries
+
+```yaml
+# .github/workflows/migration-check.yml
+name: Migration Check
+on: pull_request
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      
+      - name: Setup test database
+        run: bundle exec rails db:test:prepare
+      
+      - uses: ./.github/actions/migration-guard
+        with:
+          strict: false
+          comment-on-pr: true
+```
+
+**📘 See the [GitHub Actions guide](docs/github-actions.md) for detailed setup and advanced configurations.**
+
+### Other CI Platforms
+
+See the [CI Integration guide](docs/ci-integration.md) for examples with:
+- GitLab CI
+- CircleCI
+- Jenkins
+- Travis CI
+
+### Staging Protection
+
 ```ruby
-# config/initializers/migration_guard.rb (staging only)
+# config/initializers/migration_guard.rb
 MigrationGuard.configure do |config|
   config.block_deploy_with_orphans = true if Rails.env.staging?
 end

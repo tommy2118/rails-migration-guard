@@ -1,0 +1,100 @@
+# Scheduled check example - runs daily to detect drift
+name: Migration Check - Scheduled
+
+on:
+  schedule:
+    # Run at 9 AM UTC every weekday
+    - cron: '0 9 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  check-production-drift:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main  # Always check main branch
+          fetch-depth: 0
+      
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      
+      - name: Setup staging database connection
+        run: |
+          # Setup VPN or secure connection to staging database
+          # This is environment-specific
+          echo "Setting up secure database connection..."
+      
+      - name: Check for migration drift
+        id: check
+        uses: ./.github/actions/migration-guard
+        with:
+          rails-env: staging
+          database-url: ${{ secrets.STAGING_DATABASE_URL }}
+          comment-on-pr: false  # Don't comment on scheduled runs
+        continue-on-error: true
+      
+      - name: Send Slack notification if issues found
+        if: steps.check.outputs.status != 'success'
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "Migration drift detected in staging environment",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "⚠️ Migration Drift Detected"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Environment:* Staging\n*Orphaned Migrations:* ${{ steps.check.outputs.orphaned-count }}\n*Missing Migrations:* ${{ steps.check.outputs.missing-count }}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      
+      - name: Create issue if critical
+        if: steps.check.outputs.orphaned-count > 5 || steps.check.outputs.missing-count > 5
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `Critical: ${steps.check.outputs.orphaned-count} orphaned and ${steps.check.outputs.missing-count} missing migrations detected`;
+            const body = `
+              ## Migration Drift Alert
+              
+              A scheduled check has detected significant migration drift in the staging environment:
+              
+              - **Orphaned Migrations**: ${{ steps.check.outputs.orphaned-count }}
+              - **Missing Migrations**: ${{ steps.check.outputs.missing-count }}
+              
+              This requires immediate attention to prevent deployment issues.
+              
+              [View full report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+              
+              cc @team-leads
+            `;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['critical', 'migrations', 'automated']
+            });

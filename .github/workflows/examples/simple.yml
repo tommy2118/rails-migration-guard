@@ -1,0 +1,30 @@
+# Simple example - runs on every PR
+name: Migration Check - Simple
+
+on:
+  pull_request:
+
+jobs:
+  migration-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      
+      - name: Setup test database
+        run: |
+          bundle exec rails db:create
+          bundle exec rails db:schema:load
+        env:
+          RAILS_ENV: test
+      
+      - name: Check migrations
+        uses: ./.github/actions/migration-guard
+        with:
+          strict: false  # Only fail on errors, not warnings

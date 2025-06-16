@@ -1,0 +1,117 @@
+# Monorepo example - multiple Rails apps
+name: Migration Check - Monorepo
+
+on:
+  pull_request:
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      api-changed: ${{ steps.changes.outputs.api }}
+      admin-changed: ${{ steps.changes.outputs.admin }}
+      web-changed: ${{ steps.changes.outputs.web }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            api:
+              - 'apps/api/**'
+            admin:
+              - 'apps/admin/**'
+            web:
+              - 'apps/web/**'
+  
+  check-api:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.api-changed == 'true'
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - uses: ruby/setup-ruby@v1
+        with:
+          working-directory: apps/api
+          bundler-cache: true
+      
+      - name: Setup database
+        working-directory: apps/api
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/api_test
+          RAILS_ENV: test
+        run: |
+          bundle exec rails db:create
+          bundle exec rails db:schema:load
+      
+      - name: Check migrations
+        uses: ./.github/actions/migration-guard
+        with:
+          working-directory: apps/api
+          database-url: postgresql://postgres:postgres@localhost:5432/api_test
+  
+  check-admin:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.admin-changed == 'true'
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - uses: ruby/setup-ruby@v1
+        with:
+          working-directory: apps/admin
+          bundler-cache: true
+      
+      - name: Setup database
+        working-directory: apps/admin
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/admin_test
+          RAILS_ENV: test
+        run: |
+          bundle exec rails db:create
+          bundle exec rails db:schema:load
+      
+      - name: Check migrations
+        uses: ./.github/actions/migration-guard
+        with:
+          working-directory: apps/admin
+          database-url: postgresql://postgres:postgres@localhost:5432/admin_test
+  
+  # Similar job for web app...

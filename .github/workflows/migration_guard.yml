@@ -1,0 +1,174 @@
+name: Migration Guard Check
+on:
+  pull_request:
+    paths:
+      - 'db/migrate/**'
+      - 'db/schema.rb'
+      - 'db/structure.sql'
+  workflow_dispatch:
+    inputs:
+      strict:
+        description: 'Run in strict mode'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  check-migrations:
+    name: Check for Migration Issues
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Need full history for branch comparison
+      
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      
+      - name: Setup database
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+          RAILS_ENV: test
+        run: |
+          bundle exec rails db:create
+          bundle exec rails db:schema:load
+      
+      - name: Run Migration Guard Check
+        id: migration_check
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+          RAILS_ENV: test
+          FORMAT: json
+          STRICT: ${{ github.event.inputs.strict || 'false' }}
+        run: |
+          set +e  # Don't fail immediately
+          output=$(bundle exec rails db:migration:ci)
+          exit_code=$?
+          
+          # Save output for later processing
+          echo "$output" > migration_check_output.json
+          echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
+          
+          # Extract summary for job summary
+          if [ $exit_code -eq 0 ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "✅ No migration issues found" >> $GITHUB_STEP_SUMMARY
+          elif [ $exit_code -eq 1 ]; then
+            echo "status=warning" >> $GITHUB_OUTPUT
+            echo "⚠️ Migration issues found (warnings)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "status=error" >> $GITHUB_OUTPUT
+            echo "❌ Migration issues found (errors)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Parse and format output for job summary
+          bundle exec ruby -rjson -e '
+            data = JSON.parse(File.read("migration_check_output.json"))
+            guard = data["migration_guard"]
+            
+            if guard["orphaned_migrations"].any?
+              puts "\n### Orphaned Migrations"
+              guard["orphaned_migrations"].each do |m|
+                puts "- `#{m["version"]}` - Created on branch: #{m["branch"]}"
+              end
+            end
+            
+            if guard["missing_migrations"].any?
+              puts "\n### Missing Migrations"
+              guard["missing_migrations"].each do |m|
+                puts "- `#{m["version"]}` - Exists in main branch"
+              end
+            end
+          ' >> $GITHUB_STEP_SUMMARY || true
+          
+          exit $exit_code
+      
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-check-results
+          path: migration_check_output.json
+          retention-days: 7
+      
+      - name: Comment PR (if issues found)
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const output = JSON.parse(fs.readFileSync('migration_check_output.json', 'utf8'));
+            const guard = output.migration_guard;
+            
+            let comment = '## ⚠️ Migration Guard Check\n\n';
+            comment += 'Found issues with migrations in this PR:\n\n';
+            
+            if (guard.orphaned_migrations.length > 0) {
+              comment += '### Orphaned Migrations Detected\n';
+              comment += 'The following migrations exist in the database but not in the target branch:\n\n';
+              guard.orphaned_migrations.forEach(m => {
+                comment += `- \`${m.version}\` - Created on branch: ${m.branch}\n`;
+              });
+              comment += '\n';
+            }
+            
+            if (guard.missing_migrations.length > 0) {
+              comment += '### Missing Migrations\n';
+              comment += 'The following migrations exist in the target branch but not in your database:\n\n';
+              guard.missing_migrations.forEach(m => {
+                comment += `- \`${m.version}\`\n`;
+              });
+              comment += '\n';
+            }
+            
+            comment += '### Suggested Actions\n';
+            comment += '1. **For orphaned migrations**: Roll them back or commit the migration files\n';
+            comment += '2. **For missing migrations**: Pull latest changes and run `rails db:migrate`\n\n';
+            comment += '---\n';
+            comment += '_This comment will be updated when issues are resolved._';
+            
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Migration Guard Check')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }

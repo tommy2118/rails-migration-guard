@@ -17,6 +17,14 @@ bundle exec rails db:migration:ci STRICT=true
 bundle exec rails db:migration:ci FORMAT=json
 ```
 
+### GitHub Actions
+
+For GitHub Actions users, see our [dedicated GitHub Actions guide](./github-actions.md) for:
+- Ready-to-use workflow files
+- Reusable composite action
+- PR comment integration
+- Matrix build examples
+
 ## The `rails db:migration:ci` Command
 
 The CI command is specifically designed for automated environments. It:
@@ -123,6 +131,10 @@ $ bundle exec rails db:migration:ci FORMAT=json
 ## CI Platform Examples
 
 ### GitHub Actions
+
+**📘 See our [comprehensive GitHub Actions guide](./github-actions.md) for detailed setup instructions, reusable actions, and advanced configurations.**
+
+Basic example:
 
 ```yaml
 # .github/workflows/migration_guard.yml
