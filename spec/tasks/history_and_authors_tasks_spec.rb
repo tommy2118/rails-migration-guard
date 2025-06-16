@@ -13,7 +13,11 @@ RSpec.describe "History and authors rake tasks", type: :integration do
   end
 
   before do
-    Rake::Task.tasks.each(&:reenable) if Rake::Task.tasks.any?
+    # Reset all task state properly
+    Rake::Task.tasks.each do |task|
+      task.reenable
+      task.instance_variable_set(:@already_invoked, false)
+    end
     allow(Rails).to receive(:logger).and_return(test_logger)
     allow(MigrationGuard).to receive(:enabled?).and_return(true)
 
@@ -315,12 +319,10 @@ RSpec.describe "History and authors rake tasks", type: :integration do
   describe "db:migration:check_branch_change" do
     it "executes branch change detection" do
       detector = instance_double(MigrationGuard::BranchChangeDetector)
-      allow(MigrationGuard::BranchChangeDetector).to receive(:new).and_return(detector)
-      allow(detector).to receive(:check_branch_change)
+      expect(MigrationGuard::BranchChangeDetector).to receive(:new).once.and_return(detector)
+      expect(detector).to receive(:check_branch_change).once.with("abc123", "def456", "1")
 
       Rake::Task["db:migration:check_branch_change"].invoke("abc123", "def456", "1")
-
-      expect(detector).to have_received(:check_branch_change).with("abc123", "def456", "1")
     end
   end
 
