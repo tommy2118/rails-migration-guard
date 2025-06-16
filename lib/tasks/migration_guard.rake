@@ -76,5 +76,11 @@ namespace :db do
       ensure_migration_guard_loaded
       MigrationGuard::RakeTasks.authors_report
     end
+
+    desc "Analyze and recover from inconsistent migration states"
+    task recover: :environment do
+      ensure_migration_guard_loaded
+      MigrationGuard::RakeTasks.recover
+    end
   end
 end

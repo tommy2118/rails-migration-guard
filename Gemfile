@@ -7,7 +7,15 @@ gemspec
 
 # For testing against different Rails versions
 rails_version = ENV.fetch("RAILS_VERSION", "7.0")
-gem "rails", "~> #{rails_version}.0"
+
+# Handle Rails version specification
+case rails_version
+when "8.0"
+  # Rails 8.0.2 is the latest stable release
+  gem "rails", "~> 8.0.0"
+else
+  gem "rails", "~> #{rails_version}.0"
+end
 
 group :development, :test do
   gem "bundler", "~> 2.0"
