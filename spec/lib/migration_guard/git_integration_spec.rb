@@ -193,4 +193,88 @@ RSpec.describe MigrationGuard::GitIntegration do
       expect(git_integration.stash_required?).to be false
     end
   end
+
+  describe "#target_branches" do
+    context "when target_branches is configured" do
+      before do
+        allow(MigrationGuard.configuration).to receive(:effective_target_branches)
+          .and_return(%w[main develop staging])
+      end
+
+      it "returns the configured target branches" do
+        expect(git_integration.target_branches).to eq(%w[main develop staging])
+      end
+    end
+  end
+
+  describe "#migrations_in_branches" do
+    before do
+      allow(git_integration).to receive(:target_branches).and_return(%w[main develop])
+    end
+
+    it "returns migrations for each branch" do
+      stub_system_call(
+        "git ls-tree -r main --name-only db/migrate/ 2>&1",
+        "db/migrate/001_create_users.rb\ndb/migrate/002_add_email.rb\n",
+        success: true
+      )
+      stub_system_call(
+        "git ls-tree -r develop --name-only db/migrate/ 2>&1",
+        "db/migrate/001_create_users.rb\ndb/migrate/003_add_profile.rb\n",
+        success: true
+      )
+
+      result = git_integration.migrations_in_branches
+
+      expect(result).to eq({
+                             "main" => ["001_create_users.rb", "002_add_email.rb"],
+                             "develop" => ["001_create_users.rb", "003_add_profile.rb"]
+                           })
+    end
+
+    it "handles errors for specific branches" do
+      stub_system_call(
+        "git ls-tree -r main --name-only db/migrate/ 2>&1",
+        "db/migrate/001_create_users.rb\n",
+        success: true
+      )
+      stub_system_call(
+        "git ls-tree -r develop --name-only db/migrate/ 2>&1",
+        "fatal: Not a valid object name develop\n",
+        success: false
+      )
+
+      result = git_integration.migrations_in_branches
+
+      expect(result["main"]).to eq(["001_create_users.rb"])
+      error_msg = "Failed to list migrations in branch develop: fatal: Not a valid object name develop\n"
+      expect(result["develop"]).to eq({ error: error_msg })
+    end
+  end
+
+  describe "#migration_versions_in_branches" do
+    before do
+      allow(git_integration).to receive(:target_branches).and_return(%w[main develop])
+    end
+
+    it "returns version numbers for each branch" do
+      stub_system_call(
+        "git ls-tree -r main --name-only db/migrate/ 2>&1",
+        "db/migrate/20240101000001_create_users.rb\ndb/migrate/20240102000002_add_email.rb\n",
+        success: true
+      )
+      stub_system_call(
+        "git ls-tree -r develop --name-only db/migrate/ 2>&1",
+        "db/migrate/20240101000001_create_users.rb\ndb/migrate/20240103000003_add_profile.rb\n",
+        success: true
+      )
+
+      result = git_integration.migration_versions_in_branches
+
+      expect(result).to eq({
+                             "main" => %w[20240101000001 20240102000002],
+                             "develop" => %w[20240101000001 20240103000003]
+                           })
+    end
+  end
 end

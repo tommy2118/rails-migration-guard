@@ -3,31 +3,75 @@
 require_relative "colorizer"
 
 module MigrationGuard
-  class Reporter
+  class Reporter # rubocop:disable Metrics/ClassLength
     def initialize
       @git_integration = GitIntegration.new
     end
 
     def orphaned_migrations
-      @orphaned_migrations ||= begin
-        trunk_versions = @git_integration.migration_versions_in_trunk
+      @orphaned_migrations ||= if MigrationGuard.configuration.target_branches
+                                 orphaned_from_all_branches
+                               else
+                                 orphaned_from_main_branch
+                               end
+    end
 
-        MigrationGuardRecord
-          .applied
-          .reject { |record| trunk_versions.include?(record.version) }
-      end
+    def orphaned_from_main_branch
+      trunk_versions = @git_integration.migration_versions_in_trunk
+
+      MigrationGuardRecord
+        .applied
+        .reject { |record| trunk_versions.include?(record.version) }
+    end
+
+    def orphaned_from_all_branches
+      branch_versions = @git_integration.migration_versions_in_branches
+      all_trunk_versions = branch_versions.values.flatten.uniq
+
+      MigrationGuardRecord
+        .applied
+        .reject { |record| all_trunk_versions.include?(record.version) }
     end
 
     def missing_migrations
-      @missing_migrations ||= begin
-        trunk_versions = @git_integration.migration_versions_in_trunk
-        applied_versions = MigrationGuardRecord.pluck(:version)
+      @missing_migrations ||= if MigrationGuard.configuration.target_branches
+                                missing_from_any_branch
+                              else
+                                missing_from_main_branch
+                              end
+    end
 
-        trunk_versions - applied_versions
+    def missing_from_main_branch
+      trunk_versions = @git_integration.migration_versions_in_trunk
+      applied_versions = MigrationGuardRecord.pluck(:version)
+
+      trunk_versions - applied_versions
+    end
+
+    def missing_from_any_branch
+      branch_versions = @git_integration.migration_versions_in_branches
+      applied_versions = MigrationGuardRecord.pluck(:version)
+
+      missing_by_branch = {}
+      branch_versions.each do |branch, versions|
+        next unless versions.is_a?(Array)
+
+        missing = versions - applied_versions
+        missing_by_branch[branch] = missing if missing.any?
       end
+
+      missing_by_branch
     end
 
     def status_report
+      if MigrationGuard.configuration.target_branches
+        multi_branch_status_report
+      else
+        single_branch_status_report
+      end
+    end
+
+    def single_branch_status_report
       {
         current_branch: @git_integration.current_branch,
         main_branch: @git_integration.main_branch,
@@ -39,6 +83,21 @@ module MigrationGuard
       }
     end
 
+    def multi_branch_status_report
+      target_branches = @git_integration.target_branches
+      missing = missing_migrations
+
+      {
+        current_branch: @git_integration.current_branch,
+        target_branches: target_branches,
+        synced_count: synced_count,
+        orphaned_count: orphaned_migrations.size,
+        missing_by_branch: missing,
+        orphaned_migrations: orphaned_migrations_details,
+        missing_migrations: missing.values.flatten.uniq
+      }
+    end
+
     def format_status_output
       report = status_report
       output = []
@@ -46,18 +105,32 @@ module MigrationGuard
       add_header(output, report)
       add_summary_section(output, report)
       add_orphaned_section(output, report) if report[:orphaned_count].positive?
-      add_missing_section(output, report) if report[:missing_count].positive?
+
+      if report[:target_branches]
+        add_multi_branch_missing_section(output, report) if report[:missing_by_branch]&.any?
+      elsif report[:missing_count].positive?
+        add_missing_section(output, report)
+      end
 
       output.join("\n")
     end
 
-    def summary_line
+    def summary_line # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
       report = status_report
 
       if report[:orphaned_count].positive?
         count = report[:orphaned_count]
         branch = report[:current_branch]
         "MigrationGuard: #{count} orphaned #{pluralize_migration(count)} detected on branch '#{branch}'"
+      elsif report[:target_branches]
+        if report[:missing_by_branch]&.any?
+          total_missing = report[:missing_migrations].size
+          branches = report[:missing_by_branch].keys.join(", ")
+          "MigrationGuard: #{total_missing} missing #{pluralize_migration(total_missing)} from branches: #{branches}"
+        else
+          branches = report[:target_branches].join(", ")
+          "MigrationGuard: All migrations synced with branches: #{branches}"
+        end
       elsif report[:missing_count].positive?
         count = report[:missing_count]
         "MigrationGuard: #{count} missing #{pluralize_migration(count)} from #{report[:main_branch]}"
@@ -69,8 +142,17 @@ module MigrationGuard
     private
 
     def synced_count
-      trunk_versions = @git_integration.migration_versions_in_trunk
-      MigrationGuardRecord.applied.where(version: trunk_versions).count
+      if MigrationGuard.configuration.target_branches
+        branch_versions = @git_integration.migration_versions_in_branches
+        all_trunk_versions = branch_versions.values
+                                            .select { |v| v.is_a?(Array) }
+                                            .flatten
+                                            .uniq
+        MigrationGuardRecord.applied.where(version: all_trunk_versions).count
+      else
+        trunk_versions = @git_integration.migration_versions_in_trunk
+        MigrationGuardRecord.applied.where(version: trunk_versions).count
+      end
     end
 
     def orphaned_migrations_details
@@ -101,7 +183,12 @@ module MigrationGuard
 
     def add_header(output, report)
       output << ("═" * 55)
-      output << Colorizer.bold("Migration Status (#{report[:main_branch]} branch)")
+      if report[:target_branches]
+        branches_text = report[:target_branches].join(", ")
+        output << Colorizer.bold("Migration Status (branches: #{branches_text})")
+      else
+        output << Colorizer.bold("Migration Status (#{report[:main_branch]} branch)")
+      end
       output << ("═" * 55)
     end
 
@@ -133,27 +220,52 @@ module MigrationGuard
       output << "#{orphaned_line} (local only)"
     end
 
-    def add_missing_count(output, report)
-      return unless report[:missing_count].positive?
+    def add_missing_count(output, report) # rubocop:disable Metrics/MethodLength
+      if report[:target_branches]
+        return unless report[:missing_by_branch]&.any?
 
-      missing_line = Colorizer.format_status_line(
-        Colorizer.format_error_symbol,
-        "Missing",
-        report[:missing_count],
-        :missing
-      )
-      output << "#{missing_line} (in trunk, not local)"
+        total_missing = report[:missing_migrations].size
+        missing_line = Colorizer.format_status_line(
+          Colorizer.format_error_symbol,
+          "Missing",
+          total_missing,
+          :missing
+        )
+        output << "#{missing_line} (in target branches, not local)"
+      else
+        return unless report[:missing_count].positive?
+
+        missing_line = Colorizer.format_status_line(
+          Colorizer.format_error_symbol,
+          "Missing",
+          report[:missing_count],
+          :missing
+        )
+        output << "#{missing_line} (in trunk, not local)"
+      end
     end
 
-    def add_sync_status(output, report)
-      return unless report[:orphaned_count].zero? && report[:missing_count].zero?
+    def add_sync_status(output, report) # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+      if report[:target_branches]
+        return unless report[:orphaned_count].zero? && report[:missing_by_branch]&.empty?
 
-      output << Colorizer.format_status_line(
-        Colorizer.format_checkmark,
-        "All migrations synced with #{report[:main_branch]}",
-        report[:synced_count],
-        :synced
-      )
+        branches = report[:target_branches].join(", ")
+        output << Colorizer.format_status_line(
+          Colorizer.format_checkmark,
+          "All migrations synced with #{branches}",
+          report[:synced_count],
+          :synced
+        )
+      else
+        return unless report[:orphaned_count].zero? && report[:missing_count].zero?
+
+        output << Colorizer.format_status_line(
+          Colorizer.format_checkmark,
+          "All migrations synced with #{report[:main_branch]}",
+          report[:synced_count],
+          :synced
+        )
+      end
     end
 
     def add_orphaned_section(output, report)
@@ -172,6 +284,22 @@ module MigrationGuard
       report[:missing_migrations].each do |version|
         output << "  #{version}"
       end
+      output << ""
+      output << Colorizer.info("Run `rails db:migrate` to apply missing migrations")
+    end
+
+    def add_multi_branch_missing_section(output, report)
+      output << ""
+      output << Colorizer.error("Missing Migrations by Branch:")
+
+      report[:missing_by_branch].each do |branch, versions|
+        output << ""
+        output << "  #{Colorizer.bold(branch)}:"
+        versions.each do |version|
+          output << "    #{version}"
+        end
+      end
+
       output << ""
       output << Colorizer.info("Run `rails db:migrate` to apply missing migrations")
     end

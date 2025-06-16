@@ -27,4 +27,10 @@ MigrationGuard.configure do |config|
 
   # Main branch names to check against (in order of preference)
   config.main_branch_names = %w[main master trunk]
+  
+  # Target branches to compare migrations against
+  # When set, migrations will be compared against all specified branches
+  # instead of just the main branch. This is useful for teams that use
+  # multiple long-lived branches (e.g., develop, staging, production)
+  # config.target_branches = %w[main develop staging]
 end

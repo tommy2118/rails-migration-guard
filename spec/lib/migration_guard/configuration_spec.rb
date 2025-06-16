@@ -101,6 +101,55 @@ RSpec.describe MigrationGuard::Configuration do
     end
   end
 
+  describe "#target_branches" do
+    it "defaults to nil" do
+      expect(config.target_branches).to be_nil
+    end
+
+    it "can be set to specific branches" do
+      config.target_branches = %w[main develop staging]
+      expect(config.target_branches).to eq(%w[main develop staging])
+    end
+  end
+
+  describe "#effective_target_branches" do
+    context "when target_branches is not set" do
+      before do
+        allow(config).to receive(:`)
+          .with("git rev-parse --verify main >/dev/null 2>&1") do
+          system("exit 0")
+          ""
+        end
+      end
+
+      it "returns the first available main branch" do
+        expect(config.effective_target_branches).to eq(["main"])
+      end
+    end
+
+    context "when target_branches is set" do
+      it "returns the configured target branches" do
+        config.target_branches = %w[main develop staging]
+        expect(config.effective_target_branches).to eq(%w[main develop staging])
+      end
+    end
+
+    context "when target_branches is empty array" do
+      before do
+        config.target_branches = []
+        allow(config).to receive(:`)
+          .with("git rev-parse --verify main >/dev/null 2>&1") do
+          system("exit 0")
+          ""
+        end
+      end
+
+      it "falls back to main branch" do
+        expect(config.effective_target_branches).to eq(["main"])
+      end
+    end
+  end
+
   describe "#to_h" do
     it "returns all configuration as a hash" do
       hash = config.to_h
@@ -117,7 +166,8 @@ RSpec.describe MigrationGuard::Configuration do
         block_deploy_with_orphans: false,
         auto_cleanup: false,
         cleanup_after_days: 30,
-        main_branch_names: %w[main master trunk]
+        main_branch_names: %w[main master trunk],
+        target_branches: nil
       )
     end
   end

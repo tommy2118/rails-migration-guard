@@ -6,7 +6,7 @@ module MigrationGuard
 
     attr_accessor :enabled_environments, :track_branch, :track_author, :track_timestamp, :sandbox_mode,
                   :warn_on_switch, :warn_after_migration, :block_deploy_with_orphans, :auto_cleanup,
-                  :main_branch_names, :colorize_output
+                  :main_branch_names, :colorize_output, :target_branches
     attr_reader :git_integration_level, :cleanup_after_days
 
     def initialize
@@ -23,6 +23,7 @@ module MigrationGuard
       @cleanup_after_days = 30
       @main_branch_names = %w[main master trunk]
       @colorize_output = true
+      @target_branches = nil
     end
 
     def git_integration_level=(level)
@@ -42,7 +43,7 @@ module MigrationGuard
       @cleanup_after_days = days
     end
 
-    def to_h
+    def to_h # rubocop:disable Metrics/MethodLength
       {
         enabled_environments: enabled_environments,
         git_integration_level: git_integration_level,
@@ -56,7 +57,8 @@ module MigrationGuard
         auto_cleanup: auto_cleanup,
         cleanup_after_days: cleanup_after_days,
         main_branch_names: main_branch_names,
-        colorize_output: colorize_output
+        colorize_output: colorize_output,
+        target_branches: target_branches
       }
     end
 
@@ -70,6 +72,23 @@ module MigrationGuard
       end
 
       true
+    end
+
+    def effective_target_branches
+      return target_branches if target_branches.present?
+
+      [find_main_branch]
+    end
+
+    private
+
+    def find_main_branch
+      main_branch_names.each do |branch_name|
+        `git rev-parse --verify #{branch_name} >/dev/null 2>&1`
+        return branch_name if $CHILD_STATUS.success?
+      end
+
+      raise ConfigurationError, "No main branch found. Tried: #{main_branch_names.join(', ')}"
     end
   end
 end
