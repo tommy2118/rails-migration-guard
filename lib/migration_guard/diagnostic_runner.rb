@@ -121,19 +121,28 @@ module MigrationGuard
       print_check("Missing migrations", :error)
     end
 
+    # rubocop:disable Metrics/MethodLength
     def check_environment_configuration
       config = MigrationGuard.configuration
-      current_env = Rails.env.to_sym
 
-      if config.enabled_environments.include?(current_env)
-        envs = config.enabled_environments.join(", ")
-        print_check("Environment configuration", :success, "enabled in: #{envs}")
+      if defined?(Rails) && Rails.respond_to?(:env)
+        current_env = Rails.env.to_sym
+
+        if config.enabled_environments.include?(current_env)
+          envs = config.enabled_environments.join(", ")
+          print_check("Environment configuration", :success, "enabled in: #{envs}")
+        else
+          add_warning("MigrationGuard disabled in current environment",
+                      "Current: #{current_env}, Enabled in: #{config.enabled_environments.join(', ')}")
+          print_check("Environment configuration", :warning, "disabled in #{current_env}")
+        end
       else
-        add_warning("MigrationGuard disabled in current environment",
-                    "Current: #{current_env}, Enabled in: #{config.enabled_environments.join(', ')}")
-        print_check("Environment configuration", :warning, "disabled in #{current_env}")
+        add_warning("Rails environment not detected",
+                    "MigrationGuard is designed to work within a Rails application environment")
+        print_check("Environment configuration", :warning, "Rails not loaded")
       end
     end
+    # rubocop:enable Metrics/MethodLength
 
     def print_check(name, status, details = nil)
       symbol = case status

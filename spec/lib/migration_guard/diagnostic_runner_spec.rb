@@ -201,5 +201,23 @@ RSpec.describe MigrationGuard::DiagnosticRunner do
         end
       end
     end
+
+    context "when Rails is not loaded" do
+      before do
+        hide_const("Rails")
+      end
+
+      it "reports Rails not loaded warning" do
+        runner.run_all_checks
+
+        output = io.string
+        aggregate_failures do
+          expect(output).to include("⚠ Environment configuration")
+          expect(output).to include("Rails not loaded")
+          expect(output).to include("Warnings:")
+          expect(output).to include("Rails environment not detected")
+        end
+      end
+    end
   end
 end

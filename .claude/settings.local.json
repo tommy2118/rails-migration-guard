@@ -23,7 +23,12 @@
       "Bash(gh issue close:*)",
       "Bash(git restore:*)",
       "Bash(bundle exec rails:*)",
-      "Bash(bundle exec rake:*)"
+      "Bash(bundle exec rake:*)",
+      "Bash(gh run list:*)",
+      "Bash(RAILS_VERSION=7.0 bundle exec ruby -r./lib/rails_migration_guard -e \"puts 'Gem loaded: ' + MigrationGuard::VERSION\")",
+      "Bash(gh issue create:*)",
+      "Bash(gh label:*)",
+      "Bash(gh issue list:*)"
     ],
     "deny": []
   }
