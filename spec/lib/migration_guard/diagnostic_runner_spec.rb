@@ -106,9 +106,10 @@ RSpec.describe MigrationGuard::DiagnosticRunner do
 
     context "when orphaned migrations exist" do
       let(:orphaned_migration) do
-        instance_double(MigrationGuard::MigrationGuardRecord,
-                        version: "20240115123456",
-                        created_at: 3.days.ago)
+        MigrationGuard::MigrationGuardRecord.new(
+          version: "20240115123456",
+          created_at: 3.days.ago
+        )
       end
 
       before do
