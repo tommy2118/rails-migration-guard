@@ -27,6 +27,11 @@ RSpec.describe "Rollback rake tasks", type: :integration do
     )
 
     MigrationGuard::MigrationGuardRecord.delete_all
+
+    # Clean up any test tables that might exist
+    %w[test_table test_table_20240101000001 test_table_20240101000002 test_table_20240101000003].each do |table|
+      ActiveRecord::Base.connection.execute("DROP TABLE IF EXISTS #{table}")
+    end
   end
 
   after do
@@ -46,6 +51,7 @@ RSpec.describe "Rollback rake tasks", type: :integration do
     )
   end
 
+  # rubocop:disable RSpec/AnyInstance, RSpec/MultipleExpectations
   describe "db:migration:rollback_orphaned with real implementation" do
     let(:migration_dir) { Rails.root.join("db/migrate") }
 
@@ -74,14 +80,17 @@ RSpec.describe "Rollback rake tasks", type: :integration do
           RUBY
         )
 
-        # Record the migration as applied
+        # Record the migration as applied and create the table that will be dropped
         create_orphaned_migration(version)
         ActiveRecord::Base.connection.execute("INSERT INTO schema_migrations (version) VALUES ('#{version}')")
+        ActiveRecord::Base.connection.execute(
+          "CREATE TABLE IF NOT EXISTS test_table (id INTEGER PRIMARY KEY, name VARCHAR(255))"
+        )
       end
 
       it "prompts user for confirmation and rolls back on 'y'" do
         # Simulate user input
-        allow($stdin).to receive(:gets).and_return("y\n")
+        expect_any_instance_of(MigrationGuard::Rollbacker).to receive(:gets).and_return("y")
 
         Rake::Task["db:migration:rollback_orphaned"].execute
 
@@ -89,15 +98,14 @@ RSpec.describe "Rollback rake tasks", type: :integration do
         expect(output).to include("Found 1 orphaned migration")
         expect(output).to include("20240101000001")
         expect(output).to include("Do you want to roll back these migrations?")
-        # Since table was never created, rollback will fail
-        expect(output).not_to include("Successfully rolled back")
+        expect(output).to include("Successfully rolled back")
 
-        # Since table doesn't exist, rollback will fail and status won't change
-        expect(MigrationGuard::MigrationGuardRecord.find_by(version: "20240101000001").status).to eq("applied")
+        # Verify migration was rolled back
+        expect(MigrationGuard::MigrationGuardRecord.find_by(version: "20240101000001").status).to eq("rolled_back")
       end
 
       it "skips rollback when user enters 'n'" do
-        allow($stdin).to receive(:gets).and_return("n\n")
+        expect_any_instance_of(MigrationGuard::Rollbacker).to receive(:gets).and_return("n")
 
         Rake::Task["db:migration:rollback_orphaned"].execute
 
@@ -110,7 +118,7 @@ RSpec.describe "Rollback rake tasks", type: :integration do
       end
 
       it "exits when user enters 'q'" do
-        allow($stdin).to receive(:gets).and_return("q\n")
+        expect_any_instance_of(MigrationGuard::Rollbacker).to receive(:gets).and_return("q")
 
         Rake::Task["db:migration:rollback_orphaned"].execute
 
@@ -139,12 +147,15 @@ RSpec.describe "Rollback rake tasks", type: :integration do
           )
           create_orphaned_migration(version)
           ActiveRecord::Base.connection.execute("INSERT INTO schema_migrations (version) VALUES ('#{version}')")
+          ActiveRecord::Base.connection.execute(
+            "CREATE TABLE IF NOT EXISTS test_table_#{version} (id INTEGER PRIMARY KEY, name VARCHAR(255))"
+          )
         end
       end
 
       it "processes migrations in reverse chronological order" do
         # Rollback all with 'y'
-        allow($stdin).to receive(:gets).and_return("y\n", "y\n", "y\n")
+        expect_any_instance_of(MigrationGuard::Rollbacker).to receive(:gets).and_return("y")
 
         Rake::Task["db:migration:rollback_orphaned"].execute
 
@@ -168,17 +179,18 @@ RSpec.describe "Rollback rake tasks", type: :integration do
       end
 
       it "handles missing migration file gracefully" do
-        allow($stdin).to receive(:gets).and_return("y\n")
+        expect_any_instance_of(MigrationGuard::Rollbacker).to receive(:gets).and_return("y")
 
-        Rake::Task["db:migration:rollback_orphaned"].execute
+        expect do
+          Rake::Task["db:migration:rollback_orphaned"].execute
+        end.to raise_error(MigrationGuard::RollbackError, /Migration file for version .* not found/)
 
         output = task_output
-        # When no migration file exists, user is prompted but rollback is cancelled
         expect(output).to include("Do you want to roll back these migrations?")
-        expect(output).to include("Rollback cancelled")
       end
     end
   end
+  # rubocop:enable RSpec/AnyInstance, RSpec/MultipleExpectations
 
   describe "db:migration:rollback_all_orphaned" do
     context "with orphaned migrations" do

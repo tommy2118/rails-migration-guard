@@ -203,8 +203,8 @@ RSpec.describe "Recovery and status rake tasks", type: :integration do
       # rubocop:disable RSpec/MultipleExpectations
       it "displays comprehensive analysis report" do
         # Mock stdin to skip through any prompts
-        allow(MigrationGuard::RecoveryExecutor).to receive(:new).and_wrap_original do |method, *args|
-          executor = method.call(*args)
+        allow(MigrationGuard::RecoveryExecutor).to receive(:new).and_wrap_original do |method, *args, **kwargs|
+          executor = method.call(*args, **kwargs)
           allow(executor).to receive(:gets).and_return("0\n")
           executor
         end
@@ -249,8 +249,8 @@ RSpec.describe "Recovery and status rake tasks", type: :integration do
       context "when running interactive recovery" do
         it "prompts for recovery actions" do
           # Simulate selecting recovery option and then exiting
-          allow(MigrationGuard::RecoveryExecutor).to receive(:new).and_wrap_original do |method, *args|
-            executor = method.call(*args)
+          allow(MigrationGuard::RecoveryExecutor).to receive(:new).and_wrap_original do |method, *args, **kwargs|
+            executor = method.call(*args, **kwargs)
             allow(executor).to receive(:gets).and_return("1\n", "0\n")
             executor
           end
@@ -273,20 +273,11 @@ RSpec.describe "Recovery and status rake tasks", type: :integration do
       create_migration_record("20240102000001")
 
       # Mock DiagnosticRunner to use Rails.logger instead of puts
-      diagnostic_runner = instance_double(MigrationGuard::DiagnosticRunner)
-      allow(MigrationGuard::DiagnosticRunner).to receive(:new).and_return(diagnostic_runner)
-      allow(diagnostic_runner).to receive(:run_all_checks) do
-        Rails.logger.info "Running Migration Guard Diagnostics..."
-        Rails.logger.info "\n✓ Database connection: Connected"
-        Rails.logger.info "✓ Migration guard tables: 2 records"
-        Rails.logger.info "✓ Git repository: current: feature/test-branch"
-        Rails.logger.info "✓ Git branch detection: main: main"
-        Rails.logger.info "\n✗ Orphaned migrations: 2 found"
-        Rails.logger.info "\nIssues Found:"
-        Rails.logger.info "Orphaned migrations detected:"
-        Rails.logger.info "  - rails db:migration:rollback_orphaned"
-        Rails.logger.info "\nOverall Status: NEEDS ATTENTION"
+      # rubocop:disable RSpec/AnyInstance
+      allow_any_instance_of(MigrationGuard::DiagnosticRunner).to receive(:puts) do |_, message|
+        Rails.logger.info message if message.present?
       end
+      # rubocop:enable RSpec/AnyInstance
     end
 
     # rubocop:disable RSpec/MultipleExpectations
@@ -321,6 +312,12 @@ RSpec.describe "Recovery and status rake tasks", type: :integration do
       before do
         allow(git_integration).to receive(:current_branch)
           .and_raise(MigrationGuard::GitError, "Not a git repository")
+
+        # rubocop:disable RSpec/AnyInstance
+        allow_any_instance_of(MigrationGuard::DiagnosticRunner).to receive(:puts) do |_, message|
+          Rails.logger.info message if message.present?
+        end
+        # rubocop:enable RSpec/AnyInstance
       end
 
       it "reports git integration issues" do
