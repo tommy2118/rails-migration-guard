@@ -36,6 +36,11 @@ module MigrationGuard
     end
 
     def enabled?
+      unless defined?(Rails) && Rails.respond_to?(:env)
+        MigrationGuard::Logger.debug("Rails not defined, MigrationGuard disabled")
+        return false
+      end
+
       if Rails.env.production?
         MigrationGuard::Logger.debug("MigrationGuard disabled in production")
         return false
