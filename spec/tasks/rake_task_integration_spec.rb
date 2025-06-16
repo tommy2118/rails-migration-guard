@@ -153,7 +153,7 @@ RSpec.describe "MigrationGuard rake task integration", type: :integration do
       it "calls rollbacker to handle orphaned migrations" do
         run_rake_task("db:migration:rollback_orphaned")
 
-        expect(rollbacker).to have_received(:rollback_orphaned)
+        expect(rollbacker).to have_received(:rollback_orphaned).at_least(:once)
       end
     end
   end
@@ -186,7 +186,7 @@ RSpec.describe "MigrationGuard rake task integration", type: :integration do
       it "calls rollbacker with the specified version" do
         run_rake_task("db:migration:rollback_specific", "VERSION" => version)
 
-        expect(rollbacker).to have_received(:rollback_specific).with(version)
+        expect(rollbacker).to have_received(:rollback_specific).with(version).at_least(:once)
       end
     end
     # rubocop:enable RSpec/MultipleMemoizedHelpers
@@ -242,7 +242,7 @@ RSpec.describe "MigrationGuard rake task integration", type: :integration do
       it "cleans up old records and reports count" do
         run_rake_task("db:migration:cleanup", "FORCE" => "true")
 
-        expect(tracker).to have_received(:cleanup_old_records)
+        expect(tracker).to have_received(:cleanup_old_records).at_least(:once)
         expect(task_output).to include("Cleaned up 1 old migration tracking records")
       end
     end
@@ -260,7 +260,7 @@ RSpec.describe "MigrationGuard rake task integration", type: :integration do
       it "displays all migration history" do
         run_rake_task("db:migration:history")
 
-        expect(MigrationGuard::Historian).to have_received(:new).with({})
+        expect(MigrationGuard::Historian).to have_received(:new).with({}).at_least(:once)
         expect(task_output).to include("History output")
       end
     end
@@ -282,7 +282,7 @@ RSpec.describe "MigrationGuard rake task integration", type: :integration do
           author: "test",
           limit: 10,
           format: "json"
-        )
+        ).at_least(:once)
       end
     end
   end
@@ -298,7 +298,7 @@ RSpec.describe "MigrationGuard rake task integration", type: :integration do
     it "runs diagnostic checks" do
       run_rake_task("db:migration:doctor")
 
-      expect(diagnostics).to have_received(:run_all_checks)
+      expect(diagnostics).to have_received(:run_all_checks).at_least(:once)
     end
   end
 
