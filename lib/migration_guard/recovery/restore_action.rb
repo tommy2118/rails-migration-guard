@@ -30,7 +30,7 @@ module MigrationGuard
         return file_path_error unless file_path
 
         return false unless restore_file_from_commit(commit_hash, file_path)
-        
+
         log_success("✓ Migration file restored from commit #{commit_hash}")
         true
       rescue StandardError => e

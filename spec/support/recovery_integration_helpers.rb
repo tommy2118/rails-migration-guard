@@ -61,18 +61,19 @@ module RecoveryIntegrationHelpers
     within_app_directory(app_root) do
       run_git_command("git checkout -b #{branch_name}")
 
-      migration_versions.each do |version|
-        create_test_migration(app_root, version, "TestFeature#{version}")
+      migration_versions.each_with_index do |version, index|
+        class_name = "TestFeature#{index + 1}"
+        create_test_migration(app_root, version, class_name)
       end
 
-      run_git_command("git add db/migrate/")
+      run_git_command("git add .")
       run_git_command("git commit -m 'Add feature migrations'")
       run_git_command("git checkout main")
     end
   end
 
   # Create and apply migrations to database
-  def apply_migrations_to_database(app_root, migration_versions)
+  def apply_migrations_to_database(app_root, migration_versions, branch_name = nil)
     within_app_directory(app_root) do
       migration_versions.each do |version|
         # Simulate applying migration to schema_migrations
@@ -83,7 +84,7 @@ module RecoveryIntegrationHelpers
         # Create tracking record
         MigrationGuard::MigrationGuardRecord.create!(
           version: version,
-          branch: current_git_branch,
+          branch: branch_name || current_git_branch,
           author: "test@example.com",
           status: "applied",
           metadata: { applied_at: Time.current.iso8601 }
@@ -98,11 +99,12 @@ module RecoveryIntegrationHelpers
       # Create feature branch with migrations
       run_git_command("git checkout -b temp_feature")
 
-      versions.each do |version|
-        create_test_migration(app_root, version, "OrphanedMigration#{version}")
+      versions.each_with_index do |version, index|
+        class_name = "OrphanedMigration#{index + 1}"
+        create_test_migration(app_root, version, class_name)
       end
 
-      run_git_command("git add db/migrate/")
+      run_git_command("git add .")
       run_git_command("git commit -m 'Add orphaned migrations'")
 
       # Apply migrations to database
@@ -144,15 +146,29 @@ module RecoveryIntegrationHelpers
   # Create version conflict scenario
   def create_version_conflict_scenario(app_root, version)
     within_app_directory(app_root) do
-      # Create multiple records with same version
+      # Temporarily remove unique index to create version conflicts
+      begin
+        ActiveRecord::Base.connection.remove_index(:migration_guard_records, :version)
+      rescue StandardError
+        nil
+      end
+
+      # Create multiple records with same version using direct SQL
       2.times do |i|
-        MigrationGuard::MigrationGuardRecord.create!(
-          version: version,
-          branch: "feature/branch#{i + 1}",
-          author: "dev#{i + 1}@example.com",
-          status: "applied",
-          metadata: { branch_info: "conflict_#{i + 1}" }
+        ActiveRecord::Base.connection.execute(
+          ActiveRecord::Base.sanitize_sql([
+            "INSERT INTO migration_guard_records (version, branch, author, status, metadata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            version, "feature/branch#{i + 1}", "dev#{i + 1}@example.com", "applied", 
+            { branch_info: "conflict_#{i + 1}" }.to_json, Time.current, Time.current
+          ])
         )
+      end
+      
+      # Restore unique index
+      begin
+        ActiveRecord::Base.connection.add_index(:migration_guard_records, :version, unique: true)
+      rescue StandardError
+        nil
       end
     end
   end
