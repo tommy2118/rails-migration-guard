@@ -39,7 +39,7 @@ module MigrationGuard
     end
 
     def migrations_in_branch(branch)
-      output = `git ls-tree -r #{branch} --name-only db/migrate/ 2>&1`
+      output = `git ls-tree -r "#{branch}" --name-only db/migrate/ 2>&1`
 
       raise GitError, "Failed to list migrations in branch #{branch}: #{output}" unless $CHILD_STATUS.success?
 
@@ -77,13 +77,13 @@ module MigrationGuard
     def author_email
       output = `git config user.email 2>&1`
 
-      raise GitError, "Git user email not configured" unless $CHILD_STATUS.success? && !output.strip.empty?
+      raise GitError, "Git user email not configured" if !$CHILD_STATUS.success? || output.strip.empty?
 
       output.strip
     end
 
     def file_exists_in_branch?(branch, file_path)
-      `git cat-file -e #{branch}:#{file_path} 2>&1`
+      `git cat-file -e "#{branch}:#{file_path}" 2>&1`
       $CHILD_STATUS.success?
     end
 

@@ -80,7 +80,7 @@ RSpec.describe MigrationGuard::GitIntegration do
   describe "#migrations_in_branch" do
     it "lists migration files in the specified branch" do
       stub_system_call(
-        "git ls-tree -r main --name-only db/migrate/ 2>&1",
+        "git ls-tree -r \"main\" --name-only db/migrate/ 2>&1",
         "db/migrate/20240101000001_create_users.rb\ndb/migrate/20240102000002_add_email_to_users.rb\n",
         success: true
       )
@@ -94,14 +94,14 @@ RSpec.describe MigrationGuard::GitIntegration do
     end
 
     it "returns empty array when no migrations exist" do
-      stub_system_call("git ls-tree -r feature/new --name-only db/migrate/ 2>&1", "", success: true)
+      stub_system_call("git ls-tree -r \"feature/new\" --name-only db/migrate/ 2>&1", "", success: true)
 
       expect(git_integration.migrations_in_branch("feature/new")).to eq([])
     end
 
     it "raises GitError when command fails" do
       stub_system_call(
-        "git ls-tree -r invalid-branch --name-only db/migrate/ 2>&1",
+        "git ls-tree -r \"invalid-branch\" --name-only db/migrate/ 2>&1",
         "fatal: Not a valid object name invalid-branch\n",
         success: false
       )
@@ -118,7 +118,7 @@ RSpec.describe MigrationGuard::GitIntegration do
 
     it "returns version numbers from migration files in trunk" do
       stub_system_call(
-        "git ls-tree -r main --name-only db/migrate/ 2>&1",
+        "git ls-tree -r \"main\" --name-only db/migrate/ 2>&1",
         "db/migrate/20240101000001_create_users.rb\ndb/migrate/20240102000002_add_email_to_users.rb\n",
         success: true
       )
@@ -129,7 +129,7 @@ RSpec.describe MigrationGuard::GitIntegration do
     end
 
     it "handles empty migration list" do
-      stub_system_call("git ls-tree -r main --name-only db/migrate/ 2>&1", "", success: true)
+      stub_system_call("git ls-tree -r \"main\" --name-only db/migrate/ 2>&1", "", success: true)
 
       expect(git_integration.migration_versions_in_trunk).to eq([])
     end
@@ -151,14 +151,14 @@ RSpec.describe MigrationGuard::GitIntegration do
 
   describe "#file_exists_in_branch?" do
     it "returns true when file exists" do
-      stub_system_call("git cat-file -e main:db/migrate/20240101000001_create_users.rb 2>&1", "", success: true)
+      stub_system_call("git cat-file -e \"main:db/migrate/20240101000001_create_users.rb\" 2>&1", "", success: true)
 
       expect(git_integration.file_exists_in_branch?("main", "db/migrate/20240101000001_create_users.rb"))
         .to be true
     end
 
     it "returns false when file doesn't exist" do
-      stub_system_call("git cat-file -e main:db/migrate/nonexistent.rb 2>&1", "", success: false)
+      stub_system_call("git cat-file -e \"main:db/migrate/nonexistent.rb\" 2>&1", "", success: false)
 
       expect(git_integration.file_exists_in_branch?("main", "db/migrate/nonexistent.rb"))
         .to be false
@@ -214,12 +214,12 @@ RSpec.describe MigrationGuard::GitIntegration do
 
     it "returns migrations for each branch" do
       stub_system_call(
-        "git ls-tree -r main --name-only db/migrate/ 2>&1",
+        "git ls-tree -r \"main\" --name-only db/migrate/ 2>&1",
         "db/migrate/001_create_users.rb\ndb/migrate/002_add_email.rb\n",
         success: true
       )
       stub_system_call(
-        "git ls-tree -r develop --name-only db/migrate/ 2>&1",
+        "git ls-tree -r \"develop\" --name-only db/migrate/ 2>&1",
         "db/migrate/001_create_users.rb\ndb/migrate/003_add_profile.rb\n",
         success: true
       )
@@ -234,12 +234,12 @@ RSpec.describe MigrationGuard::GitIntegration do
 
     it "handles errors for specific branches" do
       stub_system_call(
-        "git ls-tree -r main --name-only db/migrate/ 2>&1",
+        "git ls-tree -r \"main\" --name-only db/migrate/ 2>&1",
         "db/migrate/001_create_users.rb\n",
         success: true
       )
       stub_system_call(
-        "git ls-tree -r develop --name-only db/migrate/ 2>&1",
+        "git ls-tree -r \"develop\" --name-only db/migrate/ 2>&1",
         "fatal: Not a valid object name develop\n",
         success: false
       )
@@ -259,12 +259,12 @@ RSpec.describe MigrationGuard::GitIntegration do
 
     it "returns version numbers for each branch" do
       stub_system_call(
-        "git ls-tree -r main --name-only db/migrate/ 2>&1",
+        "git ls-tree -r \"main\" --name-only db/migrate/ 2>&1",
         "db/migrate/20240101000001_create_users.rb\ndb/migrate/20240102000002_add_email.rb\n",
         success: true
       )
       stub_system_call(
-        "git ls-tree -r develop --name-only db/migrate/ 2>&1",
+        "git ls-tree -r \"develop\" --name-only db/migrate/ 2>&1",
         "db/migrate/20240101000001_create_users.rb\ndb/migrate/20240103000003_add_profile.rb\n",
         success: true
       )
