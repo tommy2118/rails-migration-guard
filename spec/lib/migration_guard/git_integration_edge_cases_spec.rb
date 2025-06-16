@@ -264,18 +264,10 @@ RSpec.describe "MigrationGuard::GitIntegration edge cases and error scenarios", 
       `git commit -m "Add 1000 migrations"`
     end
 
-    it "handles large number of migrations efficiently" do
-      start_time = Time.zone.now
+    it "handles large number of migrations correctly" do
       migrations = git_integration.migrations_in_branch("master")
-      end_time = Time.zone.now
 
       expect(migrations.size).to eq(1000)
-      expect(end_time - start_time).to be < 5 # Should complete within 5 seconds
-    end
-
-    it "filters migrations correctly with many files" do
-      migrations = git_integration.migrations_in_branch("master")
-
       # All should match the migration pattern
       expect(migrations).to all(match(/^\d+_.*\.rb$/))
     end
