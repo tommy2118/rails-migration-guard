@@ -74,6 +74,13 @@ module MigrationGuard
         detector.check_branch_change(previous_head, new_head, is_branch_checkout)
       end
 
+      def history(options = {})
+        return unless check_enabled
+
+        historian = MigrationGuard::Historian.new(options)
+        Rails.logger.info historian.format_history_output
+      end
+
       private
 
       def check_git_integration

@@ -55,5 +55,19 @@ namespace :db do
         args[:is_branch_checkout]
       )
     end
+
+    desc "Show migration history with optional filtering"
+    task history: :environment do
+      ensure_migration_guard_loaded
+
+      options = {}
+      options[:branch] = ENV["BRANCH"] if ENV["BRANCH"]
+      options[:days] = ENV["DAYS"].to_i if ENV["DAYS"]
+      options[:version] = ENV["VERSION"] if ENV["VERSION"]
+      options[:limit] = ENV["LIMIT"].to_i if ENV["LIMIT"]
+      options[:format] = ENV["FORMAT"] if ENV["FORMAT"]
+
+      MigrationGuard::RakeTasks.history(options)
+    end
   end
 end

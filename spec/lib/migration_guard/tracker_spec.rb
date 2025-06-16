@@ -32,6 +32,30 @@ RSpec.describe MigrationGuard::Tracker do
           expect(record.status).to eq("applied")
         end
 
+        it "records direction metadata" do
+          track
+          record = MigrationGuard::MigrationGuardRecord.last
+          expect(record.metadata["direction"]).to eq("UP")
+        end
+
+        it "records timestamp metadata" do
+          track
+          record = MigrationGuard::MigrationGuardRecord.last
+          expect(record.metadata["tracked_at"]).to be_present
+        end
+
+        # rubocop:disable RSpec/NestedGroups
+        context "with execution time" do
+          subject(:track) { tracker.track_migration("20240115123456", direction, execution_time: 2.5) }
+
+          it "records execution time in metadata" do
+            track
+            record = MigrationGuard::MigrationGuardRecord.last
+            expect(record.metadata["execution_time"]).to eq(2.5)
+          end
+        end
+        # rubocop:enable RSpec/NestedGroups
+
         it "records the current branch" do
           allow(tracker).to receive(:current_branch).and_return("feature/new-stuff")
 
@@ -92,6 +116,12 @@ RSpec.describe MigrationGuard::Tracker do
 
           record = MigrationGuard::MigrationGuardRecord.last
           expect(record.status).to eq("rolled_back")
+        end
+
+        it "records direction metadata" do
+          track
+          record = MigrationGuard::MigrationGuardRecord.last
+          expect(record.metadata["direction"]).to eq("DOWN")
         end
       end
 

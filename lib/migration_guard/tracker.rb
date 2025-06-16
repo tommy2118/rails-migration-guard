@@ -4,16 +4,16 @@ require_relative "migration_guard_record"
 
 module MigrationGuard
   class Tracker
-    def track_migration(version, direction)
+    def track_migration(version, direction, execution_time: nil)
       return unless MigrationGuard.enabled?
 
       MigrationGuard::Logger.debug("Starting migration tracking", version: version, direction: direction)
 
       case direction
       when :up
-        track_up_migration(version)
+        track_up_migration(version, execution_time)
       when :down
-        track_down_migration(version)
+        track_down_migration(version, execution_time)
       end
     rescue StandardError => e
       MigrationGuard::Logger.error("Failed to track migration", error: e.message, version: version)
@@ -51,7 +51,7 @@ module MigrationGuard
 
     private
 
-    def track_up_migration(version)
+    def track_up_migration(version, execution_time = nil)
       record = MigrationGuardRecord.find_or_initialize_by(version: version)
 
       if record.persisted? && record.status == "applied"
@@ -59,15 +59,15 @@ module MigrationGuard
         return
       end
 
-      attributes = build_migration_attributes("applied")
+      attributes = build_migration_attributes("applied", "UP", execution_time)
       update_migration_record(record, version, attributes)
       cleanup_old_records
       record
     end
 
-    def track_down_migration(version)
+    def track_down_migration(version, execution_time = nil)
       record = MigrationGuardRecord.find_or_initialize_by(version: version)
-      attributes = build_migration_attributes("rolled_back")
+      attributes = build_migration_attributes("rolled_back", "DOWN", execution_time)
       update_migration_record(record, version, attributes)
       record
     end
@@ -80,11 +80,17 @@ module MigrationGuard
       MigrationGuard.configuration.track_author
     end
 
-    def build_migration_attributes(status)
+    def build_migration_attributes(status, direction = nil, execution_time = nil)
+      metadata = {}
+      metadata["direction"] = direction if direction
+      metadata["execution_time"] = execution_time if execution_time
+      metadata["tracked_at"] = Time.current.iso8601
+
       {
         status: status,
         branch: track_branch? ? current_branch : nil,
-        author: track_author? ? current_author : nil
+        author: track_author? ? current_author : nil,
+        metadata: metadata.any? ? metadata : nil
       }
     end
 
