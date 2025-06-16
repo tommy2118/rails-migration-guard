@@ -40,6 +40,8 @@ Metrics/ClassLength:
 
 RSpec/ExampleLength:
   Max: 20
+  Exclude:
+    - 'spec/integration/**/*'
 
 RSpec/FilePath:
   Exclude:
@@ -51,6 +53,9 @@ RSpec/SpecFilePathFormat:
 
 RSpec/MultipleExpectations:
   Max: 5
+  Exclude:
+    - 'spec/integration/**/*'
+    - 'spec/lib/migration_guard/rake_tasks_spec.rb'
 
 RSpec/NestedGroups:
   Max: 4
@@ -66,4 +71,19 @@ Naming/PredicateMethod:
 Rails/ApplicationRecord:
   Exclude:
     - 'lib/migration_guard/migration_guard_record.rb'
+
+RSpec/MessageSpies:
+  Enabled: false
+
+RSpec/BeforeAfterAll:
+  Exclude:
+    - 'spec/tasks/**/*'
+
+RSpec/DescribeClass:
+  Exclude:
+    - 'spec/tasks/**/*'
+    - 'spec/integration/**/*'
+
+RSpec/StubbedMock:
+  Enabled: false
 

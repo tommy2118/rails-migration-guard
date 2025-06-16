@@ -20,7 +20,7 @@ RSpec.describe "migration_guard rake tasks" do
 
     it "calls MigrationGuard::RakeTasks.status" do
       expect(MigrationGuard::RakeTasks).to receive(:status)
-      
+
       Rake::Task["db:migration:status"].execute
     end
   end
@@ -32,7 +32,7 @@ RSpec.describe "migration_guard rake tasks" do
 
     it "calls MigrationGuard::RakeTasks.rollback_orphaned" do
       expect(MigrationGuard::RakeTasks).to receive(:rollback_orphaned)
-      
+
       Rake::Task["db:migration:rollback_orphaned"].execute
     end
   end
@@ -44,7 +44,7 @@ RSpec.describe "migration_guard rake tasks" do
 
     it "calls MigrationGuard::RakeTasks.rollback_all" do
       expect(MigrationGuard::RakeTasks).to receive(:rollback_all)
-      
+
       Rake::Task["db:migration:rollback_all_orphaned"].execute
     end
   end
@@ -57,9 +57,9 @@ RSpec.describe "migration_guard rake tasks" do
     it "calls MigrationGuard::RakeTasks.rollback_specific with VERSION env var" do
       version = "20240115123456"
       allow(ENV).to receive(:fetch).with("VERSION", nil).and_return(version)
-      
+
       expect(MigrationGuard::RakeTasks).to receive(:rollback_specific).with(version)
-      
+
       Rake::Task["db:migration:rollback_specific"].execute
     end
   end
@@ -71,9 +71,9 @@ RSpec.describe "migration_guard rake tasks" do
 
     it "calls MigrationGuard::RakeTasks.cleanup with force option from ENV" do
       allow(ENV).to receive(:[]).with("FORCE").and_return("true")
-      
+
       expect(MigrationGuard::RakeTasks).to receive(:cleanup).with(force: true)
-      
+
       Rake::Task["db:migration:cleanup"].execute
     end
   end
@@ -85,7 +85,7 @@ RSpec.describe "migration_guard rake tasks" do
 
     it "calls MigrationGuard::RakeTasks.doctor" do
       expect(MigrationGuard::RakeTasks).to receive(:doctor)
-      
+
       Rake::Task["db:migration:doctor"].execute
     end
   end
