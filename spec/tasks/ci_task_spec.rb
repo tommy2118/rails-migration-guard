@@ -3,7 +3,7 @@
 require "rails_helper"
 require "rake"
 
-# rubocop:disable RSpec/VerifiedDoubles, RSpec/NestedGroups
+# rubocop:disable RSpec/VerifiedDoubles, RSpec/NestedGroups, RSpec/AnyInstance
 
 RSpec.describe "CI rake task", type: :integration do
   before(:all) do
@@ -24,6 +24,10 @@ RSpec.describe "CI rake task", type: :integration do
       current_branch: "feature/test",
       main_branch: "main"
     )
+
+    # Stub exit method to prevent process termination during tests
+    # Tests that expect SystemExit will override this stub
+    allow_any_instance_of(Object).to receive(:exit)
   end
 
   describe "db:migration:ci" do
@@ -99,6 +103,8 @@ RSpec.describe "CI rake task", type: :integration do
 
         context "with default warning strictness" do
           it "exits with warning code" do
+            allow_any_instance_of(Object).to receive(:exit) { |_, code| raise SystemExit, code }
+
             expect { Rake::Task["db:migration:ci"].execute }.to raise_error(SystemExit) do |error|
               expect(error.status).to eq(1) # EXIT_WARNING
             end
@@ -115,6 +121,8 @@ RSpec.describe "CI rake task", type: :integration do
           end
 
           it "exits with error code" do
+            allow_any_instance_of(Object).to receive(:exit) { |_, code| raise SystemExit, code }
+
             expect { Rake::Task["db:migration:ci"].execute }.to raise_error(SystemExit) do |error|
               expect(error.status).to eq(2) # EXIT_ERROR
             end
@@ -176,6 +184,8 @@ RSpec.describe "CI rake task", type: :integration do
         end
 
         it "exits with error code" do
+          allow_any_instance_of(Object).to receive(:exit) { |_, code| raise SystemExit, code }
+
           expect { Rake::Task["db:migration:ci"].execute }.to raise_error(SystemExit) do |error|
             expect(error.status).to eq(2) # EXIT_ERROR
           end
@@ -241,4 +251,4 @@ RSpec.describe "CI rake task", type: :integration do
     $stdout = original_stdout
   end
 end
-# rubocop:enable RSpec/VerifiedDoubles, RSpec/NestedGroups
+# rubocop:enable RSpec/VerifiedDoubles, RSpec/NestedGroups, RSpec/AnyInstance
