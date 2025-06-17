@@ -3,14 +3,24 @@
 require "rails_helper"
 require "rake"
 
-# rubocop:disable RSpec/MultipleMemoizedHelpers
-RSpec.describe "MigrationGuard rake task integration", type: :integration do
-  # Helpers for testing rake tasks
+RSpec.shared_context "with rake task setup" do
   let(:rake_output) { StringIO.new }
   let(:stdout_output) { StringIO.new }
-  let(:original_logger) { Rails.logger }
   let(:test_logger) { Logger.new(rake_output) }
   let(:git_integration) { instance_double(MigrationGuard::GitIntegration) }
+  let(:original_logger) { Rails.logger }
+
+  before do
+    Rails.logger = test_logger
+  end
+
+  after do
+    Rails.logger = original_logger
+  end
+end
+
+RSpec.describe "MigrationGuard rake task integration", type: :integration do
+  include_context "with rake task setup"
 
   before(:all) do
     Rails.application.load_tasks if Rake::Task.tasks.empty?
@@ -39,10 +49,6 @@ RSpec.describe "MigrationGuard rake task integration", type: :integration do
 
     # Enable MigrationGuard by default
     allow(MigrationGuard).to receive(:enabled?).and_return(true)
-  end
-
-  after do
-    Rails.logger = original_logger
   end
 
   # Helper methods
@@ -100,8 +106,7 @@ RSpec.describe "MigrationGuard rake task integration", type: :integration do
         allow(git_integration).to receive(:migration_versions_in_trunk).and_return(["20240101000003"])
       end
 
-      # rubocop:disable RSpec/MultipleExpectations
-      it "displays orphaned migrations grouped by branch" do
+      it "displays orphaned migrations grouped by branch" do # rubocop:disable RSpec/MultipleExpectations
         run_rake_task("db:migration:status")
 
         expect(task_output).to include("⚠ Orphaned: 2 migrations")
@@ -111,7 +116,6 @@ RSpec.describe "MigrationGuard rake task integration", type: :integration do
         expect(task_output).to include("feature/other")
         expect(task_output).not_to include("20240101000003") # Not orphaned
       end
-      # rubocop:enable RSpec/MultipleExpectations
     end
 
     context "with JSON format" do
@@ -180,7 +184,6 @@ RSpec.describe "MigrationGuard rake task integration", type: :integration do
       end
     end
 
-    # rubocop:disable RSpec/MultipleMemoizedHelpers
     context "with valid VERSION" do
       let(:version) { "20240101000001" }
 
@@ -195,9 +198,7 @@ RSpec.describe "MigrationGuard rake task integration", type: :integration do
         expect(rollbacker).to have_received(:rollback_specific).with(version).at_least(:once)
       end
     end
-    # rubocop:enable RSpec/MultipleMemoizedHelpers
 
-    # rubocop:disable RSpec/MultipleMemoizedHelpers
     context "when migration not found" do
       let(:version) { "99999999999999" }
 
@@ -213,7 +214,6 @@ RSpec.describe "MigrationGuard rake task integration", type: :integration do
         expect(task_output).to include("Migration #{version} not found")
       end
     end
-    # rubocop:enable RSpec/MultipleMemoizedHelpers
   end
 
   describe "db:migration:cleanup" do
@@ -308,7 +308,6 @@ RSpec.describe "MigrationGuard rake task integration", type: :integration do
     end
   end
 
-  # rubocop:disable RSpec/MultipleMemoizedHelpers
   describe "db:migration:recover" do
     let(:analyzer) { instance_double(MigrationGuard::RecoveryAnalyzer) }
     let(:executor) { instance_double(MigrationGuard::RecoveryExecutor) }
@@ -350,7 +349,6 @@ RSpec.describe "MigrationGuard rake task integration", type: :integration do
       end
     end
   end
-  # rubocop:enable RSpec/MultipleMemoizedHelpers
 
   describe "db:migration:authors" do
     let(:author_reporter) { instance_double(MigrationGuard::AuthorReporter) }
@@ -394,4 +392,3 @@ RSpec.describe "MigrationGuard rake task integration", type: :integration do
     end
   end
 end
-# rubocop:enable RSpec/MultipleMemoizedHelpers
