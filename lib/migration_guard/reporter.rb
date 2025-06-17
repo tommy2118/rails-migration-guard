@@ -230,9 +230,7 @@ module MigrationGuard
       end
 
       # Add sandbox mode indicator
-      if MigrationGuard.configuration.sandbox_mode
-        output << Colorizer.warning(MigrationGuard::SandboxMessages::START)
-      end
+      output << Colorizer.warning(MigrationGuard::SandboxMessages::START) if MigrationGuard.configuration.sandbox_mode
 
       output << ("═" * 55)
     end

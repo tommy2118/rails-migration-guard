@@ -73,10 +73,10 @@ module MigrationGuard
 
     def display_sandbox_message(message, logger_level)
       require_relative "colorizer"
-      
+
       # Map logger levels to colorizer methods
       colorizer_method = logger_level == :warn ? :warning : logger_level
-      
+
       if Rails.logger
         Rails.logger.public_send(logger_level, MigrationGuard::Colorizer.public_send(colorizer_method, message))
       else
@@ -87,7 +87,7 @@ module MigrationGuard
     def should_display_sandbox_messages?
       # Respect explicit quiet flag (supports multiple true values)
       return false if env_var_truthy?("MIGRATION_GUARD_SANDBOX_QUIET")
-      
+
       # Show in test only if explicitly verbose
       return false if Rails.env.test? && !env_var_truthy?("MIGRATION_GUARD_SANDBOX_VERBOSE")
 
