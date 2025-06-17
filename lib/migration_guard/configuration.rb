@@ -4,7 +4,7 @@ module MigrationGuard
   class Configuration
     VALID_GIT_INTEGRATION_LEVELS = %i[off warning auto_rollback].freeze
     VALID_LOG_LEVELS = %i[debug info warn error fatal].freeze
-    VALID_WARNING_FREQUENCIES = %i[each once smart].freeze
+    VALID_WARNING_FREQUENCIES = %i[each once smart summary].freeze
 
     attr_accessor :enabled_environments, :track_branch, :track_author, :track_timestamp, :sandbox_mode,
                   :warn_on_switch, :warn_after_migration, :block_deploy_with_orphans, :auto_cleanup,

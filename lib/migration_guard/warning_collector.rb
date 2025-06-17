@@ -10,22 +10,43 @@ module MigrationGuard
         Thread.current[:migration_guard_migration_count] = 0
         Thread.current[:migration_guard_warnings_enabled] = true
         Thread.current[:migration_guard_batch_start_time] = nil
+        Thread.current[:migration_guard_warnings_shown] = false
       end
 
       def start_batch
         Thread.current[:migration_guard_migration_count] = 0
         Thread.current[:migration_guard_batch_start_time] = Time.current
         Thread.current[:migration_guard_warnings_enabled] = MigrationGuard.configuration.warn_after_migration
+        Thread.current[:migration_guard_warnings_shown] = false
       end
 
       def end_batch
         return unless batch_active?
         return unless warnings_enabled?
 
-        display_summary if migration_count.positive?
+        display_summary if should_display_summary?
       ensure
         reset!
       end
+
+      private
+
+      def should_display_summary?
+        return false unless migration_count.positive?
+
+        case MigrationGuard.configuration.warning_frequency
+        when :once, :summary
+          true
+        when :smart
+          # In smart mode, show summary if we have multiple migrations
+          # or if we haven't shown warnings yet
+          migration_count > 1 || !warnings_already_shown?
+        else
+          false # :each mode doesn't show summary
+        end
+      end
+
+      public
 
       def increment_migration_count
         Thread.current[:migration_guard_migration_count] ||= 0
@@ -38,6 +59,14 @@ module MigrationGuard
 
       def migration_count
         Thread.current[:migration_guard_migration_count] || 0
+      end
+
+      def mark_warnings_shown
+        Thread.current[:migration_guard_warnings_shown] = true
+      end
+
+      def warnings_already_shown?
+        Thread.current[:migration_guard_warnings_shown] == true
       end
 
       private
@@ -55,13 +84,19 @@ module MigrationGuard
       def should_show_individual_warnings?
         return true unless batch_active?
 
-        # Show individual warnings only if configured or single migration
+        # Show individual warnings only if configured
         case MigrationGuard.configuration.warning_frequency
-        when :once
+        when :once, :summary
           false
         when :smart
-          # Show warnings immediately for single migrations
-          migration_count <= 1
+          # In smart mode: show warnings for first migration only
+          # After that, consolidate into summary
+          if warnings_already_shown?
+            false
+          else
+            # Show warnings immediately for single migrations
+            migration_count <= 1
+          end
         else
           # Default to showing each warning (includes :each)
           true

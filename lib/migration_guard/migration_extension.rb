@@ -28,6 +28,7 @@ module MigrationGuard
         if direction == :up && MigrationGuard::WarningCollector.should_show_individual_warnings?
           checker = MigrationGuard::PostMigrationChecker.new
           checker.check_and_warn
+          MigrationGuard::WarningCollector.mark_warnings_shown
         end
       end
 
