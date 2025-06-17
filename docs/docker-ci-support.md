@@ -3,7 +3,7 @@
 Rails Migration Guard now provides full support for Docker containers and CI/CD environments through automatic TTY detection and environment variable overrides.
 
 > **Related Documentation:**
-> - [CI Integration Guide](ci-integration.md) - Detailed CI/CD setup
+> - [CI Integration Guide](ci-integration.html) - Detailed CI/CD setup
 > - [Troubleshooting Guide](troubleshooting.md) - Common issues and solutions
 > - [Configuration Reference](configuration.md) - All configuration options
 

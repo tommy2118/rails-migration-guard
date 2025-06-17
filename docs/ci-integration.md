@@ -19,7 +19,7 @@ bundle exec rails db:migration:ci FORMAT=json
 
 ### GitHub Actions
 
-For GitHub Actions users, see our [dedicated GitHub Actions guide](./github-actions.md) for:
+For GitHub Actions users, see our [dedicated GitHub Actions guide](./github-actions.html) for:
 - Ready-to-use workflow files
 - Reusable composite action
 - PR comment integration
@@ -132,7 +132,7 @@ $ bundle exec rails db:migration:ci FORMAT=json
 
 ### GitHub Actions
 
-**📘 See our [comprehensive GitHub Actions guide](./github-actions.md) for detailed setup instructions, reusable actions, and advanced configurations.**
+**📘 See our [comprehensive GitHub Actions guide](./github-actions.html) for detailed setup instructions, reusable actions, and advanced configurations.**
 
 Basic example:
 
@@ -417,6 +417,6 @@ bundle exec rails db:migration:ci
 
 ## Next Steps
 
-- [GitHub Actions Integration](github-actions.md) - Ready-to-use GitHub Actions workflow
+- [GitHub Actions Integration](github-actions.html) - Ready-to-use GitHub Actions workflow
 - [Team Collaboration](team-collaboration.md) - Setting up shared configurations
 - [Troubleshooting Guide](troubleshooting.md) - Common issues and solutions
