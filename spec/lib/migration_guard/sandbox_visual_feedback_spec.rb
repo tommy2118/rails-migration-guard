@@ -17,7 +17,7 @@ RSpec.describe MigrationGuard::MigrationExtension, "sandbox visual feedback" do
                         else
                           5.2
                         end
-    
+
     Class.new(ActiveRecord::Migration[migration_version]) do
       include MigrationGuard::MigrationExtension
 
@@ -28,20 +28,20 @@ RSpec.describe MigrationGuard::MigrationExtension, "sandbox visual feedback" do
       def up
         # Empty migration for testing
       end
-      
+
       # Expose private methods for testing
       def test_env_var_truthy?(env_var_name)
         env_var_truthy?(env_var_name)
       end
-      
+
       def test_should_display_sandbox_messages?
         should_display_sandbox_messages?
       end
-      
+
       def test_display_sandbox_start_message
         display_sandbox_start_message
       end
-      
+
       def test_display_sandbox_complete_message
         display_sandbox_complete_message
       end
@@ -61,8 +61,12 @@ RSpec.describe MigrationGuard::MigrationExtension, "sandbox visual feedback" do
 
   describe "sandbox mode constants" do
     it "has defined sandbox message constants" do
-      expect(MigrationGuard::SandboxMessages::START).to eq("🧪 SANDBOX MODE ACTIVE - Database changes will be rolled back")
-      expect(MigrationGuard::SandboxMessages::COMPLETE).to eq("⚠️  SANDBOX: Database changes rolled back. Schema.rb updated for inspection.")
+      expect(MigrationGuard::SandboxMessages::START).to eq(
+        "🧪 SANDBOX MODE ACTIVE - Database changes will be rolled back"
+      )
+      expect(MigrationGuard::SandboxMessages::COMPLETE).to eq(
+        "⚠️  SANDBOX: Database changes rolled back. Schema.rb updated for inspection."
+      )
     end
   end
 
@@ -101,7 +105,7 @@ RSpec.describe MigrationGuard::MigrationExtension, "sandbox visual feedback" do
 
       it "returns false when MIGRATION_GUARD_SANDBOX_QUIET is set to various truthy values" do
         allow(Rails).to receive(:env).and_return(ActiveSupport::StringInquirer.new("development"))
-        
+
         %w[true TRUE 1 yes YES].each do |value|
           ENV["MIGRATION_GUARD_SANDBOX_QUIET"] = value
           expect(migration_instance.test_should_display_sandbox_messages?).to be false
@@ -127,7 +131,7 @@ RSpec.describe MigrationGuard::MigrationExtension, "sandbox visual feedback" do
 
       it "returns true in test environment with various verbose flag values" do
         allow(Rails).to receive(:env).and_return(ActiveSupport::StringInquirer.new("test"))
-        
+
         %w[true TRUE 1 yes YES].each do |value|
           ENV["MIGRATION_GUARD_SANDBOX_VERBOSE"] = value
           expect(migration_instance.test_should_display_sandbox_messages?).to be true
