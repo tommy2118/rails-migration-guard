@@ -3,9 +3,11 @@
 require "rails_helper"
 require "rake"
 
+# rubocop:disable RSpec/MultipleMemoizedHelpers
 RSpec.describe "MigrationGuard rake task integration", type: :integration do
   # Helpers for testing rake tasks
   let(:rake_output) { StringIO.new }
+  let(:stdout_output) { StringIO.new }
   let(:original_logger) { Rails.logger }
   let(:test_logger) { Logger.new(rake_output) }
   let(:git_integration) { instance_double(MigrationGuard::GitIntegration) }
@@ -20,6 +22,9 @@ RSpec.describe "MigrationGuard rake task integration", type: :integration do
 
     # Setup test logger to capture output
     allow(Rails).to receive(:logger).and_return(test_logger)
+
+    # Capture stdout for commands that use puts
+    allow($stdout).to receive(:puts) { |msg| stdout_output.puts(msg) }
 
     # Mock git integration
     allow(MigrationGuard::GitIntegration).to receive(:new).and_return(git_integration)
@@ -52,7 +57,8 @@ RSpec.describe "MigrationGuard rake task integration", type: :integration do
   end
 
   def task_output
-    rake_output.string
+    # Combine both logger output and stdout for backward compatibility
+    rake_output.string + stdout_output.string
   end
 
   def create_migration_record(version, status: "applied", branch: "feature/test", **attributes)
@@ -375,15 +381,17 @@ RSpec.describe "MigrationGuard rake task integration", type: :integration do
 
     context "when Rails logger is nil" do
       before do
-        # The rake tasks use Rails.logger.info, so we need to ensure they handle nil logger
+        # The rake tasks still use Rails.logger.info for the disabled message
         # In real usage, Rails.logger should never be nil, but we test defensive programming
-        allow(Rails.logger).to receive(:info).and_raise(NoMethodError)
+        allow(Rails).to receive(:logger).and_return(nil)
+        allow(MigrationGuard).to receive(:enabled?).and_return(false)
       end
 
       it "doesn't crash when logger is unavailable" do
-        # The current implementation doesn't handle nil logger, so this test documents the behavior
+        # With MigrationGuard disabled and nil logger, the check_enabled method will fail
         expect { run_rake_task("db:migration:status") }.to raise_error(NoMethodError)
       end
     end
   end
 end
+# rubocop:enable RSpec/MultipleMemoizedHelpers
