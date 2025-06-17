@@ -25,9 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Shows completion message after rollback: "⚠️ SANDBOX: Database changes rolled back"
   - Added sandbox mode status to `rails db:migration:doctor` diagnostic checks
   - Added sandbox mode indicator to `rails db:migration:status` output
-  - Configurable via environment variables:
+  - Configurable via environment variables (supports multiple truthy values: true, 1, yes):
     - `MIGRATION_GUARD_SANDBOX_QUIET=true` - Disable all sandbox feedback
     - `MIGRATION_GUARD_SANDBOX_VERBOSE=true` - Enable feedback in test environment
+  - Consistent output method: uses Rails logger when available, falls back to stdout
   - Improves user experience by preventing confusion about sandbox behavior
 
 ### Fixed

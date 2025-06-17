@@ -32,7 +32,7 @@ RSpec.describe MigrationGuard::Reporter, "sandbox mode indicator" do
 
         aggregate_failures do
           expect(output).to include("Migration Status (main branch)")
-          expect(output).to include("🧪 SANDBOX MODE ACTIVE - Changes will be rolled back")
+          expect(output).to include(MigrationGuard::SandboxMessages::START)
           expect(output).to include("═" * 55)
         end
       end
@@ -68,7 +68,7 @@ RSpec.describe MigrationGuard::Reporter, "sandbox mode indicator" do
 
         aggregate_failures do
           expect(output).to include("Migration Status (branches: main, develop)")
-          expect(output).to include("🧪 SANDBOX MODE ACTIVE - Changes will be rolled back")
+          expect(output).to include(MigrationGuard::SandboxMessages::START)
           expect(output).to include("═" * 55)
         end
       end

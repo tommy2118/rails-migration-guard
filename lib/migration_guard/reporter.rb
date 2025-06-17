@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "colorizer"
+require_relative "migration_extension"
 
 module MigrationGuard
   class Reporter # rubocop:disable Metrics/ClassLength
@@ -230,7 +231,7 @@ module MigrationGuard
 
       # Add sandbox mode indicator
       if MigrationGuard.configuration.sandbox_mode
-        output << Colorizer.warning("🧪 SANDBOX MODE ACTIVE - Changes will be rolled back")
+        output << Colorizer.warning(MigrationGuard::SandboxMessages::START)
       end
 
       output << ("═" * 55)

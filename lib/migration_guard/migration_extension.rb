@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
 module MigrationGuard
+  # Constants for sandbox mode messages
+  module SandboxMessages
+    START = "🧪 SANDBOX MODE ACTIVE - Database changes will be rolled back"
+    COMPLETE = "⚠️  SANDBOX: Database changes rolled back. Schema.rb updated for inspection."
+  end
+
   module MigrationExtension
     def self.prepended(base)
       base.singleton_class.prepend(ClassMethods)
@@ -56,25 +62,41 @@ module MigrationGuard
     def display_sandbox_start_message
       return unless should_display_sandbox_messages?
 
-      require_relative "colorizer"
-      puts MigrationGuard::Colorizer.info("🧪 SANDBOX MODE ACTIVE - Database changes will be rolled back") # rubocop:disable Rails/Output
+      display_sandbox_message(SandboxMessages::START, :info)
     end
 
     def display_sandbox_complete_message
       return unless should_display_sandbox_messages?
 
+      display_sandbox_message(SandboxMessages::COMPLETE, :warn)
+    end
+
+    def display_sandbox_message(message, logger_level)
       require_relative "colorizer"
-      # rubocop:disable Layout/LineLength, Rails/Output
-      puts MigrationGuard::Colorizer.warning("⚠️  SANDBOX: Database changes rolled back. Schema.rb updated for inspection.")
-      # rubocop:enable Layout/LineLength, Rails/Output
+      
+      # Map logger levels to colorizer methods
+      colorizer_method = logger_level == :warn ? :warning : logger_level
+      
+      if Rails.logger
+        Rails.logger.public_send(logger_level, MigrationGuard::Colorizer.public_send(colorizer_method, message))
+      else
+        puts MigrationGuard::Colorizer.public_send(colorizer_method, message) # rubocop:disable Rails/Output
+      end
     end
 
     def should_display_sandbox_messages?
-      # Display messages unless explicitly disabled or in test environment
-      return false if ENV["MIGRATION_GUARD_SANDBOX_QUIET"] == "true"
-      return false if Rails.env.test? && !ENV["MIGRATION_GUARD_SANDBOX_VERBOSE"]
+      # Respect explicit quiet flag (supports multiple true values)
+      return false if env_var_truthy?("MIGRATION_GUARD_SANDBOX_QUIET")
+      
+      # Show in test only if explicitly verbose
+      return false if Rails.env.test? && !env_var_truthy?("MIGRATION_GUARD_SANDBOX_VERBOSE")
 
       true
+    end
+
+    def env_var_truthy?(env_var_name)
+      value = ENV[env_var_name]&.downcase
+      %w[true 1 yes].include?(value)
     end
   end
 end
