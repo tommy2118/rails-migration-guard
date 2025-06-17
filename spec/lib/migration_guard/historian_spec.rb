@@ -336,8 +336,9 @@ RSpec.describe MigrationGuard::Historian do
 
     # rubocop:disable RSpec/AnyInstance
     it "calls historian from rake tasks" do
-      expect_any_instance_of(described_class).to receive(:format_history_output)
+      expect_any_instance_of(described_class).to receive(:format_history_output).and_return("History output")
       allow(MigrationGuard).to receive(:enabled?).and_return(true)
+      allow($stdout).to receive(:puts)
       MigrationGuard::RakeTasks.history
     end
 

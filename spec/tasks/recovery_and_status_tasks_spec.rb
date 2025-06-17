@@ -5,6 +5,7 @@ require "rake"
 
 RSpec.describe "Recovery and status rake tasks", type: :integration do
   let(:rake_output) { StringIO.new }
+  let(:stdout_output) { StringIO.new }
   let(:original_logger) { Rails.logger }
   let(:test_logger) do
     logger = Logger.new(rake_output)
@@ -21,6 +22,9 @@ RSpec.describe "Recovery and status rake tasks", type: :integration do
     Rake::Task.tasks.each(&:reenable) if Rake::Task.tasks.any?
     allow(Rails).to receive(:logger).and_return(test_logger)
     allow(MigrationGuard).to receive(:enabled?).and_return(true)
+
+    # Capture stdout for commands that use puts
+    allow($stdout).to receive(:puts) { |msg| stdout_output.puts(msg) }
 
     # Setup git mocks
     allow(MigrationGuard::GitIntegration).to receive(:new).and_return(git_integration)
@@ -41,7 +45,8 @@ RSpec.describe "Recovery and status rake tasks", type: :integration do
   end
 
   def task_output
-    rake_output.string
+    # Combine both logger output and stdout for backward compatibility
+    rake_output.string + stdout_output.string
   end
 
   def create_migration_record(version, **attributes)

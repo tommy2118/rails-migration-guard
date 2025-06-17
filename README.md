@@ -46,7 +46,15 @@ Add this line to your application's Gemfile:
 
 ```ruby
 group :development, :staging do
-  gem 'rails-migration-guard'
+  gem 'rails_migration_guard'
+end
+```
+
+Or install directly from GitHub:
+
+```ruby
+group :development, :staging do
+  gem 'rails_migration_guard', github: 'tommy2118/rails-migration-guard'
 end
 ```
 
