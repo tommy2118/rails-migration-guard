@@ -160,7 +160,7 @@ RSpec.describe MigrationGuard::RakeTasks do
 
           expect(MigrationGuard::Tracker).to receive(:new).and_return(tracker)
           expect(tracker).to receive(:cleanup_old_records).and_return(5)
-          expect(logger).to receive(:info).with("Cleaned up 5 old migration tracking records")
+          expect($stdout).to receive(:puts).with(/✓ Cleaned up 5 old migration tracking records/)
 
           described_class.cleanup(force: true)
         end
@@ -168,8 +168,10 @@ RSpec.describe MigrationGuard::RakeTasks do
 
       context "without force" do
         it "logs a warning and does not perform cleanup" do
-          expect(logger).to receive(:warn).with("This will delete migration tracking records older than 30 days.")
-          expect(logger).to receive(:warn).with("To proceed, run with FORCE=true")
+          allow(ENV).to receive(:[]).and_call_original
+          allow(ENV).to receive(:[]).with("FORCE").and_return(nil)
+          expect($stdout).to receive(:puts).with(/This will delete migration tracking records older than 30 days/)
+          expect($stdout).to receive(:puts).with(/To proceed, run with FORCE=true/)
           expect(MigrationGuard::Tracker).not_to receive(:new)
 
           described_class.cleanup(force: false)
