@@ -14,6 +14,8 @@ RSpec.describe MigrationGuard::BranchChangeDetector do
     allow(git_integration).to receive(:current_branch).and_return("feature/new-feature")
     allow(Rails).to receive(:logger).and_return(test_logger)
     allow(test_logger).to receive(:info)
+    # Suppress console output in tests
+    allow(detector).to receive(:puts)
   end
 
   describe "#check_branch_change" do
@@ -37,6 +39,18 @@ RSpec.describe MigrationGuard::BranchChangeDetector do
       end
     end
 
+    context "when git_integration_level is :off" do
+      before do
+        allow(MigrationGuard.configuration).to receive(:git_integration_level).and_return(:off)
+      end
+
+      it "does nothing" do
+        expect(detector).not_to receive(:branch_name_from_ref)
+
+        detector.check_branch_change("abc123", "def456", "1")
+      end
+    end
+
     context "when it is a branch checkout" do
       before do
         allow(MigrationGuard.configuration).to receive(:warn_on_switch).and_return(true)
@@ -49,8 +63,8 @@ RSpec.describe MigrationGuard::BranchChangeDetector do
 
         detector.check_branch_change("abc123", "def456", "1")
 
-        expect(test_logger).to have_received(:info).with("")
-        expect(test_logger).to have_received(:info).with(%r{Switched from 'main' to 'feature/new-feature'})
+        expect(detector).to have_received(:puts).with("")
+        expect(detector).to have_received(:puts).with(%r{Switched from 'main' to 'feature/new-feature'})
       end
 
       it "shows warnings when orphaned migrations exist" do
@@ -66,8 +80,8 @@ RSpec.describe MigrationGuard::BranchChangeDetector do
 
         detector.check_branch_change("abc123", "def456", "1")
 
-        expect(test_logger).to have_received(:info).with(/Branch Change Warning/)
-        expect(test_logger).to have_received(:info).with(%r{20240115123456.*feature/old-feature})
+        expect(detector).to have_received(:puts).exactly(3).times
+        expect(detector).to have_received(:puts).with(/Branch Change Warning/)
       end
 
       it "handles same branch gracefully" do

@@ -52,6 +52,7 @@ RSpec/MultipleExpectations:
   Exclude:
     - 'spec/integration/**/*'
     - 'spec/lib/migration_guard/rake_tasks_spec.rb'
+    - 'spec/generators/migration_guard/hooks_generator_spec.rb'
 
 RSpec/NestedGroups:
   Max: 4

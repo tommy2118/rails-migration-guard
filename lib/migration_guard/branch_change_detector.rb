@@ -10,13 +10,19 @@ module MigrationGuard
       MigrationGuard::Logger.debug("Initialized BranchChangeDetector")
     end
 
-    def check_branch_change(previous_head, _new_head, is_branch_checkout)
+    def check_branch_change(previous_head, _new_head, is_branch_checkout) # rubocop:disable Metrics/MethodLength
       MigrationGuard::Logger.debug("Checking branch change",
                                    previous_head: previous_head,
                                    is_branch_checkout: is_branch_checkout)
 
       # Only check on actual branch changes, not file checkouts
       return unless is_branch_checkout == "1"
+
+      # Check if git integration is disabled
+      if MigrationGuard.configuration.git_integration_level == :off
+        MigrationGuard::Logger.debug("Git integration disabled")
+        return
+      end
 
       # Check if branch warnings are enabled
       unless MigrationGuard.configuration.warn_on_switch
@@ -63,14 +69,14 @@ module MigrationGuard
 
     def check_for_orphaned_migrations(previous_branch, current_branch)
       MigrationGuard::Logger.info("Branch switch detected", from: previous_branch, to: current_branch)
-      Rails.logger&.info ""
-      Rails.logger&.info Colorizer.info("Switched from '#{previous_branch}' to '#{current_branch}'")
+      puts "" # rubocop:disable Rails/Output
+      puts Colorizer.info("Switched from '#{previous_branch}' to '#{current_branch}'") # rubocop:disable Rails/Output
 
       warning = format_branch_change_warnings
       return unless warning
 
       MigrationGuard::Logger.warn("Orphaned migrations detected on branch switch")
-      Rails.logger&.info warning
+      puts warning # rubocop:disable Rails/Output
     end
 
     def add_warning_header(output)
