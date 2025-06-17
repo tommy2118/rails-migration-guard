@@ -1,0 +1,804 @@
+---
+layout: default
+title: CI/CD Integration Guide
+---
+
+<div class="bg-gradient-to-br from-brand-50 via-white to-accent-50 py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center" data-animate>
+            <h1 class="text-4xl font-bold text-gray-900 mb-6">
+                <span class="gradient-text">CI/CD Integration Guide</span>
+            </h1>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                Rails Migration Guard provides robust CI/CD integration to prevent orphaned migrations from reaching production. This guide covers how to integrate migration checks into your continuous integration pipeline.
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <!-- Quick Start Section -->
+    <section class="mb-16" data-animate>
+        <div class="flex items-center mb-4">
+            <div class="bg-brand-100 rounded-lg p-2 mr-3">
+                <svg class="w-6 h-6 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-900">Quick Start</h2>
+        </div>
+        
+        <p class="text-lg text-gray-600 mb-6">
+            Add this to your CI pipeline to check for migration issues:
+        </p>
+        
+        <div class="code-block rounded-lg p-6 mb-6">
+            <pre><code class="language-bash text-gray-100"># Basic CI check
+bundle exec rails db:migration:ci
+
+# Strict mode (fails on any issues)
+bundle exec rails db:migration:ci STRICT=true
+
+# JSON output for machine processing
+bundle exec rails db:migration:ci FORMAT=json</code></pre>
+        </div>
+
+        <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg mb-8">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-blue-700">
+                        For GitHub Actions users, see our <a href="./github-actions.html" class="underline hover:text-blue-800">dedicated GitHub Actions guide</a> for ready-to-use workflow files, reusable composite actions, PR comment integration, and matrix build examples.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- The CI Command Section -->
+    <section class="mb-16" data-animate>
+        <div class="flex items-center mb-4">
+            <div class="bg-purple-100 rounded-lg p-2 mr-3">
+                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-900">The <code class="bg-gray-100 text-brand-600 px-2 py-1 rounded">rails db:migration:ci</code> Command</h2>
+        </div>
+        
+        <p class="text-lg text-gray-600 mb-6">
+            The CI command is specifically designed for automated environments. It:
+        </p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                <div class="flex items-center text-accent-500 mb-3">
+                    <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="font-medium">Returns appropriate exit codes</span>
+                </div>
+                <p class="text-gray-600 text-sm ml-8">0=success, 1=warnings, 2=errors</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                <div class="flex items-center text-accent-500 mb-3">
+                    <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="font-medium">Supports multiple output formats</span>
+                </div>
+                <p class="text-gray-600 text-sm ml-8">Both human-readable and machine-readable output</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                <div class="flex items-center text-accent-500 mb-3">
+                    <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="font-medium">Works in all Rails environments</span>
+                </div>
+                <p class="text-gray-600 text-sm ml-8">Even when MigrationGuard is disabled</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                <div class="flex items-center text-accent-500 mb-3">
+                    <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="font-medium">Provides detailed issue reports</span>
+                </div>
+                <p class="text-gray-600 text-sm ml-8">With recommended fixes</p>
+            </div>
+        </div>
+
+        <div class="mb-12">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">Exit Codes</h3>
+            
+            <div class="overflow-hidden shadow-md rounded-lg border border-gray-200">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Exit Code</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Meaning</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">0</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Success</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">No migration issues found</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-yellow-600">1</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Warning</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">Issues found but not critical (default behavior)</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">2</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Error</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">Critical issues found or strict mode triggered</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="mb-12">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">Strictness Levels</h3>
+            <p class="text-gray-600 mb-6">Control how the CI command responds to migration issues:</p>
+            
+            <div class="overflow-hidden shadow-md rounded-lg border border-gray-200 mb-6">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Orphaned Migrations</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Missing Migrations</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Exit Code</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">permissive</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-yellow-600">Warning (1)</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-yellow-600">Warning (1)</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-yellow-600">1</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">warning (default)</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-yellow-600">Warning (1)</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-yellow-600">Warning (1)</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-yellow-600">1</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">strict</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">Error (2)</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">Error (2)</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">2</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="code-block rounded-lg p-6">
+                <pre><code class="language-bash text-gray-100"># Set strictness level
+bundle exec rails db:migration:ci STRICTNESS=strict
+bundle exec rails db:migration:ci STRICTNESS=warning
+bundle exec rails db:migration:ci STRICTNESS=permissive
+
+# Legacy strict flag (equivalent to STRICTNESS=strict)
+bundle exec rails db:migration:ci STRICT=true</code></pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Output Formats Section -->
+    <section class="mb-16" data-animate>
+        <div class="flex items-center mb-4">
+            <div class="bg-indigo-100 rounded-lg p-2 mr-3">
+                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path>
+                </svg>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-900">Output Formats</h2>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-6">
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-xl font-semibold text-gray-900">Text Format (Default)</h3>
+                    <p class="text-gray-600 text-sm mt-1">Human-readable output perfect for logs and developer review</p>
+                </div>
+                <div class="p-6">
+                    <div class="code-block rounded-lg p-4 mb-2">
+                        <pre><code class="language-bash text-gray-100">$ bundle exec rails db:migration:ci</code></pre>
+                    </div>
+                    <div class="bg-gray-800 rounded-lg p-4 text-sm">
+                        <p class="text-green-400 mb-2">✅ Migration Guard CI Check (feature/user-profiles → main)</p>
+                        
+                        <p class="text-blue-400 mb-2">🔍 Orphaned Migrations Found:</p>
+                        <p class="text-gray-300 mb-4 ml-2">• 20240115123456 (feature/user-profiles) - alice@example.com</p>
+                        
+                        <p class="text-yellow-400 mb-2">💡 Recommended Actions:</p>
+                        <p class="text-gray-300 mb-1 ml-2">1. Roll back orphaned migrations:</p>
+                        <p class="text-gray-400 mb-2 ml-4">rails db:migration:rollback_specific VERSION=20240115123456</p>
+                        <p class="text-gray-300 mb-4 ml-2">2. Or commit migration files if they should be included</p>
+                        
+                        <p class="text-purple-400 mb-2">📊 Summary:</p>
+                        <p class="text-gray-300 mb-1 ml-2">Orphaned: 1</p>
+                        <p class="text-gray-300 mb-1 ml-2">Missing: 0</p>
+                        <p class="text-gray-300 mb-1 ml-2">Strictness: warning</p>
+                        <p class="text-gray-300 ml-2">Exit code: 1</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-xl font-semibold text-gray-900">JSON Format</h3>
+                    <p class="text-gray-600 text-sm mt-1">Machine-readable output for CI integration and tooling</p>
+                </div>
+                <div class="p-6">
+                    <div class="code-block rounded-lg p-4 mb-2">
+                        <pre><code class="language-bash text-gray-100">$ bundle exec rails db:migration:ci FORMAT=json</code></pre>
+                    </div>
+                    <div class="code-block rounded-lg p-4 overflow-auto max-h-96 text-sm">
+                        <pre><code class="language-json text-gray-100">{
+  "migration_guard": {
+    "version": "0.1.0",
+    "status": "warning",
+    "summary": {
+      "total_orphaned": 1,
+      "total_missing": 0,
+      "issues_found": 1,
+      "main_branch": "main",
+      "current_branch": "feature/user-profiles"
+    },
+    "orphaned_migrations": [
+      {
+        "version": "20240115123456",
+        "file": "20240115123456_*.rb",
+        "branch": "feature/user-profiles",
+        "author": "alice@example.com",
+        "created_at": "2024-01-15T12:34:56Z"
+      }
+    ],
+    "missing_migrations": [],
+    "branch_info": {
+      "current": "feature/user-profiles",
+      "main": "main",
+      "ahead_count": 0,
+      "behind_count": 0
+    },
+    "timestamp": "2024-01-15T13:00:00Z",
+    "exit_code": 1,
+    "strictness": "warning"
+  }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CI Platform Examples Section -->
+    <section class="mb-16" data-animate>
+        <div class="flex items-center mb-4">
+            <div class="bg-pink-100 rounded-lg p-2 mr-3">
+                <svg class="w-6 h-6 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                </svg>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-900">CI Platform Examples</h2>
+        </div>
+        
+        <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg mb-8">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-md text-blue-700 font-medium">GitHub Actions</p>
+                    <p class="text-sm text-blue-600 mt-1">
+                        See our <a href="./github-actions.html" class="underline hover:text-blue-800 font-medium">comprehensive GitHub Actions guide</a> for detailed setup instructions, reusable actions, and advanced configurations.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mb-12">
+            <h3 class="text-xl font-semibold text-gray-900 mb-4">GitHub Actions</h3>
+            <p class="text-gray-600 mb-4">Basic example:</p>
+            
+            <div class="code-block rounded-lg p-6 mb-2">
+                <pre><code class="language-yaml text-gray-100"># .github/workflows/migration_guard.yml
+name: Migration Guard Check
+
+on:
+  pull_request:
+    paths:
+      - 'db/migrate/**'
+      - 'db/schema.rb'
+
+jobs:
+  check-migrations:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for proper branch comparison
+      
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      
+      - name: Setup Database
+        run: |
+          bundle exec rails db:setup
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost/test
+      
+      - name: Check for migration issues
+        run: |
+          bundle exec rails db:migration:ci --strict
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost/test</code></pre>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+            <div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">GitLab CI</h3>
+                <div class="code-block rounded-lg p-6">
+                    <pre><code class="language-yaml text-gray-100"># .gitlab-ci.yml
+stages:
+  - test
+
+migration_guard:
+  stage: test
+  image: ruby:3.1
+  services:
+    - postgres:14
+  variables:
+    POSTGRES_DB: test
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+    DATABASE_URL: postgresql://postgres:postgres@postgres/test
+    RAILS_ENV: test
+  before_script:
+    - bundle install
+    - bundle exec rails db:setup
+  script:
+    - bundle exec rails db:migration:ci STRICTNESS=strict FORMAT=json
+  only:
+    changes:
+      - db/migrate/**/*
+      - db/schema.rb</code></pre>
+                </div>
+            </div>
+            
+            <div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">CircleCI</h3>
+                <div class="code-block rounded-lg p-6">
+                    <pre><code class="language-yaml text-gray-100"># .circleci/config.yml
+version: 2.1
+
+jobs:
+  migration_guard:
+    docker:
+      - image: cimg/ruby:3.1
+      - image: cimg/postgres:14.0
+        environment:
+          POSTGRES_DB: test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+    
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: bundle install
+      
+      - run:
+          name: Setup database
+          command: |
+            bundle exec rails db:setup
+          environment:
+            RAILS_ENV: test
+            DATABASE_URL: postgresql://postgres@localhost/test
+      
+      - run:
+          name: Check migrations
+          command: |
+            bundle exec rails db:migration:ci STRICT=true
+          environment:
+            RAILS_ENV: test
+            DATABASE_URL: postgresql://postgres@localhost/test
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - migration_guard:
+          filters:
+            branches:
+              ignore: main</code></pre>
+                </div>
+            </div>
+            
+            <div class="md:col-span-2">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">Jenkins</h3>
+                <div class="code-block rounded-lg p-6">
+                    <pre><code class="language-groovy text-gray-100">// Jenkinsfile
+pipeline {
+    agent any
+    
+    environment {
+        RAILS_ENV = 'test'
+        DATABASE_URL = 'postgresql://postgres:postgres@localhost/test'
+    }
+    
+    stages {
+        stage('Setup') {
+            steps {
+                sh 'bundle install'
+                sh 'bundle exec rails db:setup'
+            }
+        }
+        
+        stage('Migration Guard Check') {
+            steps {
+                script {
+                    def result = sh(
+                        script: 'bundle exec rails db:migration:ci FORMAT=json STRICTNESS=strict',
+                        returnStatus: true
+                    )
+                    
+                    if (result != 0) {
+                        error("Migration issues detected. Check logs for details.")
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            // Archive migration check results
+            archiveArtifacts artifacts: 'log/migration_guard.log', allowEmptyArchive: true
+        }
+    }
+}</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Environment Variables Section -->
+    <section class="mb-16" data-animate>
+        <div class="flex items-center mb-4">
+            <div class="bg-green-100 rounded-lg p-2 mr-3">
+                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-900">Environment Variables</h2>
+        </div>
+        
+        <p class="text-lg text-gray-600 mb-6">
+            The CI command supports these environment variables:
+        </p>
+        
+        <div class="overflow-hidden shadow-md rounded-lg border border-gray-200 mb-6">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Variable</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Values</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Default</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">FORMAT</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">text, json</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">text</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">Output format</td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">STRICT</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">true, false</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">false</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">Legacy strict mode flag</td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">STRICTNESS</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">permissive, warning, strict</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">warning</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">Strictness level</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-yellow-700">
+                        Case-insensitive variants are also supported (<code>format</code>, <code>strict</code>, <code>strictness</code>).
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Integration Tips Section -->
+    <section class="mb-16" data-animate>
+        <div class="flex items-center mb-4">
+            <div class="bg-amber-100 rounded-lg p-2 mr-3">
+                <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                </svg>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-900">Integration Tips</h2>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="bg-amber-50 px-6 py-4 border-b border-amber-100">
+                    <h3 class="text-xl font-semibold text-gray-900">1. Run Only on Migration Changes</h3>
+                </div>
+                <div class="p-6">
+                    <p class="text-gray-600 mb-4">Configure your CI to run migration checks only when migration-related files change:</p>
+                    <div class="code-block rounded-lg p-4">
+                        <pre><code class="language-yaml text-gray-100"># GitHub Actions
+on:
+  pull_request:
+    paths:
+      - 'db/migrate/**'
+      - 'db/schema.rb'
+      - 'Gemfile*'</code></pre>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="bg-amber-50 px-6 py-4 border-b border-amber-100">
+                    <h3 class="text-xl font-semibold text-gray-900">2. Parallel Builds</h3>
+                </div>
+                <div class="p-6">
+                    <p class="text-gray-600 mb-4">The CI command is fast (typically < 5 seconds) and can run in parallel with other checks:</p>
+                    <div class="code-block rounded-lg p-4">
+                        <pre><code class="language-yaml text-gray-100">jobs:
+  tests:
+    # ... your existing tests
+  
+  migration_guard:
+    runs-on: ubuntu-latest
+    # ... migration guard setup</code></pre>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="bg-amber-50 px-6 py-4 border-b border-amber-100">
+                    <h3 class="text-xl font-semibold text-gray-900">3. Custom Strictness by Branch</h3>
+                </div>
+                <div class="p-6">
+                    <p class="text-gray-600 mb-4">Adjust strictness based on the target branch:</p>
+                    <div class="code-block rounded-lg p-4">
+                        <pre><code class="language-bash text-gray-100"># Strict for main/production branches
+if [[ "$TARGET_BRANCH" == "main" ]]; then
+  bundle exec rails db:migration:ci STRICTNESS=strict
+else
+  bundle exec rails db:migration:ci STRICTNESS=warning
+fi</code></pre>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="bg-amber-50 px-6 py-4 border-b border-amber-100">
+                    <h3 class="text-xl font-semibold text-gray-900">4. Artifact Collection</h3>
+                </div>
+                <div class="p-6">
+                    <p class="text-gray-600 mb-4">Save migration check results for debugging:</p>
+                    <div class="code-block rounded-lg p-4">
+                        <pre><code class="language-yaml text-gray-100">- name: Save migration check results
+  if: failure()
+  run: |
+    bundle exec rails db:migration:ci FORMAT=json > migration_check.json
+    
+- uses: actions/upload-artifact@v3
+  if: failure()
+  with:
+    name: migration-check-results
+    path: migration_check.json</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Troubleshooting Section -->
+    <section class="mb-16" data-animate>
+        <div class="flex items-center mb-4">
+            <div class="bg-red-100 rounded-lg p-2 mr-3">
+                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-900">Troubleshooting</h2>
+        </div>
+        
+        <div class="mb-8">
+            <h3 class="text-xl font-semibold text-gray-900 mb-4">Common Issues</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                    <h4 class="font-medium text-red-600 mb-2">Exit code 2 in CI but local tests pass</h4>
+                    <ul class="text-gray-700 space-y-1 list-disc list-inside ml-2">
+                        <li>Ensure your CI environment has the same database state as local</li>
+                        <li>Check that all migration files are committed</li>
+                        <li>Verify git history is complete (<code>fetch-depth: 0</code> in GitHub Actions)</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                    <h4 class="font-medium text-gray-800 mb-2">"MigrationGuard is not enabled" message</h4>
+                    <ul class="text-gray-700 space-y-1 list-disc list-inside ml-2">
+                        <li>This is normal and returns exit code 0</li>
+                        <li>MigrationGuard automatically disables in production and can be configured for other environments</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                    <h4 class="font-medium text-gray-800 mb-2">JSON parsing errors</h4>
+                    <ul class="text-gray-700 space-y-1 list-disc list-inside ml-2">
+                        <li>Ensure you're using <code>FORMAT=json</code> not <code>FORMAT=JSON</code></li>
+                        <li>Check for mixed output (some gems may output to stdout)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mb-8">
+            <h3 class="text-xl font-semibold text-gray-900 mb-4">Debug Mode</h3>
+            <p class="text-gray-600 mb-4">For detailed debugging, enable verbose logging:</p>
+            
+            <div class="code-block rounded-lg p-6">
+                <pre><code class="language-bash text-gray-100"># Add to your CI environment
+export MIGRATION_GUARD_LOG_LEVEL=debug
+bundle exec rails db:migration:ci</code></pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Best Practices Section -->
+    <section class="mb-16" data-animate>
+        <div class="flex items-center mb-4">
+            <div class="bg-blue-100 rounded-lg p-2 mr-3">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                </svg>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-900">Best Practices</h2>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+                <div class="flex items-center mb-2">
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center mr-2">1</span>
+                    <h3 class="font-medium text-gray-900">Use appropriate strictness</h3>
+                </div>
+                <p class="text-gray-600 text-sm ml-8">Start with <code>warning</code> and move to <code>strict</code> as your team adapts</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+                <div class="flex items-center mb-2">
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center mr-2">2</span>
+                    <h3 class="font-medium text-gray-900">Run early in pipeline</h3>
+                </div>
+                <p class="text-gray-600 text-sm ml-8">Catch issues before expensive test suites</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+                <div class="flex items-center mb-2">
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center mr-2">3</span>
+                    <h3 class="font-medium text-gray-900">Cache dependencies</h3>
+                </div>
+                <p class="text-gray-600 text-sm ml-8">Bundle and gem caching significantly speeds up CI</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+                <div class="flex items-center mb-2">
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center mr-2">4</span>
+                    <h3 class="font-medium text-gray-900">Monitor trends</h3>
+                </div>
+                <p class="text-gray-600 text-sm ml-8">Track migration issues over time to identify patterns</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+                <div class="flex items-center mb-2">
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center mr-2">5</span>
+                    <h3 class="font-medium text-gray-900">Team education</h3>
+                </div>
+                <p class="text-gray-600 text-sm ml-8">Ensure developers understand the migration workflow</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Next Steps Section -->
+    <section data-animate>
+        <div class="flex items-center mb-4">
+            <div class="bg-gray-100 rounded-lg p-2 mr-3">
+                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                </svg>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-900">Next Steps</h2>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <a href="./github-actions.html" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-6 border border-gray-200 hover:border-brand-200 transform hover:-translate-y-1">
+                <div class="flex items-center mb-4 text-brand-600">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    <h3 class="font-semibold text-lg">GitHub Actions Integration</h3>
+                </div>
+                <p class="text-gray-600 text-sm">Ready-to-use GitHub Actions workflow</p>
+            </a>
+            
+            <a href="./team-collaboration.html" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-6 border border-gray-200 hover:border-brand-200 transform hover:-translate-y-1">
+                <div class="flex items-center mb-4 text-brand-600">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                    <h3 class="font-semibold text-lg">Team Collaboration</h3>
+                </div>
+                <p class="text-gray-600 text-sm">Setting up shared configurations</p>
+            </a>
+            
+            <a href="./troubleshooting.html" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-6 border border-gray-200 hover:border-brand-200 transform hover:-translate-y-1">
+                <div class="flex items-center mb-4 text-brand-600">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    </svg>
+                    <h3 class="font-semibold text-lg">Troubleshooting Guide</h3>
+                </div>
+                <p class="text-gray-600 text-sm">Common issues and solutions</p>
+            </a>
+        </div>
+    </section>
+</div>
