@@ -23,6 +23,7 @@ module MigrationGuard
       check_orphaned_migrations
       check_missing_migrations
       check_schema_consistency
+      check_missing_migration_files
       check_environment_configuration
 
       print_summary
@@ -192,6 +193,52 @@ module MigrationGuard
       ActiveRecord::Base.connection.select_values("SELECT version FROM schema_migrations")
     rescue StandardError
       []
+    end
+
+    def check_missing_migration_files
+      missing_files = find_missing_migration_files
+
+      if missing_files.empty?
+        print_check("Migration files", :success, "all files present")
+      else
+        count = missing_files.size
+        add_issue("Migration file(s) missing",
+                  "Cannot rollback migrations without their files: #{missing_files.map(&:version).join(', ')}")
+        print_check("Migration files", :error, "#{count} missing")
+      end
+    rescue StandardError => e
+      add_issue("Migration file check failed", e.message)
+      print_check("Migration files", :error)
+    end
+
+    def find_missing_migration_files
+      all_records = MigrationGuard::MigrationGuardRecord.all
+      paths = migration_paths
+
+      all_records.reject do |record|
+        migration_file_exists?(record.version, paths)
+      end
+    end
+
+    def migration_file_exists?(version, paths)
+      paths.any? do |path|
+        Dir.glob(File.join(path, "#{version}_*.rb")).any?
+      end
+    end
+
+    def migration_paths
+      return ["db/migrate"] unless defined?(Rails) && Rails.respond_to?(:application)
+      return ["db/migrate"] unless Rails.application
+
+      begin
+        config_paths = Rails.application.config.paths
+        return ["db/migrate"] unless config_paths.respond_to?(:[])
+
+        migrate_paths = config_paths["db/migrate"]
+        migrate_paths || ["db/migrate"]
+      rescue StandardError
+        ["db/migrate"]
+      end
     end
 
     # rubocop:disable Metrics/MethodLength

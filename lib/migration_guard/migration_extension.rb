@@ -44,13 +44,13 @@ module MigrationGuard
 
     def exec_migration(conn, direction)
       if MigrationGuard.enabled? && MigrationGuard.configuration.sandbox_mode && direction == :up
-        Rails.logger.debug { "[MigrationGuard] Running migration #{version} in sandbox mode..." }
+        Rails.logger&.debug { "[MigrationGuard] Running migration #{version} in sandbox mode..." }
         conn.transaction(requires_new: true) do
           super
-          Rails.logger.debug "[MigrationGuard] Migration would succeed. Rolling back sandbox..."
+          Rails.logger&.debug "[MigrationGuard] Migration would succeed. Rolling back sandbox..."
           raise ActiveRecord::Rollback
         end
-        Rails.logger.debug "[MigrationGuard] Sandbox rollback complete. Run without sandbox to apply."
+        Rails.logger&.debug "[MigrationGuard] Sandbox rollback complete. Run without sandbox to apply."
       else
         super
       end
