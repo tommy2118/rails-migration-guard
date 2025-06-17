@@ -344,8 +344,9 @@ module MigrationGuard
     end
 
     def find_stuck_migrations
-      # Find migrations that have been in "rolling_back" status for more than 1 hour
-      timeout = 1.hour.ago
+      # Find migrations that have been in "rolling_back" status for more than the configured timeout
+      timeout_minutes = MigrationGuard.configuration.stuck_migration_timeout
+      timeout = timeout_minutes.minutes.ago
       MigrationGuard::MigrationGuardRecord
         .where(status: "rolling_back")
         .where(updated_at: ...timeout)
@@ -354,15 +355,25 @@ module MigrationGuard
     def report_stuck_migrations(stuck_migrations)
       count = stuck_migrations.size
       oldest_time = stuck_migrations.minimum(:updated_at)
-      hours_stuck = ((Time.current - oldest_time) / 1.hour).round if oldest_time
+      time_stuck = format_time_stuck(oldest_time) if oldest_time
 
       versions = stuck_migrations.map(&:version).join(", ")
       add_issue("Stuck migrations detected",
                 "Migration(s) stuck in rollback state: #{versions}. Run 'rails db:migration:recover' to fix")
 
       details = "#{count} stuck"
-      details += " (oldest: #{hours_stuck}h)" if hours_stuck
+      details += " (oldest: #{time_stuck})" if time_stuck
       print_check("Stuck migrations", :error, details)
+    end
+
+    def format_time_stuck(timestamp)
+      minutes = ((Time.current - timestamp) / 1.minute).round
+      if minutes < 60
+        "#{minutes}m"
+      else
+        hours = minutes / 60
+        "#{hours}h"
+      end
     end
   end
   # rubocop:enable Metrics/ClassLength

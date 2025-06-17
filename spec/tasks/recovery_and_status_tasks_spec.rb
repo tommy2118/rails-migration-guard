@@ -341,12 +341,12 @@ RSpec.describe "Recovery and status rake tasks", type: :integration do
 
     context "with stuck migrations" do
       before do
-        # Create a migration stuck in rolling_back status for more than 1 hour
+        # Create a migration stuck in rolling_back status for more than 10 minutes
         MigrationGuard::MigrationGuardRecord.create!(
           version: "20240301000001",
           status: "rolling_back",
           branch: "feature/stuck-branch",
-          updated_at: 2.hours.ago
+          updated_at: 20.minutes.ago
         )
 
         # rubocop:disable RSpec/AnyInstance

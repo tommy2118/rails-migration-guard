@@ -9,10 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Enhanced Doctor Command** (#86) - Doctor now detects stuck migrations:
-  - Detects migrations stuck in "rolling_back" status for more than 1 hour
+  - Detects migrations stuck in "rolling_back" status 
+  - Configurable timeout (default: 10 minutes) via `config.stuck_migration_timeout`
   - Reports the number of stuck migrations and how long they've been stuck
+  - Shows time in minutes or hours for better readability
   - Recommends running `rails db:migration:recover` to fix stuck migrations
-  - Provides comprehensive diagnostic information for troubleshooting
+  - Both doctor and recovery system use the same configurable timeout
 
 - **Rails 8.0 Compatibility** (#72) - Full support for Rails 8.0:
   - Updated test suite to run on Rails 8.0.2

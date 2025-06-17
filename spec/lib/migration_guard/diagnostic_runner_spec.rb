@@ -265,7 +265,7 @@ RSpec.describe MigrationGuard::DiagnosticRunner do
           version: "20240201000001",
           status: "rolling_back",
           branch: "feature/stuck",
-          updated_at: 30.minutes.ago
+          updated_at: 5.minutes.ago
         )
 
         # Create an old rolling_back migration (should be detected)
@@ -273,17 +273,17 @@ RSpec.describe MigrationGuard::DiagnosticRunner do
           version: "20240201000002",
           status: "rolling_back",
           branch: "feature/stuck",
-          updated_at: 3.hours.ago
+          updated_at: 20.minutes.ago
         )
       end
 
-      it "reports only migrations stuck for more than 1 hour" do
+      it "reports only migrations stuck for more than 10 minutes" do
         runner.run_all_checks
 
         output = io.string
         aggregate_failures do
           expect(output).to include("✗ Stuck migrations")
-          expect(output).to include("1 stuck (oldest: 3h)")
+          expect(output).to include("1 stuck (oldest: 20m)")
           expect(output).to include("Issues Found:")
           expect(output).to include("Stuck migrations detected")
           expect(output).to include("Migration(s) stuck in rollback state: 20240201000002")
@@ -300,6 +300,39 @@ RSpec.describe MigrationGuard::DiagnosticRunner do
 
         output = io.string
         expect(output).to include("✓ Stuck migrations: none found")
+      end
+    end
+
+    context "with custom stuck_migration_timeout" do
+      before do
+        allow(MigrationGuard.configuration).to receive(:stuck_migration_timeout).and_return(5)
+
+        # Create migrations at different times
+        MigrationGuard::MigrationGuardRecord.create!(
+          version: "20240301000001",
+          status: "rolling_back",
+          branch: "feature/test",
+          updated_at: 3.minutes.ago # Should NOT be detected with 5 minute timeout
+        )
+
+        MigrationGuard::MigrationGuardRecord.create!(
+          version: "20240301000002",
+          status: "rolling_back",
+          branch: "feature/test",
+          updated_at: 7.minutes.ago # Should be detected with 5 minute timeout
+        )
+      end
+
+      it "respects the configured timeout" do
+        runner.run_all_checks
+
+        output = io.string
+        aggregate_failures do
+          expect(output).to include("✗ Stuck migrations")
+          expect(output).to include("1 stuck") # Only 1 should be detected
+          expect(output).to include("Migration(s) stuck in rollback state: 20240301000002")
+          expect(output).not_to match(/Migration\(s\) stuck in rollback state:.*20240301000001/)
+        end
       end
     end
   end

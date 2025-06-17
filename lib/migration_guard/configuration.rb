@@ -10,7 +10,7 @@ module MigrationGuard
                   :warn_on_switch, :warn_after_migration, :block_deploy_with_orphans, :auto_cleanup,
                   :main_branch_names, :colorize_output, :target_branches, :logger, :visible_debug,
                   :warning_frequency, :max_warnings_display, :auto_detect_tty
-    attr_reader :git_integration_level, :cleanup_after_days, :log_level
+    attr_reader :git_integration_level, :cleanup_after_days, :log_level, :stuck_migration_timeout
 
     def initialize
       set_default_environment_config
@@ -42,6 +42,7 @@ module MigrationGuard
       @auto_cleanup = false
       @cleanup_after_days = 30
       @auto_detect_tty = true
+      @stuck_migration_timeout = 10 # minutes
     end
 
     def set_default_git_config
@@ -76,6 +77,14 @@ module MigrationGuard
       @cleanup_after_days = days
     end
 
+    def stuck_migration_timeout=(minutes)
+      unless minutes.is_a?(Integer) && minutes.positive?
+        raise ConfigurationError, "stuck_migration_timeout must be a positive integer (minutes)"
+      end
+
+      @stuck_migration_timeout = minutes
+    end
+
     def log_level=(level)
       unless VALID_LOG_LEVELS.include?(level)
         raise ConfigurationError, "Invalid log level: #{level}. " \
@@ -105,7 +114,8 @@ module MigrationGuard
         target_branches: target_branches,
         log_level: log_level,
         logger: logger,
-        auto_detect_tty: auto_detect_tty
+        auto_detect_tty: auto_detect_tty,
+        stuck_migration_timeout: stuck_migration_timeout
       }
     end
 
