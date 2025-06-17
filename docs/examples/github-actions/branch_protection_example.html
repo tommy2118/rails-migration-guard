@@ -1,0 +1,79 @@
+---
+layout: default
+title: Branch Protection Example
+---
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div class="text-center mb-12">
+        <h1 class="text-3xl font-bold text-gray-900 mb-4">Branch Protection Example</h1>
+        <p class="text-xl text-gray-600">Example of GitHub branch protection settings for Rails Migration Guard</p>
+    </div>
+
+    <div class="border border-gray-300 rounded-lg shadow-md overflow-hidden bg-white">
+        <div class="bg-gray-100 border-b border-gray-200 px-6 py-4">
+            <h2 class="text-xl font-semibold text-gray-900">Branch protection rule: main</h2>
+        </div>
+        
+        <div class="p-6">
+            <div class="mb-8">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Protect matching branches</h3>
+                
+                <div class="ml-6 space-y-4">
+                    <div>
+                        <div class="flex items-center">
+                            <svg class="h-5 w-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="font-medium">Require a pull request before merging</span>
+                        </div>
+                        
+                        <div class="ml-7 mt-2">
+                            <div class="flex items-center">
+                                <svg class="h-5 w-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span>Require approvals</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="flex items-center">
+                            <svg class="h-5 w-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="font-medium">Require status checks to pass before merging</span>
+                        </div>
+                        
+                        <div class="ml-7 mt-2">
+                            <div class="flex items-center">
+                                <svg class="h-5 w-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span>Require branches to be up to date before merging</span>
+                            </div>
+                            
+                            <div class="ml-7 mt-4 border border-gray-200 rounded-lg p-4">
+                                <h4 class="font-medium text-gray-900 mb-2">Status checks that are required:</h4>
+                                <ul class="list-disc list-inside ml-2">
+                                    <li class="text-gray-700">Migration Guard Check</li>
+                                    <li class="text-gray-700">Test suite</li>
+                                    <li class="text-gray-700">Lint</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="flex items-center">
+                            <svg class="h-5 w-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="font-medium">Do not allow bypassing the above settings</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
