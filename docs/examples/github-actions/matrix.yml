@@ -1,0 +1,81 @@
+# Matrix GitHub Actions workflow for Rails Migration Guard
+name: Migration Matrix Check
+
+on:
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'db/migrate/**'
+      - 'db/schema.rb'
+      - 'db/structure.sql'
+
+jobs:
+  check-migrations:
+    name: Check migrations (Ruby ${{ matrix.ruby }}, Rails ${{ matrix.rails }})
+    runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: ['3.1', '3.2', '3.3']
+        rails: ['7.0', '7.1', '7.2']
+        exclude:
+          # Exclude incompatible combinations
+          - ruby: '3.1'
+            rails: '7.2'
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: rails_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required for branch comparison
+      
+      - name: Set up Ruby ${{ matrix.ruby }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      
+      - name: Set Rails version
+        run: |
+          bundle add rails --version "~> ${{ matrix.rails }}.0"
+          bundle update rails actionpack activerecord
+      
+      - name: Set up database
+        run: |
+          bundle exec rails db:create
+          bundle exec rails db:schema:load
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/rails_test
+      
+      - name: Check migrations
+        id: check
+        uses: ./.github/actions/migration-guard
+        with:
+          strict: ${{ matrix.rails == '7.2' }}  # Strict only for latest Rails
+          comment-on-pr: ${{ matrix.ruby == '3.3' && matrix.rails == '7.2' }}  # Only comment once
+          format: json
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/rails_test
+      
+      - name: Show results
+        run: |
+          echo "Ruby ${{ matrix.ruby }}, Rails ${{ matrix.rails }} - Status: ${{ steps.check.outputs.status }}"
+          echo "Orphaned migrations: ${{ steps.check.outputs.orphaned-count }}"
+          echo "Missing migrations: ${{ steps.check.outputs.missing-count }}"

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Branch Protection Example</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      color: #24292e;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .settings-header {
+      margin-bottom: 20px;
+    }
+    .settings-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .settings-breadcrumb {
+      color: #586069;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .settings-panel {
+      border: 1px solid #e1e4e8;
+      border-radius: 6px;
+      background-color: #fff;
+      margin-bottom: 30px;
+    }
+    .panel-header {
+      background-color: #f6f8fa;
+      border-bottom: 1px solid #e1e4e8;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .panel-body {
+      padding: 16px;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-control {
+      padding: 10px;
+      border: 1px solid #e1e4e8;
+      border-radius: 6px;
+      width: 100%;
+      margin-top: 8px;
+    }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      margin-top: 8px;
+    }
+    .checkbox {
+      margin-right: 8px;
+    }
+    .checkbox-section {
+      margin-left: 24px;
+      margin-top: 8px;
+    }
+    .status-check-item {
+      display: flex;
+      align-items: center;
+      padding: 8px;
+      border: 1px solid #e1e4e8;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+    .status-check-icon {
+      margin-right: 8px;
+      color: #28a745;
+    }
+    .status-check-name {
+      flex-grow: 1;
+    }
+    .btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .btn-green {
+      background-color: #2ea44f;
+      color: white;
+      border: 1px solid rgba(27, 31, 35, 0.15);
+    }
+    .section-title {
+      font-weight: 600;
+      margin-top: 16px;
+      margin-bottom: 8px;
+    }
+    .section-subtitle {
+      color: #586069;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+    .highlighted {
+      background-color: #fff8c5;
+      padding: 2px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="settings-header">
+    <div class="settings-breadcrumb">
+      Repository settings > Branches
+    </div>
+    <h1 class="settings-title">Branch protection rules</h1>
+  </div>
+  
+  <div class="settings-panel">
+    <div class="panel-header">
+      Branch protection rule: main
+    </div>
+    <div class="panel-body">
+      <div class="form-group">
+        <label for="branch-name">Branch name pattern</label>
+        <input type="text" id="branch-name" class="form-control" value="main" readonly>
+      </div>
+      
+      <div class="form-group">
+        <div class="checkbox-label">
+          <input type="checkbox" class="checkbox" checked>
+          <strong>Require a pull request before merging</strong>
+        </div>
+        <div class="checkbox-section">
+          <div class="checkbox-label">
+            <input type="checkbox" class="checkbox" checked>
+            <span>Require approvals</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <div class="checkbox-label highlighted">
+          <input type="checkbox" class="checkbox" checked>
+          <strong>Require status checks to pass before merging</strong>
+        </div>
+        <div class="section-subtitle">
+          Choose which status checks must pass before branches can be merged into main.
+        </div>
+        <div class="checkbox-section">
+          <div class="checkbox-label">
+            <input type="checkbox" class="checkbox" checked>
+            <span>Require branches to be up to date before merging</span>
+          </div>
+          
+          <div class="section-title">Status checks that are required:</div>
+          
+          <div class="status-check-item highlighted">
+            <span class="status-check-icon">✓</span>
+            <span class="status-check-name">Migration Guard Check</span>
+          </div>
+          
+          <div class="status-check-item">
+            <span class="status-check-icon">✓</span>
+            <span class="status-check-name">RSpec tests</span>
+          </div>
+          
+          <div class="status-check-item">
+            <span class="status-check-icon">✓</span>
+            <span class="status-check-name">Linting</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <div class="checkbox-label">
+          <input type="checkbox" class="checkbox" checked>
+          <strong>Require conversation resolution before merging</strong>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <div class="checkbox-label">
+          <input type="checkbox" class="checkbox" checked>
+          <strong>Do not allow bypassing the above settings</strong>
+        </div>
+      </div>
+      
+      <button class="btn btn-green">Save changes</button>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,65 @@
+# Simple GitHub Actions workflow for Rails Migration Guard
+name: Migration Check
+
+on:
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'db/migrate/**'
+      - 'db/schema.rb'
+      - 'db/structure.sql'
+
+jobs:
+  check-migrations:
+    name: Check migrations
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: rails_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required for branch comparison
+      
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      
+      - name: Set up database
+        run: |
+          bundle exec rails db:create
+          bundle exec rails db:schema:load
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/rails_test
+      
+      - name: Check migrations
+        id: check
+        uses: ./.github/actions/migration-guard
+        with:
+          strict: false
+          comment-on-pr: true
+          format: json
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/rails_test
+      
+      - name: Show results
+        run: |
+          echo "Migration check status: ${{ steps.check.outputs.status }}"
+          echo "Orphaned migrations: ${{ steps.check.outputs.orphaned-count }}"
+          echo "Missing migrations: ${{ steps.check.outputs.missing-count }}"

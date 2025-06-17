@@ -33,7 +33,7 @@ jobs:
         env:
           RAILS_ENV: test
       
-      - uses: rails-migration-guard/migration-guard-action@v1
+      - uses: tommy2118/migration-guard-action@v1
 ```
 
 ### Using the Built-in Action
@@ -176,7 +176,7 @@ For multiple Rails apps:
 
 The action automatically comments on PRs when issues are found:
 
-![PR Comment Example](./images/pr-comment-example.png)
+![PR Comment Example](./examples/github-actions/pr_comment_example.html)
 
 ### Comment Format
 
@@ -431,15 +431,15 @@ jobs:
 
 ## Examples
 
-See the [examples directory](./.github/workflows/examples/) for:
+See the [examples directory](./examples/github-actions/) for:
 
-- [Simple setup](../.github/workflows/examples/simple.yml)
-- [Matrix builds](../.github/workflows/examples/matrix.yml)
-- [Monorepo setup](../.github/workflows/examples/monorepo.yml)
-- [Scheduled checks](../.github/workflows/examples/scheduled.yml)
+- [Simple setup](./examples/github-actions/simple.yml)
+- [Matrix builds](./examples/github-actions/matrix.yml)
+- [Monorepo setup](./examples/github-actions/monorepo.yml)
+- [Scheduled checks](./examples/github-actions/scheduled.yml)
 
 ## Support
 
-- [Report issues](https://github.com/rails-migration-guard/rails-migration-guard/issues)
+- [Report issues](https://github.com/tommy2118/rails-migration-guard/issues)
 - [GitHub Actions documentation](https://docs.github.com/actions)
-- [Rails Migration Guard documentation](./README.md)
+- [Rails Migration Guard documentation](../README.md)

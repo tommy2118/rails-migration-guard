@@ -1,0 +1,99 @@
+# Monorepo GitHub Actions workflow for Rails Migration Guard
+name: Monorepo Migration Check
+
+on:
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'apps/*/db/migrate/**'
+      - 'apps/*/db/schema.rb'
+      - 'apps/*/db/structure.sql'
+
+jobs:
+  check-migrations:
+    name: Check migrations
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required for branch comparison
+      
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      
+      # API app migrations
+      - name: Set up API database
+        run: |
+          cd apps/api
+          PGPASSWORD=postgres psql -h localhost -U postgres -c "CREATE DATABASE api_test;"
+          bundle install
+          bundle exec rails db:schema:load
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/api_test
+      
+      - name: Check API migrations
+        id: check-api
+        uses: ./.github/actions/migration-guard
+        with:
+          working-directory: apps/api
+          strict: false
+          comment-on-pr: true
+          format: json
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/api_test
+      
+      # Admin app migrations
+      - name: Set up Admin database
+        run: |
+          cd apps/admin
+          PGPASSWORD=postgres psql -h localhost -U postgres -c "CREATE DATABASE admin_test;"
+          bundle install
+          bundle exec rails db:schema:load
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/admin_test
+      
+      - name: Check Admin migrations
+        id: check-admin
+        uses: ./.github/actions/migration-guard
+        with:
+          working-directory: apps/admin
+          strict: false
+          comment-on-pr: true
+          format: json
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/admin_test
+      
+      # Create a summary
+      - name: Create Summary
+        run: |
+          echo "## Migration Check Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### API Application" >> $GITHUB_STEP_SUMMARY
+          echo "Status: ${{ steps.check-api.outputs.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "Orphaned: ${{ steps.check-api.outputs.orphaned-count }}" >> $GITHUB_STEP_SUMMARY
+          echo "Missing: ${{ steps.check-api.outputs.missing-count }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Admin Application" >> $GITHUB_STEP_SUMMARY
+          echo "Status: ${{ steps.check-admin.outputs.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "Orphaned: ${{ steps.check-admin.outputs.orphaned-count }}" >> $GITHUB_STEP_SUMMARY
+          echo "Missing: ${{ steps.check-admin.outputs.missing-count }}" >> $GITHUB_STEP_SUMMARY

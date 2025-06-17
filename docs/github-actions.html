@@ -329,30 +329,10 @@ steps:
         
         <div class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
             <div class="p-6">
-                <div class="border border-gray-300 rounded-lg p-6 bg-gray-50 mb-6">
-                    <h3 class="text-xl font-medium text-yellow-600 mb-3">⚠️ Migration Guard Check</h3>
-                    
-                    <p class="text-gray-800 mb-4">Found issues with migrations in this PR:</p>
-                    
-                    <div class="mb-4">
-                        <h4 class="text-lg font-medium text-gray-800 mb-2">Orphaned Migrations Detected</h4>
-                        <p class="text-gray-700 mb-2">The following migrations exist in the database but not in the target branch:</p>
-                        <ul class="list-disc list-inside text-gray-700 ml-4">
-                            <li><code>20240115123456_add_user_profiles.rb</code> - Created on branch: feature/user-profiles</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <h4 class="text-lg font-medium text-gray-800 mb-2">Suggested Actions</h4>
-                        <ol class="list-decimal list-inside text-gray-700 ml-4">
-                            <li><strong>For orphaned migrations</strong>: Roll them back or commit the migration files</li>
-                            <li><strong>For missing migrations</strong>: Pull latest changes and run <code>rails db:migrate</code></li>
-                        </ol>
-                    </div>
-                    
-                    <div class="border-t border-gray-300 mt-4 pt-4 text-gray-500 text-sm italic">
-                        This comment will be updated when issues are resolved.
-                    </div>
+                <div class="mb-6">
+                    <a href="./examples/github-actions/pr_comment_example.html" target="_blank" class="block">
+                        <img src="./examples/github-actions/pr_comment_example.html" alt="PR Comment Example" class="border border-gray-300 rounded-lg w-full">
+                    </a>
                 </div>
                 
                 <h3 class="text-xl font-semibold text-gray-900 mb-4">Comment Format</h3>
@@ -442,7 +422,7 @@ jobs:
                         <li>Enable "Require status checks to pass"</li>
                         <li>Add "Migration Guard Check" to required checks</li>
                     </ol>
-                    <img src="./images/branch-protection-example.png" alt="Branch protection settings" class="rounded-lg border border-gray-200 w-full">
+                    <img src="./examples/github-actions/branch_protection_example.html" alt="Branch protection settings" class="rounded-lg border border-gray-200 w-full">
                 </div>
             </div>
             
@@ -835,7 +815,7 @@ jobs:
         </p>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <a href="../.github/workflows/examples/simple.yml" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-6 border border-gray-200 hover:border-brand-200 transform hover:-translate-y-1">
+            <a href="./examples/github-actions/simple.yml" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-6 border border-gray-200 hover:border-brand-200 transform hover:-translate-y-1">
                 <div class="flex items-center mb-4 text-brand-600">
                     <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
@@ -845,7 +825,7 @@ jobs:
                 <p class="text-gray-600 text-sm">Basic workflow for standard Rails apps</p>
             </a>
             
-            <a href="../.github/workflows/examples/matrix.yml" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-6 border border-gray-200 hover:border-brand-200 transform hover:-translate-y-1">
+            <a href="./examples/github-actions/matrix.yml" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-6 border border-gray-200 hover:border-brand-200 transform hover:-translate-y-1">
                 <div class="flex items-center mb-4 text-brand-600">
                     <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
@@ -855,7 +835,7 @@ jobs:
                 <p class="text-gray-600 text-sm">Testing across multiple Ruby and Rails versions</p>
             </a>
             
-            <a href="../.github/workflows/examples/monorepo.yml" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-6 border border-gray-200 hover:border-brand-200 transform hover:-translate-y-1">
+            <a href="./examples/github-actions/monorepo.yml" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-6 border border-gray-200 hover:border-brand-200 transform hover:-translate-y-1">
                 <div class="flex items-center mb-4 text-brand-600">
                     <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
@@ -865,7 +845,7 @@ jobs:
                 <p class="text-gray-600 text-sm">For repositories with multiple Rails applications</p>
             </a>
             
-            <a href="../.github/workflows/examples/scheduled.yml" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-6 border border-gray-200 hover:border-brand-200 transform hover:-translate-y-1">
+            <a href="./examples/github-actions/scheduled.yml" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-6 border border-gray-200 hover:border-brand-200 transform hover:-translate-y-1">
                 <div class="flex items-center mb-4 text-brand-600">
                     <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -889,7 +869,7 @@ jobs:
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <a href="https://github.com/rails-migration-guard/rails-migration-guard/issues" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-6 border border-gray-200 hover:border-brand-200 transform hover:-translate-y-1">
+            <a href="https://github.com/tommy2118/rails-migration-guard/issues" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-6 border border-gray-200 hover:border-brand-200 transform hover:-translate-y-1">
                 <div class="flex items-center mb-4 text-brand-600">
                     <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
