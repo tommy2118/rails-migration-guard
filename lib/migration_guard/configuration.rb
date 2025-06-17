@@ -42,6 +42,9 @@ module MigrationGuard
       @auto_cleanup = false
       @cleanup_after_days = 30
       @auto_detect_tty = true
+      # Default to 10 minutes as most migrations should complete within this timeframe
+      # This provides a reasonable balance between detecting truly stuck migrations
+      # and avoiding false positives from legitimately long-running migrations
       @stuck_migration_timeout = 10 # minutes
     end
 

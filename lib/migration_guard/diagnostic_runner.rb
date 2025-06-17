@@ -1,11 +1,13 @@
 # frozen_string_literal: true
 
 require_relative "colorizer"
+require_relative "time_formatters"
 
 module MigrationGuard
   # Comprehensive diagnostic runner for troubleshooting MigrationGuard issues
   # rubocop:disable Metrics/ClassLength
   class DiagnosticRunner
+    include TimeFormatters
     def initialize
       @issues = []
       @warnings = []
@@ -347,15 +349,13 @@ module MigrationGuard
       # Find migrations that have been in "rolling_back" status for more than the configured timeout
       timeout_minutes = MigrationGuard.configuration.stuck_migration_timeout
       timeout = timeout_minutes.minutes.ago
-      MigrationGuard::MigrationGuardRecord
-        .where(status: "rolling_back")
-        .where(updated_at: ...timeout)
+      MigrationGuard::MigrationGuardRecord.stuck_in_rollback(timeout)
     end
 
     def report_stuck_migrations(stuck_migrations)
       count = stuck_migrations.size
       oldest_time = stuck_migrations.minimum(:updated_at)
-      time_stuck = format_time_stuck(oldest_time) if oldest_time
+      time_stuck = format_time_since(oldest_time) if oldest_time
 
       versions = stuck_migrations.map(&:version).join(", ")
       add_issue("Stuck migrations detected",
@@ -364,16 +364,6 @@ module MigrationGuard
       details = "#{count} stuck"
       details += " (oldest: #{time_stuck})" if time_stuck
       print_check("Stuck migrations", :error, details)
-    end
-
-    def format_time_stuck(timestamp)
-      minutes = ((Time.current - timestamp) / 1.minute).round
-      if minutes < 60
-        "#{minutes}m"
-      else
-        hours = minutes / 60
-        "#{hours}h"
-      end
     end
   end
   # rubocop:enable Metrics/ClassLength
