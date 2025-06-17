@@ -3,900 +3,215 @@ layout: default
 title: GitHub Actions Integration
 ---
 
-<div class="bg-gradient-to-br from-brand-50 via-white to-accent-50 py-16">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center" data-animate>
-            <h1 class="text-4xl font-bold text-gray-900 mb-6">
-                <span class="gradient-text">GitHub Actions Integration</span>
-            </h1>
-            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-                Rails Migration Guard provides seamless integration with GitHub Actions to automatically check for migration issues in your CI/CD pipeline.
-            </p>
-        </div>
-    </div>
-</div>
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <h1 class="text-4xl font-bold text-gray-900 mb-8">GitHub Actions Integration</h1>
+    
+    <p class="text-xl text-gray-600 mb-12">
+        Automatically check for migration issues in your CI/CD pipeline using Rails Migration Guard with GitHub Actions.
+    </p>
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-    <!-- Quick Start Section -->
-    <section class="mb-16" data-animate>
-        <div class="flex items-center mb-4">
-            <div class="bg-brand-100 rounded-lg p-2 mr-3">
-                <svg class="w-6 h-6 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                </svg>
-            </div>
-            <h2 class="text-3xl font-bold text-gray-900">Quick Start</h2>
-        </div>
+    <section class="mb-16">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Basic Setup</h2>
         
-        <div class="mb-12">
-            <h3 class="text-xl font-semibold text-gray-900 mb-4">Basic Setup</h3>
-            <p class="text-gray-600 mb-4">1. Add the workflow file to your repository:</p>
-            
-            <div class="code-block rounded-lg p-6 mb-8">
-                <pre><code class="language-yaml text-gray-100"># .github/workflows/migration-check.yml
+        <p class="text-gray-600 mb-6">
+            Add this workflow to your repository to check for migration issues on every pull request:
+        </p>
+        
+        <div class="bg-gray-900 rounded-lg p-6 mb-8">
+            <pre><code class="text-gray-100"># .github/workflows/migration-check.yml
 name: Migration Check
 
 on:
   pull_request:
+    branches: [ main, master ]
 
 jobs:
-  check:
+  check-migrations:
     runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Required for branch comparison
       
-      - uses: ruby/setup-ruby@v1
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
       
-      - run: |
+      - name: Setup database
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+          RAILS_ENV: test
+        run: |
           bundle exec rails db:create
           bundle exec rails db:schema:load
-        env:
-          RAILS_ENV: test
       
-      - uses: rails-migration-guard/migration-guard-action@v1</code></pre>
-            </div>
-            
-            <h3 class="text-xl font-semibold text-gray-900 mb-4">Using the Built-in Action</h3>
-            <p class="text-gray-600 mb-4">For projects using Rails Migration Guard, you can use the built-in action:</p>
-            
-            <div class="code-block rounded-lg p-6 mb-4">
-                <pre><code class="language-yaml text-gray-100">- name: Check migrations
-  uses: ./.github/actions/migration-guard
-  with:
-    strict: false               # Only fail on errors, not warnings
-    comment-on-pr: true        # Add comments to PRs
-    format: json               # Use JSON output for parsing</code></pre>
-            </div>
+      - name: Check for migration issues
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+          RAILS_ENV: test
+        run: |
+          bundle exec rails db:migration:ci --strict</code></pre>
         </div>
     </section>
 
-    <!-- Configuration Options Section -->
-    <section class="mb-16" data-animate>
-        <div class="flex items-center mb-4">
-            <div class="bg-purple-100 rounded-lg p-2 mr-3">
-                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                </svg>
-            </div>
-            <h2 class="text-3xl font-bold text-gray-900">Configuration Options</h2>
-        </div>
+    <section class="mb-16">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Configuration Options</h2>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <div class="bg-purple-50 px-6 py-4 border-b border-purple-100">
-                    <h3 class="text-xl font-semibold text-gray-900">Action Inputs</h3>
-                </div>
-                <div class="p-0">
-                    <div class="overflow-hidden">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Input</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Default</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Required</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">working-directory</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">Rails app directory</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">.</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">No</td>
-                                </tr>
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">rails-env</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">Rails environment</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">test</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">No</td>
-                                </tr>
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">database-url</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">Database connection URL</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">-</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">No</td>
-                                </tr>
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">strict</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">Fail on warnings</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">false</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">No</td>
-                                </tr>
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">format</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">Output format (text/json)</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">json</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">No</td>
-                                </tr>
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">comment-on-pr</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">Comment on PR with results</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">true</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">No</td>
-                                </tr>
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">github-token</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">GitHub token for PR comments</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">github.token</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">No</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <div class="bg-purple-50 px-6 py-4 border-b border-purple-100">
-                    <h3 class="text-xl font-semibold text-gray-900">Action Outputs</h3>
-                </div>
-                <div class="p-0">
-                    <div class="overflow-hidden">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Output</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">status</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">Check result: success, warning, or error</td>
-                                </tr>
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">exit-code</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">Exit code from the check (0, 1, or 2)</td>
-                                </tr>
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">orphaned-count</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">Number of orphaned migrations found</td>
-                                </tr>
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">missing-count</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">Number of missing migrations found</td>
-                                </tr>
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">results-file</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">Path to the JSON results file</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+        <div class="bg-white rounded-lg border border-gray-200 overflow-hidden mb-8">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Option</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Default</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap font-mono text-sm">--strict</td>
+                        <td class="px-6 py-4 text-sm text-gray-600">Fail on warnings (not just errors)</td>
+                        <td class="px-6 py-4 text-sm text-gray-600">false</td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap font-mono text-sm">--format</td>
+                        <td class="px-6 py-4 text-sm text-gray-600">Output format (text/json)</td>
+                        <td class="px-6 py-4 text-sm text-gray-600">text</td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap font-mono text-sm">RAILS_ENV</td>
+                        <td class="px-6 py-4 text-sm text-gray-600">Rails environment</td>
+                        <td class="px-6 py-4 text-sm text-gray-600">test</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </section>
 
-    <!-- Advanced Configurations Section -->
-    <section class="mb-16" data-animate>
-        <div class="flex items-center mb-4">
-            <div class="bg-indigo-100 rounded-lg p-2 mr-3">
-                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                </svg>
-            </div>
-            <h2 class="text-3xl font-bold text-gray-900">Advanced Configurations</h2>
+    <section class="mb-16">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Exit Codes</h2>
+        
+        <p class="text-gray-600 mb-4">The CI command returns different exit codes based on the check results:</p>
+        
+        <ul class="list-disc list-inside space-y-2 text-gray-600 mb-8">
+            <li><code class="bg-gray-100 px-2 py-1 rounded">0</code> - No issues found</li>
+            <li><code class="bg-gray-100 px-2 py-1 rounded">1</code> - Warnings found (orphaned migrations)</li>
+            <li><code class="bg-gray-100 px-2 py-1 rounded">2</code> - Errors found (missing migrations or critical issues)</li>
+        </ul>
+    </section>
+
+    <section class="mb-16">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Advanced Examples</h2>
+        
+        <h3 class="text-xl font-semibold text-gray-900 mb-3">Matrix Testing</h3>
+        <p class="text-gray-600 mb-4">Test across multiple Ruby and Rails versions:</p>
+        
+        <div class="bg-gray-900 rounded-lg p-6 mb-8">
+            <pre><code class="text-gray-100">strategy:
+  matrix:
+    ruby: ['3.1', '3.2', '3.3']
+    rails: ['7.0', '7.1', '7.2']
+    
+steps:
+  - uses: ruby/setup-ruby@v1
+    with:
+      ruby-version: ${{ matrix.ruby }}
+      bundler-cache: true</code></pre>
         </div>
         
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <div class="bg-indigo-50 px-6 py-4 border-b border-indigo-100">
-                    <h3 class="text-xl font-semibold text-gray-900">Database Services</h3>
-                </div>
-                <div class="p-6">
-                    <h4 class="text-lg font-medium text-gray-900 mb-3">PostgreSQL</h4>
-                    <div class="code-block rounded-lg p-4 mb-6">
-                        <pre><code class="language-yaml text-gray-100">services:
-  postgres:
-    image: postgres:14
-    env:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    options: >-
-      --health-cmd pg_isready
-      --health-interval 10s
-      --health-timeout 5s
-      --health-retries 5
-    ports:
-      - 5432:5432
-
-# In your steps:
-env:
-  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db</code></pre>
-                    </div>
-                    
-                    <h4 class="text-lg font-medium text-gray-900 mb-3">MySQL</h4>
-                    <div class="code-block rounded-lg p-4">
-                        <pre><code class="language-yaml text-gray-100">services:
-  mysql:
-    image: mysql:8
-    env:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: test_db
-    options: >-
-      --health-cmd="mysqladmin ping"
-      --health-interval=10s
-      --health-timeout=5s
-      --health-retries=3
-    ports:
-      - 3306:3306
-
-# In your steps:
-env:
-  DATABASE_URL: mysql2://root:password@localhost:3306/test_db</code></pre>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <div class="bg-indigo-50 px-6 py-4 border-b border-indigo-100">
-                    <h3 class="text-xl font-semibold text-gray-900">Conditional Checks</h3>
-                </div>
-                <div class="p-6">
-                    <p class="text-gray-600 mb-3">Only run on migration changes:</p>
-                    <div class="code-block rounded-lg p-4 mb-8">
-                        <pre><code class="language-yaml text-gray-100">on:
+        <h3 class="text-xl font-semibold text-gray-900 mb-3">Conditional Checks</h3>
+        <p class="text-gray-600 mb-4">Only run when migrations change:</p>
+        
+        <div class="bg-gray-900 rounded-lg p-6 mb-8">
+            <pre><code class="text-gray-100">on:
   pull_request:
     paths:
       - 'db/migrate/**'
       - 'db/schema.rb'
       - 'db/structure.sql'</code></pre>
-                    </div>
-                    
-                    <h4 class="text-lg font-medium text-gray-900 mb-3">Matrix Builds</h4>
-                    <p class="text-gray-600 mb-3">Test across multiple versions:</p>
-                    <div class="code-block rounded-lg p-4">
-                        <pre><code class="language-yaml text-gray-100">strategy:
-  matrix:
-    ruby: ['3.1', '3.2', '3.3']
-    rails: ['7.0', '7.1', '7.2']
-
-steps:
-  - uses: ruby/setup-ruby@v1
-    with:
-      ruby-version: ${{ matrix.ruby }}
-  
-  - uses: ./.github/actions/migration-guard
-    with:
-      strict: ${{ matrix.rails == '7.2' }}  # Strict for latest only</code></pre>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <div class="bg-indigo-50 px-6 py-4 border-b border-indigo-100">
-                    <h3 class="text-xl font-semibold text-gray-900">Monorepo Support</h3>
-                </div>
-                <div class="p-6">
-                    <p class="text-gray-600 mb-3">For multiple Rails apps:</p>
-                    <div class="code-block rounded-lg p-4">
-                        <pre><code class="language-yaml text-gray-100">- name: Check API migrations
-  uses: ./.github/actions/migration-guard
-  with:
-    working-directory: apps/api
-    database-url: ${{ secrets.API_DATABASE_URL }}
-
-- name: Check Admin migrations
-  uses: ./.github/actions/migration-guard
-  with:
-    working-directory: apps/admin
-    database-url: ${{ secrets.ADMIN_DATABASE_URL }}</code></pre>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- PR Comments Section -->
-    <section class="mb-16" data-animate>
-        <div class="flex items-center mb-4">
-            <div class="bg-pink-100 rounded-lg p-2 mr-3">
-                <svg class="w-6 h-6 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
-                </svg>
-            </div>
-            <h2 class="text-3xl font-bold text-gray-900">PR Comments</h2>
         </div>
         
-        <p class="text-lg text-gray-600 mb-6">
-            The action automatically comments on PRs when issues are found:
-        </p>
+        <h3 class="text-xl font-semibold text-gray-900 mb-3">Scheduled Monitoring</h3>
+        <p class="text-gray-600 mb-4">Check for drift in staging environments:</p>
         
-        <div class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
-            <div class="p-6">
-                <div class="mb-6">
-                    <a href="./examples/github-actions/pr_comment_example.html" target="_blank" class="block">
-                        <img src="./examples/github-actions/pr_comment_example.html" alt="PR Comment Example" class="border border-gray-300 rounded-lg w-full">
-                    </a>
-                </div>
-                
-                <h3 class="text-xl font-semibold text-gray-900 mb-4">Comment Format</h3>
-                <div class="code-block rounded-lg p-4 mb-6">
-                    <pre><code class="language-markdown text-gray-100">## ⚠️ Migration Guard Check
-
-Found issues with migrations in this PR:
-
-### Orphaned Migrations Detected
-The following migrations exist in the database but not in the target branch:
-
-- `20240115123456_add_user_profiles.rb` - Created on branch: feature/user-profiles
-
-### Suggested Actions
-1. **For orphaned migrations**: Roll them back or commit the migration files
-2. **For missing migrations**: Pull latest changes and run `rails db:migrate`
-
----
-_This comment will be updated when issues are resolved._</code></pre>
-                </div>
-                
-                <h3 class="text-xl font-semibold text-gray-900 mb-4">Disabling Comments</h3>
-                <div class="code-block rounded-lg p-4">
-                    <pre><code class="language-yaml text-gray-100">- uses: ./.github/actions/migration-guard
-  with:
-    comment-on-pr: false</code></pre>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Scheduled Checks Section -->
-    <section class="mb-16" data-animate>
-        <div class="flex items-center mb-4">
-            <div class="bg-yellow-100 rounded-lg p-2 mr-3">
-                <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-            </div>
-            <h2 class="text-3xl font-bold text-gray-900">Scheduled Checks</h2>
-        </div>
-        
-        <p class="text-lg text-gray-600 mb-6">
-            Monitor for migration drift:
-        </p>
-        
-        <div class="code-block rounded-lg p-6 mb-6">
-            <pre><code class="language-yaml text-gray-100">on:
+        <div class="bg-gray-900 rounded-lg p-6 mb-8">
+            <pre><code class="text-gray-100">on:
   schedule:
-    - cron: '0 9 * * 1-5'  # 9 AM UTC weekdays
-
-jobs:
-  check-drift:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-      
-      - uses: ./.github/actions/migration-guard
-        with:
-          rails-env: staging
-          database-url: ${{ secrets.STAGING_DATABASE_URL }}</code></pre>
+    - cron: '0 9 * * 1-5'  # 9 AM UTC on weekdays
+    
+env:
+  RAILS_ENV: staging
+  DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}</code></pre>
         </div>
     </section>
 
-    <!-- Status Checks Section -->
-    <section class="mb-16" data-animate>
-        <div class="flex items-center mb-4">
-            <div class="bg-green-100 rounded-lg p-2 mr-3">
-                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-            </div>
-            <h2 class="text-3xl font-bold text-gray-900">Status Checks</h2>
-        </div>
+    <section class="mb-16">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Parsing JSON Output</h2>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <div class="bg-green-50 px-6 py-4 border-b border-green-100">
-                    <h3 class="text-xl font-semibold text-gray-900">Branch Protection</h3>
-                </div>
-                <div class="p-6">
-                    <ol class="list-decimal list-inside text-gray-700 space-y-2 mb-4">
-                        <li>Go to Settings → Branches</li>
-                        <li>Add branch protection rule for <code>main</code></li>
-                        <li>Enable "Require status checks to pass"</li>
-                        <li>Add "Migration Guard Check" to required checks</li>
-                    </ol>
-                    <img src="./examples/github-actions/branch_protection_example.html" alt="Branch protection settings" class="rounded-lg border border-gray-200 w-full">
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <div class="bg-green-50 px-6 py-4 border-b border-green-100">
-                    <h3 class="text-xl font-semibold text-gray-900">Status Badge</h3>
-                </div>
-                <div class="p-6">
-                    <p class="text-gray-600 mb-4">Add to your README:</p>
-                    <div class="code-block rounded-lg p-4 mb-4">
-                        <pre><code class="language-markdown text-gray-100">![Migration Check](https://github.com/YOUR_ORG/YOUR_REPO/actions/workflows/migration-check.yml/badge.svg)</code></pre>
-                    </div>
-                    <div class="border border-gray-200 rounded-lg p-4 flex items-center justify-center bg-gray-50">
-                        <img src="https://img.shields.io/badge/Migration%20Check-passing-brightgreen" alt="Migration Check Badge" class="h-6">
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Integration with Other Tools Section -->
-    <section class="mb-16" data-animate>
-        <div class="flex items-center mb-4">
-            <div class="bg-blue-100 rounded-lg p-2 mr-3">
-                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
-                </svg>
-            </div>
-            <h2 class="text-3xl font-bold text-gray-900">Integration with Other Tools</h2>
-        </div>
+        <p class="text-gray-600 mb-4">Use JSON format for advanced workflows:</p>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <div class="bg-blue-50 px-6 py-4 border-b border-blue-100">
-                    <h3 class="text-xl font-semibold text-gray-900">Slack Notifications</h3>
-                </div>
-                <div class="p-6">
-                    <div class="code-block rounded-lg p-4">
-                        <pre><code class="language-yaml text-gray-100">- name: Notify Slack on failure
-  if: failure()
-  uses: slackapi/slack-github-action@v1
-  with:
-    payload: |
-      {
-        "text": "Migration check failed for PR #${{ github.event.pull_request.number }}",
-        "blocks": [{
-          "type": "section",
-          "text": {
-            "type": "mrkdwn",
-            "text": "Orphaned: ${{ steps.check.outputs.orphaned-count }}\nMissing: ${{ steps.check.outputs.missing-count }}"
-          }
-        }]
-      }
+        <div class="bg-gray-900 rounded-lg p-6 mb-8">
+            <pre><code class="text-gray-100">- name: Check migrations
+  id: migration_check
   env:
-    SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}</code></pre>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <div class="bg-blue-50 px-6 py-4 border-b border-blue-100">
-                    <h3 class="text-xl font-semibold text-gray-900">Jira Integration</h3>
-                </div>
-                <div class="p-6">
-                    <div class="code-block rounded-lg p-4">
-                        <pre><code class="language-yaml text-gray-100">- name: Create Jira issue for critical drift
-  if: steps.check.outputs.orphaned-count > 5
-  uses: atlassian/gajira-create@master
-  with:
-    project: PROJ
-    issuetype: Bug
-    summary: "Critical migration drift detected"
-    description: |
-      Orphaned migrations: ${{ steps.check.outputs.orphaned-count }}
-      Missing migrations: ${{ steps.check.outputs.missing-count }}</code></pre>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Troubleshooting Section -->
-    <section class="mb-16" data-animate>
-        <div class="flex items-center mb-4">
-            <div class="bg-red-100 rounded-lg p-2 mr-3">
-                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                </svg>
-            </div>
-            <h2 class="text-3xl font-bold text-gray-900">Troubleshooting</h2>
-        </div>
-        
-        <div class="mb-12">
-            <h3 class="text-xl font-semibold text-gray-900 mb-4">Common Issues</h3>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                    <div class="bg-red-50 px-6 py-4 border-b border-red-100">
-                        <h4 class="text-lg font-medium text-gray-900">"fetch-depth: 0 is required"</h4>
-                    </div>
-                    <div class="p-6">
-                        <p class="text-gray-600 mb-4">The action needs full git history to compare branches:</p>
-                        <div class="code-block rounded-lg p-4">
-                            <pre><code class="language-yaml text-gray-100">- uses: actions/checkout@v4
-  with:
-    fetch-depth: 0  # Don't use shallow clone</code></pre>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                    <div class="bg-red-50 px-6 py-4 border-b border-red-100">
-                        <h4 class="text-lg font-medium text-gray-900">Database connection errors</h4>
-                    </div>
-                    <div class="p-6">
-                        <p class="text-gray-600 mb-4">Ensure your database service is healthy:</p>
-                        <div class="code-block rounded-lg p-4">
-                            <pre><code class="language-yaml text-gray-100">- name: Wait for PostgreSQL
+    DATABASE_URL: ${{ secrets.DATABASE_URL }}
   run: |
-    until pg_isready -h localhost -p 5432; do
-      echo "Waiting for PostgreSQL..."
-      sleep 1
-    done</code></pre>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                    <div class="bg-red-50 px-6 py-4 border-b border-red-100">
-                        <h4 class="text-lg font-medium text-gray-900">Permission denied for PR comments</h4>
-                    </div>
-                    <div class="p-6">
-                        <p class="text-gray-600 mb-4">The default <code>GITHUB_TOKEN</code> needs write permission:</p>
-                        <div class="code-block rounded-lg p-4">
-                            <pre><code class="language-yaml text-gray-100">permissions:
-  contents: read
-  pull-requests: write</code></pre>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-xl font-semibold text-gray-900">Debug Mode</h3>
-                </div>
-                <div class="p-6">
-                    <p class="text-gray-600 mb-4">Enable debug output:</p>
-                    <div class="code-block rounded-lg p-4">
-                        <pre><code class="language-yaml text-gray-100">- uses: ./.github/actions/migration-guard
+    bundle exec rails db:migration:ci --format json > result.json || true
+    echo "orphaned_count=$(jq '.orphaned | length' result.json)" >> $GITHUB_OUTPUT
+    echo "missing_count=$(jq '.missing | length' result.json)" >> $GITHUB_OUTPUT
+    
+- name: Comment on PR
+  if: steps.migration_check.outputs.orphaned_count > 0
+  uses: actions/github-script@v6
   with:
-    format: text  # More readable debug output
-  env:
-    ACTIONS_STEP_DEBUG: true</code></pre>
-                    </div>
-                </div>
-            </div>
+    script: |
+      github.rest.issues.createComment({
+        issue_number: context.issue.number,
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        body: '⚠️ Found ${{ steps.migration_check.outputs.orphaned_count }} orphaned migrations'
+      })</code></pre>
         </div>
     </section>
 
-    <!-- Best Practices Section -->
-    <section class="mb-16" data-animate>
-        <div class="flex items-center mb-4">
-            <div class="bg-emerald-100 rounded-lg p-2 mr-3">
-                <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-            </div>
-            <h2 class="text-3xl font-bold text-gray-900">Best Practices</h2>
-        </div>
+    <section class="mb-16">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Best Practices</h2>
         
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-emerald-500">
-                <div class="flex items-center mb-2">
-                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-500 flex items-center justify-center mr-2">1</span>
-                    <h3 class="font-medium text-gray-900">Start with warnings</h3>
-                </div>
-                <p class="text-gray-600 text-sm ml-8">Use <code>strict: false</code> initially</p>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-emerald-500">
-                <div class="flex items-center mb-2">
-                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-500 flex items-center justify-center mr-2">2</span>
-                    <h3 class="font-medium text-gray-900">Gradual enforcement</h3>
-                </div>
-                <p class="text-gray-600 text-sm ml-8">Move to strict mode once stable</p>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-emerald-500">
-                <div class="flex items-center mb-2">
-                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-500 flex items-center justify-center mr-2">3</span>
-                    <h3 class="font-medium text-gray-900">Monitor scheduled checks</h3>
-                </div>
-                <p class="text-gray-600 text-sm ml-8">Catch drift early</p>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-emerald-500">
-                <div class="flex items-center mb-2">
-                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-500 flex items-center justify-center mr-2">4</span>
-                    <h3 class="font-medium text-gray-900">Cache dependencies</h3>
-                </div>
-                <p class="text-gray-600 text-sm ml-8">Use <code>bundler-cache: true</code></p>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-emerald-500">
-                <div class="flex items-center mb-2">
-                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-500 flex items-center justify-center mr-2">5</span>
-                    <h3 class="font-medium text-gray-900">Parallel jobs</h3>
-                </div>
-                <p class="text-gray-600 text-sm ml-8">Run migration checks alongside tests</p>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-emerald-500">
-                <div class="flex items-center mb-2">
-                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-500 flex items-center justify-center mr-2">6</span>
-                    <h3 class="font-medium text-gray-900">Fail fast</h3>
-                </div>
-                <p class="text-gray-600 text-sm ml-8">Use <code>continue-on-error: false</code> for critical apps</p>
-            </div>
-        </div>
+        <ul class="list-disc list-inside space-y-3 text-gray-600">
+            <li><strong>Always use <code>fetch-depth: 0</code></strong> - The gem needs full git history to compare branches</li>
+            <li><strong>Start without <code>--strict</code></strong> - Get warnings first, then enforce strict mode</li>
+            <li><strong>Cache dependencies</strong> - Use <code>bundler-cache: true</code> for faster builds</li>
+            <li><strong>Use secrets for database URLs</strong> - Never hardcode credentials in workflows</li>
+            <li><strong>Run in parallel</strong> - Migration checks can run alongside your test suite</li>
+        </ul>
     </section>
 
-    <!-- Security Considerations Section -->
-    <section class="mb-16" data-animate>
-        <div class="flex items-center mb-4">
-            <div class="bg-orange-100 rounded-lg p-2 mr-3">
-                <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                </svg>
-            </div>
-            <h2 class="text-3xl font-bold text-gray-900">Security Considerations</h2>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <div class="bg-orange-50 px-6 py-4 border-b border-orange-100">
-                    <h3 class="text-xl font-semibold text-gray-900">Database Credentials</h3>
-                </div>
-                <div class="p-6">
-                    <p class="text-gray-600 mb-4">Always use secrets for database URLs:</p>
-                    <div class="code-block rounded-lg p-4 mb-4">
-                        <pre><code class="language-yaml text-gray-100">env:
-  DATABASE_URL: ${{ secrets.DATABASE_URL }}</code></pre>
-                    </div>
-                    <p class="text-gray-600 text-sm italic">Never commit credentials in workflow files.</p>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <div class="bg-orange-50 px-6 py-4 border-b border-orange-100">
-                    <h3 class="text-xl font-semibold text-gray-900">Token Permissions</h3>
-                </div>
-                <div class="p-6">
-                    <p class="text-gray-600 mb-4">Limit token permissions:</p>
-                    <div class="code-block rounded-lg p-4">
-                        <pre><code class="language-yaml text-gray-100">permissions:
-  contents: read        # Read code
-  pull-requests: write  # Comment on PRs
-  issues: write        # Create issues (if needed)</code></pre>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <div class="bg-orange-50 px-6 py-4 border-b border-orange-100">
-                    <h3 class="text-xl font-semibold text-gray-900">Third-party Actions</h3>
-                </div>
-                <div class="p-6">
-                    <p class="text-gray-600 mb-4">Pin action versions:</p>
-                    <div class="code-block rounded-lg p-4">
-                        <pre><code class="language-yaml text-gray-100">- uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608  # v4.1.0</code></pre>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <div class="bg-orange-50 px-6 py-4 border-b border-orange-100">
-                    <h3 class="text-xl font-semibold text-gray-900">Minimum Permissions</h3>
-                </div>
-                <div class="p-6">
-                    <p class="text-gray-600 mb-4">The following permissions are required for different features:</p>
-                    <div class="code-block rounded-lg p-4 mb-4">
-                        <pre><code class="language-yaml text-gray-100">permissions:
-  contents: read        # Required: Read repository code
-  pull-requests: write  # Required only if comment-on-pr is true
-  issues: write        # Optional: Only if creating issues
-  actions: read        # Optional: For workflow status checks</code></pre>
-                    </div>
-                    <p class="text-gray-600 mb-2">For read-only operations (no PR comments):</p>
-                    <div class="code-block rounded-lg p-4">
-                        <pre><code class="language-yaml text-gray-100">permissions:
-  contents: read</code></pre>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Migration to GitHub Actions Section -->
-    <section class="mb-16" data-animate>
-        <div class="flex items-center mb-4">
-            <div class="bg-purple-100 rounded-lg p-2 mr-3">
-                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
-                </svg>
-            </div>
-            <h2 class="text-3xl font-bold text-gray-900">Migration to GitHub Actions</h2>
-        </div>
-        
-        <p class="text-lg text-gray-600 mb-6">
-            From other CI systems:
-        </p>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-xl font-semibold text-gray-900">From CircleCI</h3>
-                </div>
-                <div class="p-6">
-                    <div class="grid grid-cols-1 gap-4">
-                        <div>
-                            <h4 class="text-sm font-medium text-gray-500 mb-2">CircleCI</h4>
-                            <div class="code-block rounded-lg p-4">
-                                <pre><code class="language-yaml text-gray-100">- run:
-    name: Check migrations
-    command: bundle exec rails migration_guard:check</code></pre>
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <h4 class="text-sm font-medium text-gray-500 mb-2">GitHub Actions</h4>
-                            <div class="code-block rounded-lg p-4">
-                                <pre><code class="language-yaml text-gray-100">- name: Check migrations
-  run: bundle exec rails db:migration:ci</code></pre>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-xl font-semibold text-gray-900">From GitLab CI</h3>
-                </div>
-                <div class="p-6">
-                    <div class="grid grid-cols-1 gap-4">
-                        <div>
-                            <h4 class="text-sm font-medium text-gray-500 mb-2">GitLab CI</h4>
-                            <div class="code-block rounded-lg p-4">
-                                <pre><code class="language-yaml text-gray-100"># GitLab CI
-migration_check:
-  script:
-    - bundle exec rails migration_guard:check
-  only:
-    - merge_requests</code></pre>
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <h4 class="text-sm font-medium text-gray-500 mb-2">GitHub Actions</h4>
-                            <div class="code-block rounded-lg p-4">
-                                <pre><code class="language-yaml text-gray-100"># GitHub Actions
-on:
-  pull_request:
-jobs:
-  check:
-    steps:
-      - run: bundle exec rails db:migration:ci</code></pre>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Examples Section -->
-    <section class="mb-16" data-animate>
-        <div class="flex items-center mb-4">
-            <div class="bg-gray-100 rounded-lg p-2 mr-3">
-                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-            </div>
-            <h2 class="text-3xl font-bold text-gray-900">Examples</h2>
-        </div>
-        
-        <p class="text-lg text-gray-600 mb-6">
-            See the examples directory for:
-        </p>
+    <section>
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Next Steps</h2>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <a href="./examples/github-actions/simple.yml" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-6 border border-gray-200 hover:border-brand-200 transform hover:-translate-y-1">
-                <div class="flex items-center mb-4 text-brand-600">
-                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                    </svg>
-                    <h3 class="font-semibold text-lg">Simple setup</h3>
-                </div>
-                <p class="text-gray-600 text-sm">Basic workflow for standard Rails apps</p>
+            <a href="./ci-integration.html" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200">
+                <h3 class="font-semibold text-lg mb-2">CI/CD Integration</h3>
+                <p class="text-gray-600 text-sm">Learn about other CI systems</p>
             </a>
             
-            <a href="./examples/github-actions/matrix.yml" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-6 border border-gray-200 hover:border-brand-200 transform hover:-translate-y-1">
-                <div class="flex items-center mb-4 text-brand-600">
-                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
-                    </svg>
-                    <h3 class="font-semibold text-lg">Matrix builds</h3>
-                </div>
-                <p class="text-gray-600 text-sm">Testing across multiple Ruby and Rails versions</p>
-            </a>
-            
-            <a href="./examples/github-actions/monorepo.yml" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-6 border border-gray-200 hover:border-brand-200 transform hover:-translate-y-1">
-                <div class="flex items-center mb-4 text-brand-600">
-                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
-                    </svg>
-                    <h3 class="font-semibold text-lg">Monorepo setup</h3>
-                </div>
-                <p class="text-gray-600 text-sm">For repositories with multiple Rails applications</p>
-            </a>
-            
-            <a href="./examples/github-actions/scheduled.yml" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-6 border border-gray-200 hover:border-brand-200 transform hover:-translate-y-1">
-                <div class="flex items-center mb-4 text-brand-600">
-                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <h3 class="font-semibold text-lg">Scheduled checks</h3>
-                </div>
-                <p class="text-gray-600 text-sm">Automated monitoring for migration drift</p>
-            </a>
-        </div>
-    </section>
-
-    <!-- Support Section -->
-    <section data-animate>
-        <div class="flex items-center mb-4">
-            <div class="bg-gray-100 rounded-lg p-2 mr-3">
-                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                </svg>
-            </div>
-            <h2 class="text-3xl font-bold text-gray-900">Support</h2>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <a href="https://github.com/tommy2118/rails-migration-guard/issues" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-6 border border-gray-200 hover:border-brand-200 transform hover:-translate-y-1">
-                <div class="flex items-center mb-4 text-brand-600">
-                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                    <h3 class="font-semibold text-lg">Report Issues</h3>
-                </div>
-                <p class="text-gray-600 text-sm">Get help with GitHub Actions integration</p>
-            </a>
-            
-            <a href="https://docs.github.com/actions" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-6 border border-gray-200 hover:border-brand-200 transform hover:-translate-y-1">
-                <div class="flex items-center mb-4 text-brand-600">
-                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <h3 class="font-semibold text-lg">GitHub Actions Documentation</h3>
-                </div>
-                <p class="text-gray-600 text-sm">Learn more about GitHub Actions</p>
-            </a>
-            
-            <a href="./README.html" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-6 border border-gray-200 hover:border-brand-200 transform hover:-translate-y-1">
-                <div class="flex items-center mb-4 text-brand-600">
-                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                    </svg>
-                    <h3 class="font-semibold text-lg">Rails Migration Guard Documentation</h3>
-                </div>
-                <p class="text-gray-600 text-sm">Complete documentation for the gem</p>
+            <a href="./configuration.html" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200">
+                <h3 class="font-semibold text-lg mb-2">Configuration</h3>
+                <p class="text-gray-600 text-sm">Customize Rails Migration Guard settings</p>
             </a>
         </div>
     </section>

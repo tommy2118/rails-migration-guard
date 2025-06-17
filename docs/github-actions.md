@@ -6,7 +6,7 @@ Rails Migration Guard provides seamless integration with GitHub Actions to autom
 
 ### Basic Setup
 
-1. Add the workflow file to your repository:
+Rails Migration Guard includes a built-in GitHub Action for easy integration. Add this workflow file to your repository:
 
 ```yaml
 # .github/workflows/migration-check.yml
@@ -33,12 +33,12 @@ jobs:
         env:
           RAILS_ENV: test
       
-      - uses: tommy2118/migration-guard-action@v1
+      - uses: ./.github/actions/migration-guard
 ```
 
-### Using the Built-in Action
+### Configuring the Action
 
-For projects using Rails Migration Guard, you can use the built-in action:
+The built-in action supports various configuration options:
 
 ```yaml
 - name: Check migrations
