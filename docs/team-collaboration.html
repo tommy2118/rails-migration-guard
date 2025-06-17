@@ -1,0 +1,438 @@
+---
+layout: default
+title: Team Collaboration
+---
+
+<div class="documentation">
+  <h1>Team Collaboration with Rails Migration Guard</h1>
+  
+  <p>Rails Migration Guard helps development teams collaborate effectively on database migrations. This guide covers best practices, team workflows, and coordination strategies.</p>
+  
+  <div class="table-of-contents">
+    <h2>Table of Contents</h2>
+    <ol>
+      <li><a href="#team-workflows">Team Workflows</a></li>
+      <li><a href="#author-tracking">Author Tracking</a></li>
+      <li><a href="#branch-strategies">Branch Strategies</a></li>
+      <li><a href="#migration-coordination">Migration Coordination</a></li>
+      <li><a href="#pull-request-guidelines">Pull Request Guidelines</a></li>
+      <li><a href="#ci-cd-integration">CI/CD Integration</a></li>
+      <li><a href="#communication-practices">Communication Practices</a></li>
+      <li><a href="#troubleshooting-together">Troubleshooting Together</a></li>
+    </ol>
+  </div>
+  
+  <section id="team-workflows">
+    <h2>Team Workflows</h2>
+    
+    <h3>Recommended Workflow</h3>
+    
+    <ol>
+      <li><strong>Check migration status before branching</strong>
+        <pre><code># Before creating a new branch
+$ rails db:migration:status
+$ git checkout -b feature/new-feature</code></pre>
+      </li>
+      
+      <li><strong>Create migrations on feature branches</strong>
+        <pre><code># On your feature branch
+$ rails generate migration AddUserPreferences
+$ rails db:migrate</code></pre>
+      </li>
+      
+      <li><strong>Check status before creating pull requests</strong>
+        <pre><code># Before creating PR
+$ rails db:migration:status
+
+═══════════════════════════════════════════════════════
+Migration Status (main branch)
+═══════════════════════════════════════════════════════
+✓ Synced:    15 migrations
+⚠ Orphaned:   1 migrations (local only)
+✗ Missing:    0 migrations (in trunk, not local)
+
+Orphaned Migrations:
+  20240615123456 AddUserPreferences
+    Branch: feature/user-prefs
+    Author: developer@example.com
+    Age: 1 day</code></pre>
+      </li>
+      
+      <li><strong>Create pull request with migrations</strong>
+        <p>Make sure your PR includes both the migration file and any schema changes.</p>
+      </li>
+      
+      <li><strong>After merging, update main branch</strong>
+        <pre><code># After PR is merged
+$ git checkout main
+$ git pull
+$ rails db:migrate</code></pre>
+      </li>
+    </ol>
+    
+    <h3>Workflow for Multiple Teams</h3>
+    
+    <p>When multiple teams work on the same codebase:</p>
+    
+    <ol>
+      <li><strong>Coordinate migration timing</strong>
+        <p>Use author tracking to identify which team is responsible for each migration.</p>
+      </li>
+      
+      <li><strong>Use multiple target branches</strong>
+        <pre><code># config/initializers/migration_guard.rb
+MigrationGuard.configure do |config|
+  config.target_branches = %w[main team1-develop team2-develop]
+end</code></pre>
+      </li>
+      
+      <li><strong>Regular sync-ups</strong>
+        <p>Schedule regular team sync-ups to discuss migration changes and coordinate merges.</p>
+      </li>
+    </ol>
+  </section>
+  
+  <section id="author-tracking">
+    <h2>Author Tracking</h2>
+    
+    <p>Rails Migration Guard automatically captures author information from git when tracking migrations, which helps teams coordinate and track ownership.</p>
+    
+    <h3>Author Reports</h3>
+    
+    <pre><code># View author statistics
+$ rails db:migration:authors
+
+👥 Migration Authors Report (main)
+Author                           Total    Applied  Orphaned  Rolled Back  Latest Migration    
+-----------------------------------------------------------------------------------------------
+alice@example.com                    12        8         2            2    2024-06-15 14:23
+bob@example.com                       7        5         1            1    2024-06-14 09:15
+charlie@example.com                   3        3         0            0    2024-06-13 16:42
+-----------------------------------------------------------------------------------------------
+
+📊 Authors Summary:
+  Total authors: 3
+  Total tracked migrations: 22
+  Most active: alice@example.com (12 migrations)
+  Average per author: 7.3
+  Your rank: #1 (12 migrations)</code></pre>
+    
+    <h3>Filtering History by Author</h3>
+    
+    <pre><code># Filter history by author
+$ rails db:migration:history AUTHOR=alice
+
+Migration History (filtered by author: alice)
+Version              Status      Branch              Author               Age
+--------------------------------------------------------------------------------
+20240615143012       applied     feature/profiles    alice@example.com    1 day
+20240614091234       applied     feature/avatars     alice@example.com    2 days
+20240610123456       orphaned    feature/settings    alice@example.com    6 days</code></pre>
+    
+    <h3>Benefits of Author Tracking</h3>
+    
+    <ul>
+      <li><strong>Accountability</strong>: Know who created each migration</li>
+      <li><strong>Support</strong>: Quickly identify who to ask about a specific migration</li>
+      <li><strong>Coordination</strong>: See which team members are actively creating migrations</li>
+      <li><strong>Analysis</strong>: Track migration patterns by developer</li>
+    </ul>
+  </section>
+  
+  <section id="branch-strategies">
+    <h2>Branch Strategies</h2>
+    
+    <h3>Gitflow Strategy</h3>
+    
+    <p>For teams using Gitflow with develop/feature/release branches:</p>
+    
+    <pre><code>MigrationGuard.configure do |config|
+  # Configure multiple main branches
+  config.main_branch_names = %w[main develop]
+  
+  # Or use target branches for more control
+  config.target_branches = %w[main develop]
+end</code></pre>
+    
+    <p>Workflow:</p>
+    <ol>
+      <li>Create feature branches from <code>develop</code></li>
+      <li>Add migrations in feature branches</li>
+      <li>Merge to <code>develop</code> first</li>
+      <li>Only merge to <code>main</code> during releases</li>
+    </ol>
+    
+    <h3>Trunk-Based Development</h3>
+    
+    <p>For teams using trunk-based development:</p>
+    
+    <pre><code>MigrationGuard.configure do |config|
+  # Configure for trunk-based development
+  config.main_branch_names = %w[main trunk]
+  
+  # More strict settings to encourage frequent merging
+  config.warn_on_switch = true
+  config.orphaned_age_warning = 3.days  # Warn when migrations are orphaned > 3 days
+end</code></pre>
+    
+    <p>Workflow:</p>
+    <ol>
+      <li>Use short-lived feature branches</li>
+      <li>Merge to main frequently (at least daily)</li>
+      <li>Use feature flags for incomplete features</li>
+    </ol>
+    
+    <h3>Release Branch Strategy</h3>
+    
+    <p>For teams that maintain multiple release branches:</p>
+    
+    <pre><code>MigrationGuard.configure do |config|
+  # Track against all active release branches
+  config.target_branches = %w[main release/v1 release/v2]
+  
+  # Prevent orphans on release branches
+  config.protected_branches = %w[release/v1 release/v2]
+end</code></pre>
+  </section>
+  
+  <section id="migration-coordination">
+    <h2>Migration Coordination</h2>
+    
+    <h3>Avoiding Conflicts</h3>
+    
+    <p>Common migration conflicts and how to avoid them:</p>
+    
+    <table>
+      <thead>
+        <tr>
+          <th>Conflict</th>
+          <th>Prevention Strategy</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Migration version collisions</td>
+          <td>Use <code>rails generate migration</code> to get timestamp-based versions</td>
+        </tr>
+        <tr>
+          <td>Schema conflicts</td>
+          <td>Coordinate column additions/changes across teams</td>
+        </tr>
+        <tr>
+          <td>Data migrations</td>
+          <td>Use idempotent migrations that can run multiple times safely</td>
+        </tr>
+        <tr>
+          <td>Long-running migrations</td>
+          <td>Add <code>disable_ddl_transaction!</code> and coordinate deployment timing</td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <h3>Scheduling Migrations</h3>
+    
+    <p>Best practices for scheduling migrations in a team environment:</p>
+    
+    <ul>
+      <li><strong>Small, frequent migrations</strong> are easier to manage than large, infrequent ones</li>
+      <li><strong>Communicate large schema changes</strong> to the team before implementation</li>
+      <li><strong>Use reversible migrations</strong> whenever possible with proper <code>up</code> and <code>down</code> methods</li>
+      <li><strong>Schedule complex migrations</strong> during off-hours or low-traffic periods</li>
+    </ul>
+  </section>
+  
+  <section id="pull-request-guidelines">
+    <h2>Pull Request Guidelines</h2>
+    
+    <h3>Migration PR Checklist</h3>
+    
+    <p>When creating a pull request that includes migrations, ensure:</p>
+    
+    <ul>
+      <li>✅ Migration file is included in the PR</li>
+      <li>✅ <code>schema.rb</code> or <code>structure.sql</code> is updated</li>
+      <li>✅ Migration includes a proper <code>down</code> method</li>
+      <li>✅ Large data migrations are optimized (batched/backgrounded)</li>
+      <li>✅ Complex migrations include proper indexes</li>
+      <li>✅ PR description explains the purpose of the migration</li>
+    </ul>
+    
+    <h3>Code Review for Migrations</h3>
+    
+    <p>When reviewing migration PRs, check for:</p>
+    
+    <ul>
+      <li>🔍 Proper indexing for new columns</li>
+      <li>🔍 Impact on existing queries</li>
+      <li>🔍 Reversibility with <code>down</code> method</li>
+      <li>🔍 Performance concerns for large tables</li>
+      <li>🔍 Potential lock time during migration</li>
+      <li>🔍 Consistent naming conventions</li>
+    </ul>
+  </section>
+  
+  <section id="ci-cd-integration">
+    <h2>CI/CD Integration</h2>
+    
+    <h3>Running Migration Checks in CI</h3>
+    
+    <pre><code>name: Migration Check
+on: pull_request
+
+jobs:
+  check-migrations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      
+      - name: Setup test database
+        run: bundle exec rails db:test:prepare
+      
+      - name: Check migration status
+        run: bundle exec rails db:migration:ci STRICT=true FORMAT=json
+        
+      - name: Post migration status comment
+        if: always()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const migrationOutput = fs.readFileSync('./migration_status.json', 'utf8');
+            const data = JSON.parse(migrationOutput);
+            
+            let comment = '## Migration Status Check\n\n';
+            comment += `- Synced: ${data.synced.length} migrations\n`;
+            comment += `- Orphaned: ${data.orphaned.length} migrations\n`;
+            comment += `- Missing: ${data.missing.length} migrations\n\n`;
+            
+            if (data.orphaned.length > 0) {
+              comment += '### Orphaned Migrations (exist locally but not in main)\n\n';
+              data.orphaned.forEach(m => {
+                comment += `- ${m.version} ${m.name} by ${m.author} (${m.branch})\n`;
+              });
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            })</code></pre>
+    
+    <h3>Staging Environment Protection</h3>
+    
+    <pre><code># config/initializers/migration_guard.rb
+MigrationGuard.configure do |config|
+  # Only block deploys in staging environment
+  config.block_deploy_with_orphans = true if Rails.env.staging?
+end</code></pre>
+    
+    <h3>Deployment Coordination</h3>
+    
+    <p>Use the CI results to coordinate deployments:</p>
+    
+    <ul>
+      <li>Block deployments if orphaned migrations are detected</li>
+      <li>Generate reports of migration status before each deployment</li>
+      <li>Include migration authors in deployment notifications</li>
+    </ul>
+  </section>
+  
+  <section id="communication-practices">
+    <h2>Communication Practices</h2>
+    
+    <h3>Team Migration Channel</h3>
+    
+    <p>Consider creating a dedicated chat channel for migration coordination. Post updates like:</p>
+    
+    <ul>
+      <li>"Adding <code>user_preferences</code> table in PR #123"</li>
+      <li>"Planning to add index to <code>large_table</code> next week"</li>
+      <li>"Heads up: complex data migration coming on Friday"</li>
+    </ul>
+    
+    <h3>Migration Calendar</h3>
+    
+    <p>For larger teams, maintain a shared calendar of planned migrations, especially for:</p>
+    
+    <ul>
+      <li>Large table alterations</li>
+      <li>Schema changes that impact multiple teams</li>
+      <li>Data migrations that might take significant time</li>
+    </ul>
+    
+    <h3>Notification Hooks</h3>
+    
+    <p>Set up custom notification hooks in your configuration:</p>
+    
+    <pre><code>MigrationGuard.configure do |config|
+  # Send notification when orphaned migrations are detected
+  config.on_orphaned_migration = lambda do |migration|
+    # Send to Slack channel
+    notifier = Slack::Notifier.new(ENV['SLACK_WEBHOOK_URL'])
+    notifier.ping("Orphaned migration detected: #{migration.version} by #{migration.author}")
+  end
+end</code></pre>
+  </section>
+  
+  <section id="troubleshooting-together">
+    <h2>Troubleshooting Together</h2>
+    
+    <h3>Team Recovery Workflow</h3>
+    
+    <p>When migration issues affect multiple team members:</p>
+    
+    <ol>
+      <li><strong>Document the issue</strong> in your team's knowledge base</li>
+      <li><strong>Run the diagnostic tool</strong> and share the results:
+        <pre><code>rails db:migration:doctor > migration_doctor_results.txt</code></pre>
+      </li>
+      <li><strong>Coordinate recovery</strong> - decide who will fix the issue to avoid duplicate efforts</li>
+      <li><strong>Create a recovery branch</strong> for the fix</li>
+      <li><strong>Share the recovery steps</strong> with the team after resolution</li>
+    </ol>
+    
+    <h3>Common Team Issues</h3>
+    
+    <table>
+      <thead>
+        <tr>
+          <th>Issue</th>
+          <th>Team Solution</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Multiple developers working on the same table</td>
+          <td>Coordinate in advance and use small, focused migrations</td>
+        </tr>
+        <tr>
+          <td>Conflicting migration versions</td>
+          <td>Always use <code>rails generate migration</code> for timestamp-based versions</td>
+        </tr>
+        <tr>
+          <td>Orphaned migrations accumulating</td>
+          <td>Schedule regular cleanup sessions; designate a "migration guardian"</td>
+        </tr>
+        <tr>
+          <td>Long-running migrations blocking team</td>
+          <td>Schedule complex migrations during off-hours; use background migrations where possible</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+  
+  <section id="conclusion">
+    <h2>Conclusion</h2>
+    
+    <p>Effective team collaboration around database migrations requires a combination of good tooling, clear processes, and open communication. Rails Migration Guard provides the foundation, but teams should adapt these practices to their specific workflows and needs.</p>
+    
+    <p>Remember that the ultimate goal is to make database migrations a predictable, low-stress part of development rather than a source of team friction or production issues.</p>
+  </section>
+</div>

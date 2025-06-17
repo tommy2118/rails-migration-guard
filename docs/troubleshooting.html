@@ -1,0 +1,705 @@
+---
+layout: default
+title: Troubleshooting Guide
+---
+
+<div class="documentation">
+  <h1>Troubleshooting Guide for Rails Migration Guard</h1>
+  
+  <p>This guide helps you resolve common issues when using the Rails Migration Guard gem.</p>
+  
+  <div class="table-of-contents">
+    <h2>Table of Contents</h2>
+    <ol>
+      <li><a href="#git-command-not-found">Git Command Not Found</a></li>
+      <li><a href="#git-integration-edge-cases">Git Integration Edge Cases</a></li>
+      <li><a href="#permission-issues">Permission Issues</a></li>
+      <li><a href="#database-connection-errors">Database Connection Errors</a></li>
+      <li><a href="#migration-version-conflicts">Migration Version Conflicts</a></li>
+      <li><a href="#performance-issues">Performance Issues</a></li>
+      <li><a href="#rails-version-compatibility">Rails Version Compatibility</a></li>
+      <li><a href="#common-error-messages">Common Error Messages</a></li>
+    </ol>
+  </div>
+  
+  <section id="git-command-not-found">
+    <h2>Git Command Not Found</h2>
+    
+    <h3>Problem</h3>
+    <p>You see errors like:</p>
+    <pre><code>MigrationGuard::GitError: Git command not found</code></pre>
+    
+    <h3>Solution</h3>
+    <ol>
+      <li>
+        <strong>Verify Git is installed:</strong>
+        <pre><code>which git
+# Should output something like: /usr/bin/git</code></pre>
+      </li>
+      <li>
+        <strong>Install Git if missing:</strong>
+        <ul>
+          <li>macOS: <code>brew install git</code></li>
+          <li>Ubuntu/Debian: <code>sudo apt-get install git</code></li>
+          <li>CentOS/RHEL: <code>sudo yum install git</code></li>
+        </ul>
+      </li>
+      <li>
+        <strong>Check PATH environment variable:</strong>
+        <pre><code>echo $PATH
+# Ensure it includes the directory containing git</code></pre>
+      </li>
+      <li>
+        <strong>For deployment environments:</strong>
+        <ul>
+          <li>Ensure Git is available in your Docker image or deployment environment</li>
+          <li>Consider disabling MigrationGuard in production if Git isn't available:</li>
+        </ul>
+        <pre><code># config/initializers/migration_guard.rb
+MigrationGuard.configure do |config|
+  config.enabled_environments = [:development, :staging]
+  # Explicitly exclude production
+end</code></pre>
+      </li>
+    </ol>
+  </section>
+  
+  <section id="git-integration-edge-cases">
+    <h2>Git Integration Edge Cases</h2>
+    
+    <p>Rails Migration Guard relies heavily on Git for tracking migrations across branches. Here's how to handle various edge cases and special scenarios.</p>
+    
+    <h3>Special Branch Names</h3>
+    
+    <h4>Branch Names with Special Characters</h4>
+    
+    <p>Rails Migration Guard uses shell commands to interact with Git, which can cause issues with certain branch names.</p>
+    
+    <p><strong>Problem:</strong></p>
+    <pre><code># Branch with spaces
+git checkout -b "feature/my new feature"
+$ rails db:migration:status
+sh: syntax error near unexpected token `new'</code></pre>
+    
+    <p><strong>Solutions:</strong></p>
+    
+    <ol>
+      <li>
+        <strong>Best practice - avoid special characters:</strong>
+        <pre><code># Use hyphens instead of spaces
+git checkout -b feature/my-new-feature
+
+# Use underscores
+git checkout -b feature/my_new_feature</code></pre>
+      </li>
+      <li>
+        <strong>Configure safe branch handling:</strong>
+        <pre><code># config/initializers/migration_guard.rb
+MigrationGuard.configure do |config|
+  # Sanitize branch names automatically
+  config.before_track = lambda do |record|
+    record.branch = record.branch.gsub(/[^a-zA-Z0-9\-_\/]/, '-') if record.branch
+  end
+end</code></pre>
+      </li>
+      <li>
+        <strong>Escape branch names in Git commands:</strong>
+        <p>The gem automatically quotes branch names in Git commands, but extreme cases may still fail.</p>
+      </li>
+    </ol>
+    
+    <h4>Unicode and Emoji in Branch Names</h4>
+    
+    <p><strong>Problem:</strong></p>
+    <pre><code>git checkout -b "feature/user-auth-🔐"
+$ rails db:migration:status
+# May fail on systems without proper UTF-8 support</code></pre>
+    
+    <p><strong>Solution:</strong></p>
+    <pre><code># Force UTF-8 encoding
+MigrationGuard.configure do |config|
+  config.encoding = 'UTF-8'
+  config.handle_encoding_errors = true
+end</code></pre>
+    
+    <h3>Git Configuration Edge Cases</h3>
+    
+    <h4>Empty or Missing Git Config</h4>
+    
+    <p><strong>Problem:</strong></p>
+    <pre><code>$ git config user.email
+# Returns nothing
+$ rails db:migration:status
+MigrationGuard::GitError: Git user email not configured</code></pre>
+    
+    <p><strong>Solutions:</strong></p>
+    
+    <ol>
+      <li>
+        <strong>Disable author tracking:</strong>
+        <pre><code>MigrationGuard.configure do |config|
+  config.track_author = false
+end</code></pre>
+      </li>
+      <li>
+        <strong>Provide fallback values:</strong>
+        <pre><code>MigrationGuard.configure do |config|
+  config.author_fallback = ENV['USER'] || 'system'
+  config.branch_fallback = 'unknown'
+end</code></pre>
+      </li>
+      <li>
+        <strong>Custom resolvers:</strong>
+        <pre><code>MigrationGuard.configure do |config|
+  # Use system username if git config fails
+  config.author_resolver = lambda do
+    `git config user.email`.strip.presence || 
+    `whoami`.strip.presence || 
+    'unknown'
+  end
+end</code></pre>
+      </li>
+    </ol>
+    
+    <h4>Author Tracking Issues</h4>
+    
+    <p><strong>Problem: Author not showing in reports</strong></p>
+    <pre><code>$ rails db:migration:authors
+# Shows empty or missing authors</code></pre>
+    
+    <p><strong>Solutions:</strong></p>
+    
+    <ol>
+      <li>
+        <strong>Verify git configuration:</strong>
+        <pre><code>$ git config user.email
+$ git config user.name</code></pre>
+      </li>
+      <li>
+        <strong>Check if author tracking is enabled:</strong>
+        <pre><code># In rails console
+MigrationGuard.configuration.track_author
+# Should return true</code></pre>
+      </li>
+      <li>
+        <strong>For CI/CD environments, set git config:</strong>
+        <pre><code>git config user.email "ci@example.com"
+git config user.name "CI System"</code></pre>
+      </li>
+    </ol>
+    
+    <p><strong>Problem: Author filtering not working</strong></p>
+    <pre><code>$ rails db:migration:history AUTHOR=alice
+# Returns no results despite having migrations by alice</code></pre>
+    
+    <p><strong>Solutions:</strong></p>
+    
+    <ol>
+      <li>
+        <strong>Use partial matching:</strong>
+        <pre><code>$ rails db:migration:history AUTHOR=alice
+# This will match alice@example.com, alice.smith@company.com, etc.</code></pre>
+      </li>
+      <li>
+        <strong>Check exact author values in database:</strong>
+        <pre><code># In rails console
+MigrationGuard::MigrationGuardRecord.pluck(:author).uniq</code></pre>
+      </li>
+    </ol>
+    
+    <h4>Detached HEAD State</h4>
+    
+    <p><strong>Problem:</strong></p>
+    <pre><code>$ git checkout abc123def
+Note: switching to 'abc123def'.
+You are in 'detached HEAD' state...
+
+$ rails db:migration:status
+Current branch: HEAD</code></pre>
+    
+    <p><strong>Solutions:</strong></p>
+    
+    <ol>
+      <li>
+        <strong>Use commit SHA instead:</strong>
+        <pre><code>MigrationGuard.configure do |config|
+  config.on_detached_head = lambda do
+    `git rev-parse --short HEAD`.strip
+  end
+end</code></pre>
+      </li>
+      <li>
+        <strong>Skip tracking in detached state:</strong>
+        <pre><code>MigrationGuard.configure do |config|
+  config.track_in_detached_head = false
+end</code></pre>
+      </li>
+    </ol>
+    
+    <h3>Repository State Issues</h3>
+    
+    <h4>Shallow Clones</h4>
+    
+    <p><strong>Problem:</strong> CI/CD systems often use shallow clones</p>
+    <pre><code>$ git clone --depth 1 repo.git
+$ rails db:migration:status
+# May not see all migrations in history</code></pre>
+    
+    <p><strong>Solution:</strong></p>
+    <pre><code># Detect and handle shallow clones
+MigrationGuard.configure do |config|
+  config.before_check = lambda do
+    if `git rev-parse --is-shallow-repository`.strip == 'true'
+      system('git fetch --unshallow') rescue nil
+    end
+  end
+end</code></pre>
+    
+    <h4>Submodules and Worktrees</h4>
+    
+    <p><strong>Problem:</strong> Complex Git setups may confuse the gem</p>
+    <pre><code># In a git worktree
+$ git worktree add ../feature-branch feature/new-thing
+$ cd ../feature-branch
+$ rails db:migration:status
+# May reference wrong repository</code></pre>
+    
+    <p><strong>Solution:</strong></p>
+    <pre><code>MigrationGuard.configure do |config|
+  # Explicitly set the git directory
+  config.git_dir = Rails.root.join('.git').to_s
+  
+  # Or disable in worktrees
+  config.enabled = !ENV['GIT_WORKTREE_PATH']
+end</code></pre>
+    
+    <h4>Large Repositories</h4>
+    
+    <p><strong>Problem:</strong> Git operations timeout in very large repositories</p>
+    <pre><code>MigrationGuard::GitError: Git command timed out</code></pre>
+    
+    <p><strong>Solutions:</strong></p>
+    
+    <ol>
+      <li>
+        <strong>Increase timeout:</strong>
+        <pre><code>MigrationGuard.configure do |config|
+  config.git_timeout = 30.seconds  # Default is 5 seconds
+end</code></pre>
+      </li>
+      <li>
+        <strong>Optimize Git operations:</strong>
+        <pre><code>MigrationGuard.configure do |config|
+  # Only check specific paths
+  config.migration_paths = ['db/migrate']
+  
+  # Limit history depth
+  config.max_history_depth = 100
+end</code></pre>
+      </li>
+      <li>
+        <strong>Cache Git results:</strong>
+        <pre><code>MigrationGuard.configure do |config|
+  config.enable_caching = true
+  config.cache_duration = 5.minutes
+end</code></pre>
+      </li>
+    </ol>
+    
+    <h3>Branch Switching Issues</h3>
+    
+    <h4>Uncommitted Changes</h4>
+    
+    <p><strong>Problem:</strong></p>
+    <pre><code>$ git checkout main
+error: Your local changes to the following files would be overwritten by checkout:
+  db/migrate/20240115_add_users.rb</code></pre>
+    
+    <p><strong>Solution:</strong></p>
+    <pre><code># Auto-stash migrations during branch switch
+MigrationGuard.configure do |config|
+  config.auto_stash_migrations = true
+  config.stash_message = "MigrationGuard: Auto-stashed migrations"
+end</code></pre>
+    
+    <h4>Missing Remote Branches</h4>
+    
+    <p><strong>Problem:</strong></p>
+    <pre><code>$ rails db:migration:status
+Failed to list migrations in branch origin/main: fatal: ambiguous argument</code></pre>
+    
+    <p><strong>Solutions:</strong></p>
+    
+    <ol>
+      <li>
+        <strong>Fetch before checking:</strong>
+        <pre><code>MigrationGuard.configure do |config|
+  config.auto_fetch = true
+  config.fetch_timeout = 10.seconds
+end</code></pre>
+      </li>
+      <li>
+        <strong>Use local branches only:</strong>
+        <pre><code>MigrationGuard.configure do |config|
+  config.check_remote_branches = false
+  config.target_branches = ['main']  # Local branches only
+end</code></pre>
+      </li>
+    </ol>
+    
+    <h3>Non-Standard Git Setups</h3>
+    
+    <h4>Multiple Remotes</h4>
+    
+    <p><strong>Problem:</strong> Ambiguous branch references with multiple remotes</p>
+    <pre><code>$ git remote -v
+origin  git@github.com:company/app.git (fetch)
+upstream git@github.com:original/app.git (fetch)</code></pre>
+    
+    <p><strong>Solution:</strong></p>
+    <pre><code>MigrationGuard.configure do |config|
+  # Specify which remote to use
+  config.primary_remote = 'origin'
+  
+  # Or use fully qualified branch names
+  config.main_branch_names = %w[origin/main upstream/main]
+end</code></pre>
+    
+    <h4>Git Hooks Interference</h4>
+    
+    <p><strong>Problem:</strong> Existing git hooks may interfere with MigrationGuard operations</p>
+    
+    <p><strong>Solution:</strong></p>
+    <pre><code>MigrationGuard.configure do |config|
+  # Skip hooks during git operations
+  config.git_env = { 'GIT_HOOKS_SKIP' => '1' }
+  
+  # Or use specific git options
+  config.git_options = '--no-verify'
+end</code></pre>
+    
+    <h3>Best Practices for Git Integration</h3>
+    
+    <ol>
+      <li>
+        <strong>Sanitize inputs:</strong>
+        <pre><code>MigrationGuard.configure do |config|
+  config.sanitize_git_input = true
+  config.max_branch_length = 255
+end</code></pre>
+      </li>
+      <li>
+        <strong>Handle errors gracefully:</strong>
+        <pre><code>MigrationGuard.configure do |config|
+  config.on_git_error = lambda do |error|
+    Rails.logger.warn "MigrationGuard Git error: #{error.message}"
+    # Continue without git integration
+    nil
+  end
+end</code></pre>
+      </li>
+      <li>
+        <strong>Environment-specific configuration:</strong>
+        <pre><code>MigrationGuard.configure do |config|
+  case Rails.env
+  when 'development'
+    config.git_integration_level = :full
+  when 'ci', 'test'
+    config.git_integration_level = :minimal
+  when 'production'
+    config.git_integration_level = :off
+  end
+end</code></pre>
+      </li>
+    </ol>
+  </section>
+  
+  <section id="permission-issues">
+    <h2>Permission Issues</h2>
+    
+    <h3>Problem</h3>
+    <p>Errors accessing migration files or the migration_guard_records table:</p>
+    <pre><code>Errno::EACCES: Permission denied @ rb_sysopen - db/migrate/...</code></pre>
+    
+    <h3>Solution</h3>
+    <ol>
+      <li>
+        <strong>Check file permissions:</strong>
+        <pre><code>ls -la db/migrate/
+# Files should be readable by the Rails process</code></pre>
+      </li>
+      <li>
+        <strong>Fix migration directory permissions:</strong>
+        <pre><code>chmod 755 db/migrate
+chmod 644 db/migrate/*.rb</code></pre>
+      </li>
+      <li>
+        <strong>Database table permissions:</strong>
+        <pre><code>-- Grant permissions to your Rails database user
+GRANT ALL PRIVILEGES ON migration_guard_records TO your_rails_user;</code></pre>
+      </li>
+      <li>
+        <strong>For shared hosting environments:</strong>
+        <ul>
+          <li>Ensure the web server user has read access to the Rails root directory</li>
+          <li>Check with your hosting provider about file permission requirements</li>
+        </ul>
+      </li>
+    </ol>
+  </section>
+  
+  <section id="database-connection-errors">
+    <h2>Database Connection Errors</h2>
+    
+    <h3>Problem</h3>
+    <pre><code>ActiveRecord::ConnectionNotEstablished
+Could not find migration_guard_records table</code></pre>
+    
+    <h3>Solution</h3>
+    <ol>
+      <li>
+        <strong>Run the installation generator:</strong>
+        <pre><code>rails generate migration_guard:install
+rails db:migrate</code></pre>
+      </li>
+      <li>
+        <strong>Verify the table exists:</strong>
+        <pre><code>rails console
+> ActiveRecord::Base.connection.tables.include?('migration_guard_records')
+# Should return true</code></pre>
+      </li>
+      <li>
+        <strong>For multiple databases:</strong>
+        <pre><code># Ensure MigrationGuard uses the correct database
+class MigrationGuardRecord < ApplicationRecord
+  establish_connection :primary # or your specific database
+end</code></pre>
+      </li>
+      <li>
+        <strong>Connection pool issues:</strong>
+        <pre><code># config/database.yml
+development:
+  pool: 10  # Increase if you see connection timeouts</code></pre>
+      </li>
+    </ol>
+  </section>
+  
+  <section id="migration-version-conflicts">
+    <h2>Migration Version Conflicts</h2>
+    
+    <h3>Problem</h3>
+    <pre><code>ActiveRecord::RecordNotUnique: Duplicate entry '20240101000001' for key 'index_migration_guard_records_on_version'</code></pre>
+    
+    <h3>Solution</h3>
+    <ol>
+      <li>
+        <strong>Clean up duplicate records:</strong>
+        <pre><code># In rails console
+duplicates = MigrationGuard::MigrationGuardRecord
+  .group(:version)
+  .having('COUNT(*) > 1')
+  .pluck(:version)
+
+duplicates.each do |version|
+  records = MigrationGuard::MigrationGuardRecord.where(version: version)
+  records.offset(1).destroy_all  # Keep the first, remove others
+end</code></pre>
+      </li>
+      <li>
+        <strong>Reset migration tracking:</strong>
+        <pre><code>rails db:migration:cleanup FORCE=true</code></pre>
+      </li>
+      <li>
+        <strong>Prevent future conflicts:</strong>
+        <ul>
+          <li>Always use Rails generators for migrations: <code>rails g migration AddFieldToModel</code></li>
+          <li>Avoid manually creating migration files</li>
+          <li>Use timestamp-based migration versions (Rails default)</li>
+        </ul>
+      </li>
+    </ol>
+  </section>
+  
+  <section id="performance-issues">
+    <h2>Performance Issues</h2>
+    
+    <h3>Problem</h3>
+    <p>Status checks or rollback operations are slow with large migration histories.</p>
+    
+    <h3>Solution</h3>
+    <ol>
+      <li>
+        <strong>Add database indexes (if missing):</strong>
+        <pre><code>class AddIndexesToMigrationGuardRecords < ActiveRecord::Migration[7.0]
+  def change
+    add_index :migration_guard_records, :status, unless_exists: true
+    add_index :migration_guard_records, :created_at, unless_exists: true
+    add_index :migration_guard_records, [:branch, :status], unless_exists: true
+  end
+end</code></pre>
+      </li>
+      <li>
+        <strong>Enable auto-cleanup:</strong>
+        <pre><code>MigrationGuard.configure do |config|
+  config.auto_cleanup = true
+  config.cleanup_after_days = 30  # Remove old rolled_back records
+end</code></pre>
+      </li>
+      <li>
+        <strong>Optimize Git operations:</strong>
+        <pre><code># Ensure your Git repository is optimized
+git gc --aggressive
+git repack -a -d</code></pre>
+      </li>
+      <li>
+        <strong>For very large projects:</strong>
+        <p>Consider limiting the branches checked:</p>
+        <pre><code>config.target_branches = ['main']  # Only check against main branch</code></pre>
+      </li>
+    </ol>
+  </section>
+  
+  <section id="rails-version-compatibility">
+    <h2>Rails Version Compatibility</h2>
+    
+    <h3>Known Issues by Rails Version</h3>
+    
+    <h4>Rails 6.1</h4>
+    <ul>
+      <li>Minimum supported version</li>
+      <li>All features work as expected</li>
+    </ul>
+    
+    <h4>Rails 7.0+</h4>
+    <ul>
+      <li>Fully compatible</li>
+      <li>Supports multiple databases</li>
+      <li>Works with async migrations</li>
+    </ul>
+    
+    <h4>Rails 8.0+</h4>
+    <ul>
+      <li>Requires sqlite3 gem version 2.1.0 or higher</li>
+      <li>Compatible with new migration versioning</li>
+    </ul>
+    
+    <h3>Solution for Version Issues</h3>
+    <ol>
+      <li>
+        <strong>Check your Rails version:</strong>
+        <pre><code>rails --version</code></pre>
+      </li>
+      <li>
+        <strong>Update the gem if needed:</strong>
+        <pre><code># Gemfile
+gem 'rails_migration_guard', '~> 2.0'  # Check latest version</code></pre>
+      </li>
+      <li>
+        <strong>For older Rails versions:</strong>
+        <pre><code># Use an older version of the gem
+gem 'rails_migration_guard', '~> 1.0'  # For Rails < 6.1</code></pre>
+      </li>
+    </ol>
+  </section>
+  
+  <section id="common-error-messages">
+    <h2>Common Error Messages</h2>
+    
+    <h3>"No main branch found"</h3>
+    <pre><code>MigrationGuard::GitError: No main branch found. Tried: main, master, trunk</code></pre>
+    
+    <p><strong>Solution:</strong></p>
+    <pre><code># Configure your main branch name
+MigrationGuard.configure do |config|
+  config.main_branch_names = %w[develop production custom-main]
+end</code></pre>
+    
+    <h3>"Orphaned migrations detected"</h3>
+    <p>This is a warning, not an error. It means you have migrations that exist locally but not in your main branch.</p>
+    
+    <p><strong>Solutions:</strong></p>
+    <ol>
+      <li>Review the orphaned migrations: <code>rails db:migration:status</code></li>
+      <li>Roll them back if not needed: <code>rails db:migration:rollback_orphaned</code></li>
+      <li>Or commit and push them to your main branch</li>
+    </ol>
+    
+    <h3>"Git user email not configured"</h3>
+    <pre><code>MigrationGuard::GitError: Git user email not configured</code></pre>
+    
+    <p><strong>Solution:</strong></p>
+    <pre><code>git config --global user.email "you@example.com"
+git config --global user.name "Your Name"</code></pre>
+    
+    <h3>"Migration file not found in branch"</h3>
+    <p>This occurs when checking for migrations across branches.</p>
+    
+    <p><strong>Solution:</strong></p>
+    <ol>
+      <li>Fetch latest branches: <code>git fetch --all</code></li>
+      <li>Ensure branches are up to date: <code>git pull origin main</code></li>
+      <li>Check if migration was renamed or deleted</li>
+    </ol>
+  </section>
+  
+  <section id="getting-help">
+    <h2>Getting Help</h2>
+    
+    <p>If you're still experiencing issues:</p>
+    
+    <ol>
+      <li>
+        <strong>Run the diagnostic tool:</strong>
+        <pre><code>rails db:migration:doctor</code></pre>
+      </li>
+      <li>
+        <strong>Check the gem version:</strong>
+        <pre><code>bundle show rails_migration_guard</code></pre>
+      </li>
+      <li>
+        <strong>Enable debug logging:</strong>
+        <pre><code># In Rails console
+MigrationGuard.logger.level = Logger::DEBUG</code></pre>
+      </li>
+      <li>
+        <strong>Report issues:</strong>
+        <ul>
+          <li><a href="https://github.com/tommy2118/rails-migration-guard/issues">GitHub Issues</a></li>
+          <li>Include output from <code>rails db:migration:doctor</code></li>
+          <li>Provide Rails version, Ruby version, and database type</li>
+        </ul>
+      </li>
+    </ol>
+  </section>
+  
+  <section id="prevention-tips">
+    <h2>Prevention Tips</h2>
+    
+    <ol>
+      <li>
+        <strong>Regular maintenance:</strong>
+        <ul>
+          <li>Run <code>rails db:migration:status</code> before deploying</li>
+          <li>Clean up old migrations periodically</li>
+          <li>Keep your branches synchronized</li>
+        </ul>
+      </li>
+      <li>
+        <strong>Team practices:</strong>
+        <ul>
+          <li>Always create migrations on feature branches</li>
+          <li>Merge migration changes promptly</li>
+          <li>Communicate about migration conflicts</li>
+        </ul>
+      </li>
+      <li>
+        <strong>CI/CD integration:</strong>
+        <ul>
+          <li>Add migration checks to your CI pipeline</li>
+          <li>Block deployments with orphaned migrations</li>
+          <li>Automate cleanup in staging environments</li>
+        </ul>
+      </li>
+    </ol>
+  </section>
+</div>
