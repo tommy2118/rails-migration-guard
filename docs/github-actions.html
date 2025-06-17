@@ -3,22 +3,31 @@ layout: default
 title: GitHub Actions Integration
 ---
 
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-    <h1 class="text-4xl font-bold text-gray-900 mb-8">GitHub Actions Integration</h1>
+<div class="documentation">
+  <h1>GitHub Actions Integration</h1>
+  
+  <p>Rails Migration Guard provides seamless integration with GitHub Actions to automatically check for migration issues in your CI/CD pipeline. This guide covers setup, configuration, and best practices.</p>
+  
+  <div class="table-of-contents">
+    <h2>Table of Contents</h2>
+    <ol>
+      <li><a href="#basic-setup">Basic Setup</a></li>
+      <li><a href="#configuration-options">Configuration Options</a></li>
+      <li><a href="#exit-codes">Exit Codes</a></li>
+      <li><a href="#database-services">Database Services</a></li>
+      <li><a href="#advanced-examples">Advanced Examples</a></li>
+      <li><a href="#json-output">Parsing JSON Output</a></li>
+      <li><a href="#best-practices">Best Practices</a></li>
+      <li><a href="#troubleshooting">Troubleshooting</a></li>
+    </ol>
+  </div>
+  
+  <section id="basic-setup">
+    <h2>Basic Setup</h2>
     
-    <p class="text-xl text-gray-600 mb-12">
-        Automatically check for migration issues in your CI/CD pipeline using Rails Migration Guard with GitHub Actions.
-    </p>
-
-    <section class="mb-16">
-        <h2 class="text-2xl font-bold text-gray-900 mb-4">Basic Setup</h2>
-        
-        <p class="text-gray-600 mb-6">
-            Add this workflow to your repository to check for migration issues on every pull request:
-        </p>
-        
-        <div class="bg-gray-900 rounded-lg p-6 mb-8">
-            <pre><code class="text-gray-100"># .github/workflows/migration-check.yml
+    <p>Add this workflow to your repository to check for migration issues on every pull request:</p>
+    
+    <pre><code># .github/workflows/migration-check.yml
 name: Migration Check
 
 on:
@@ -66,62 +75,143 @@ jobs:
           RAILS_ENV: test
         run: |
           bundle exec rails db:migration:ci --strict</code></pre>
-        </div>
-    </section>
+    
+    <h3>Using the Built-in Action</h3>
+    
+    <p>Rails Migration Guard also includes a GitHub Action that provides additional features like PR comments:</p>
+    
+    <pre><code>- name: Check migrations
+  uses: ./.github/actions/migration-guard
+  with:
+    strict: false               # Only fail on errors, not warnings
+    comment-on-pr: true        # Add comments to PRs
+    format: json               # Use JSON output for parsing</code></pre>
+  </section>
+  
+  <section id="configuration-options">
+    <h2>Configuration Options</h2>
+    
+    <h3>Command Line Options</h3>
+    
+    <table>
+      <thead>
+        <tr>
+          <th>Option</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>--strict</code></td>
+          <td>Fail on warnings (not just errors)</td>
+          <td>false</td>
+        </tr>
+        <tr>
+          <td><code>--format</code></td>
+          <td>Output format (text/json)</td>
+          <td>text</td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <h3>Environment Variables</h3>
+    
+    <table>
+      <thead>
+        <tr>
+          <th>Variable</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>RAILS_ENV</code></td>
+          <td>Rails environment</td>
+          <td>test</td>
+        </tr>
+        <tr>
+          <td><code>DATABASE_URL</code></td>
+          <td>Database connection string</td>
+          <td>From database.yml</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+  
+  <section id="exit-codes">
+    <h2>Exit Codes</h2>
+    
+    <p>The CI command returns different exit codes based on the check results:</p>
+    
+    <ul>
+      <li><code>0</code> - No issues found</li>
+      <li><code>1</code> - Warnings found (orphaned migrations)</li>
+      <li><code>2</code> - Errors found (missing migrations or critical issues)</li>
+    </ul>
+    
+    <p>Use <code>--strict</code> to treat warnings as failures (exit code 1).</p>
+  </section>
+  
+  <section id="database-services">
+    <h2>Database Services</h2>
+    
+    <h3>PostgreSQL</h3>
+    
+    <pre><code>services:
+  postgres:
+    image: postgres:14
+    env:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    options: >-
+      --health-cmd pg_isready
+      --health-interval 10s
+      --health-timeout 5s
+      --health-retries 5
+    ports:
+      - 5432:5432
 
-    <section class="mb-16">
-        <h2 class="text-2xl font-bold text-gray-900 mb-4">Configuration Options</h2>
-        
-        <div class="bg-white rounded-lg border border-gray-200 overflow-hidden mb-8">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Option</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Default</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap font-mono text-sm">--strict</td>
-                        <td class="px-6 py-4 text-sm text-gray-600">Fail on warnings (not just errors)</td>
-                        <td class="px-6 py-4 text-sm text-gray-600">false</td>
-                    </tr>
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap font-mono text-sm">--format</td>
-                        <td class="px-6 py-4 text-sm text-gray-600">Output format (text/json)</td>
-                        <td class="px-6 py-4 text-sm text-gray-600">text</td>
-                    </tr>
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap font-mono text-sm">RAILS_ENV</td>
-                        <td class="px-6 py-4 text-sm text-gray-600">Rails environment</td>
-                        <td class="px-6 py-4 text-sm text-gray-600">test</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
+env:
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db</code></pre>
+    
+    <h3>MySQL</h3>
+    
+    <pre><code>services:
+  mysql:
+    image: mysql:8
+    env:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: test_db
+    options: >-
+      --health-cmd="mysqladmin ping"
+      --health-interval=10s
+      --health-timeout=5s
+      --health-retries=3
+    ports:
+      - 3306:3306
 
-    <section class="mb-16">
-        <h2 class="text-2xl font-bold text-gray-900 mb-4">Exit Codes</h2>
-        
-        <p class="text-gray-600 mb-4">The CI command returns different exit codes based on the check results:</p>
-        
-        <ul class="list-disc list-inside space-y-2 text-gray-600 mb-8">
-            <li><code class="bg-gray-100 px-2 py-1 rounded">0</code> - No issues found</li>
-            <li><code class="bg-gray-100 px-2 py-1 rounded">1</code> - Warnings found (orphaned migrations)</li>
-            <li><code class="bg-gray-100 px-2 py-1 rounded">2</code> - Errors found (missing migrations or critical issues)</li>
-        </ul>
-    </section>
-
-    <section class="mb-16">
-        <h2 class="text-2xl font-bold text-gray-900 mb-4">Advanced Examples</h2>
-        
-        <h3 class="text-xl font-semibold text-gray-900 mb-3">Matrix Testing</h3>
-        <p class="text-gray-600 mb-4">Test across multiple Ruby and Rails versions:</p>
-        
-        <div class="bg-gray-900 rounded-lg p-6 mb-8">
-            <pre><code class="text-gray-100">strategy:
+env:
+  DATABASE_URL: mysql2://root:password@localhost:3306/test_db</code></pre>
+    
+    <h3>SQLite</h3>
+    
+    <p>SQLite requires no additional services:</p>
+    
+    <pre><code>env:
+  DATABASE_URL: sqlite3:db/test.sqlite3
+  RAILS_ENV: test</code></pre>
+  </section>
+  
+  <section id="advanced-examples">
+    <h2>Advanced Examples</h2>
+    
+    <h3>Matrix Testing</h3>
+    
+    <p>Test across multiple Ruby and Rails versions:</p>
+    
+    <pre><code>strategy:
   matrix:
     ruby: ['3.1', '3.2', '3.3']
     rails: ['7.0', '7.1', '7.2']
@@ -130,42 +220,51 @@ steps:
   - uses: ruby/setup-ruby@v1
     with:
       ruby-version: ${{ matrix.ruby }}
-      bundler-cache: true</code></pre>
-        </div>
-        
-        <h3 class="text-xl font-semibold text-gray-900 mb-3">Conditional Checks</h3>
-        <p class="text-gray-600 mb-4">Only run when migrations change:</p>
-        
-        <div class="bg-gray-900 rounded-lg p-6 mb-8">
-            <pre><code class="text-gray-100">on:
+      bundler-cache: true
+  
+  - name: Check migrations
+    run: bundle exec rails db:migration:ci</code></pre>
+    
+    <h3>Conditional Checks</h3>
+    
+    <p>Only run when migrations change:</p>
+    
+    <pre><code>on:
   pull_request:
     paths:
       - 'db/migrate/**'
       - 'db/schema.rb'
       - 'db/structure.sql'</code></pre>
-        </div>
-        
-        <h3 class="text-xl font-semibold text-gray-900 mb-3">Scheduled Monitoring</h3>
-        <p class="text-gray-600 mb-4">Check for drift in staging environments:</p>
-        
-        <div class="bg-gray-900 rounded-lg p-6 mb-8">
-            <pre><code class="text-gray-100">on:
+    
+    <h3>Scheduled Monitoring</h3>
+    
+    <p>Check for drift in staging environments:</p>
+    
+    <pre><code>on:
   schedule:
     - cron: '0 9 * * 1-5'  # 9 AM UTC on weekdays
     
-env:
-  RAILS_ENV: staging
-  DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}</code></pre>
-        </div>
-    </section>
-
-    <section class="mb-16">
-        <h2 class="text-2xl font-bold text-gray-900 mb-4">Parsing JSON Output</h2>
-        
-        <p class="text-gray-600 mb-4">Use JSON format for advanced workflows:</p>
-        
-        <div class="bg-gray-900 rounded-lg p-6 mb-8">
-            <pre><code class="text-gray-100">- name: Check migrations
+jobs:
+  check-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      
+      - name: Check staging migrations
+        env:
+          RAILS_ENV: staging
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+        run: bundle exec rails db:migration:ci</code></pre>
+  </section>
+  
+  <section id="json-output">
+    <h2>Parsing JSON Output</h2>
+    
+    <p>Use JSON format for advanced workflows:</p>
+    
+    <pre><code>- name: Check migrations
   id: migration_check
   env:
     DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -185,34 +284,97 @@ env:
         repo: context.repo.repo,
         body: '⚠️ Found ${{ steps.migration_check.outputs.orphaned_count }} orphaned migrations'
       })</code></pre>
-        </div>
-    </section>
-
-    <section class="mb-16">
-        <h2 class="text-2xl font-bold text-gray-900 mb-4">Best Practices</h2>
-        
-        <ul class="list-disc list-inside space-y-3 text-gray-600">
-            <li><strong>Always use <code>fetch-depth: 0</code></strong> - The gem needs full git history to compare branches</li>
-            <li><strong>Start without <code>--strict</code></strong> - Get warnings first, then enforce strict mode</li>
-            <li><strong>Cache dependencies</strong> - Use <code>bundler-cache: true</code> for faster builds</li>
-            <li><strong>Use secrets for database URLs</strong> - Never hardcode credentials in workflows</li>
-            <li><strong>Run in parallel</strong> - Migration checks can run alongside your test suite</li>
-        </ul>
-    </section>
-
-    <section>
-        <h2 class="text-2xl font-bold text-gray-900 mb-4">Next Steps</h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <a href="./ci-integration.html" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200">
-                <h3 class="font-semibold text-lg mb-2">CI/CD Integration</h3>
-                <p class="text-gray-600 text-sm">Learn about other CI systems</p>
-            </a>
-            
-            <a href="./configuration.html" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200">
-                <h3 class="font-semibold text-lg mb-2">Configuration</h3>
-                <p class="text-gray-600 text-sm">Customize Rails Migration Guard settings</p>
-            </a>
-        </div>
-    </section>
+    
+    <h3>JSON Output Format</h3>
+    
+    <pre><code>{
+  "status": "warning",
+  "orphaned": [
+    {
+      "version": "20240115123456",
+      "name": "add_user_profiles",
+      "branch": "feature/profiles",
+      "author": "developer@example.com"
+    }
+  ],
+  "missing": [],
+  "synced": ["20240110111111", "20240112222222"]
+}</code></pre>
+  </section>
+  
+  <section id="best-practices">
+    <h2>Best Practices</h2>
+    
+    <ul>
+      <li><strong>Always use <code>fetch-depth: 0</code></strong> - The gem needs full git history to compare branches</li>
+      <li><strong>Start without <code>--strict</code></strong> - Get warnings first, then enforce strict mode</li>
+      <li><strong>Cache dependencies</strong> - Use <code>bundler-cache: true</code> for faster builds</li>
+      <li><strong>Use secrets for database URLs</strong> - Never hardcode credentials in workflows</li>
+      <li><strong>Run in parallel</strong> - Migration checks can run alongside your test suite</li>
+      <li><strong>Monitor scheduled checks</strong> - Set up notifications for drift detection</li>
+    </ul>
+    
+    <h3>Security Considerations</h3>
+    
+    <pre><code>permissions:
+  contents: read        # Read repository code
+  pull-requests: write  # Comment on PRs (if using action)
+  
+env:
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}  # Never hardcode</code></pre>
+  </section>
+  
+  <section id="troubleshooting">
+    <h2>Troubleshooting</h2>
+    
+    <h3>Common Issues</h3>
+    
+    <h4>"fetch-depth: 0 is required"</h4>
+    
+    <p>The gem needs full git history to compare branches:</p>
+    
+    <pre><code>- uses: actions/checkout@v4
+  with:
+    fetch-depth: 0  # Don't use shallow clone</code></pre>
+    
+    <h4>Database connection errors</h4>
+    
+    <p>Ensure your database service is healthy:</p>
+    
+    <pre><code>- name: Wait for PostgreSQL
+  run: |
+    until pg_isready -h localhost -p 5432; do
+      echo "Waiting for PostgreSQL..."
+      sleep 1
+    done</code></pre>
+    
+    <h4>Permission denied for PR comments</h4>
+    
+    <p>When using the built-in action with PR comments:</p>
+    
+    <pre><code>permissions:
+  contents: read
+  pull-requests: write</code></pre>
+    
+    <h3>Debug Mode</h3>
+    
+    <p>Enable verbose output for troubleshooting:</p>
+    
+    <pre><code>- name: Check migrations (debug)
+  env:
+    RAILS_ENV: test
+    MIGRATION_GUARD_DEBUG: true
+  run: |
+    bundle exec rails db:migration:ci --format text</code></pre>
+  </section>
+  
+  <div class="next-steps">
+    <h2>Next Steps</h2>
+    
+    <ul>
+      <li><a href="/ci-integration.html">CI/CD Integration</a> - Learn about other CI systems</li>
+      <li><a href="/configuration.html">Configuration</a> - Customize Rails Migration Guard settings</li>
+      <li><a href="/examples/">Examples</a> - See more workflow examples</li>
+    </ul>
+  </div>
 </div>
