@@ -30,15 +30,15 @@ module MigrationGuard
       end
 
       def log_success(message)
-        Rails.logger.info Colorizer.success(message)
+        Rails.logger&.info Colorizer.success(message)
       end
 
       def log_error(message)
-        Rails.logger.error Colorizer.error(message)
+        Rails.logger&.error Colorizer.error(message)
       end
 
       def log_info(message)
-        Rails.logger.info Colorizer.info(message)
+        Rails.logger&.info Colorizer.info(message)
       end
     end
   end
