@@ -72,7 +72,7 @@ module MigrationGuard
         )
 
         unless status.success?
-          Rails.logger.error "Git log failed: #{stderr}"
+          Rails.logger&.error "Git log failed: #{stderr}"
           return nil
         end
 
