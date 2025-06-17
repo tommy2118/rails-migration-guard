@@ -6,10 +6,16 @@ module MigrationGuard
   # rubocop:disable Metrics/ClassLength
   class Rollbacker
     def initialize(interactive: true)
-      @interactive = interactive
+      # Auto-detect TTY availability if interactive mode is requested
+      @interactive = interactive && $stdin.tty?
       @git_integration = GitIntegration.new
       @reporter = Reporter.new
-      MigrationGuard::Logger.debug("Initialized Rollbacker", interactive: interactive)
+
+      if interactive && !@interactive
+        MigrationGuard::Logger.info("Non-TTY environment detected, running in non-interactive mode")
+      end
+
+      MigrationGuard::Logger.debug("Initialized Rollbacker", interactive: @interactive)
     end
 
     def rollback_orphaned

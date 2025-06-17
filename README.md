@@ -39,6 +39,7 @@ Rails Migration Guard solves these issues by tracking which migrations belong to
 - ⚙️ **Highly configurable** with sensible defaults
 - 🤖 **CI/CD integration** with exit codes and JSON output
 - 🔄 **GitHub Actions support** with PR comments and status checks
+- 🐳 **Docker & CI ready** - automatic TTY detection and non-interactive modes
 
 ## Installation
 
@@ -217,6 +218,24 @@ Author tracking helps teams:
 - Track migration patterns per developer
 - Find the right person to ask about a migration
 - Monitor team migration activity
+
+### Docker & CI/CD Support
+
+Rails Migration Guard automatically detects non-TTY environments (Docker, CI) and switches to non-interactive mode:
+
+```bash
+# In Docker containers - automatically non-interactive
+docker exec -it myapp rails db:migration:rollback_orphaned
+
+# Force non-interactive mode
+FORCE=true rails db:migration:rollback_orphaned
+NON_INTERACTIVE=true rails db:migration:recover
+
+# CI/CD automation
+AUTO=true rails db:migration:recover  # Auto-apply first recovery option
+```
+
+See [Docker & CI/CD Documentation](docs/docker-ci-support.md) for detailed examples.
 
 ### Sandbox Mode
 

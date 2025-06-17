@@ -25,7 +25,9 @@ module MigrationGuard
       def rollback_orphaned
         return unless check_enabled
 
-        rollbacker = MigrationGuard::Rollbacker.new
+        # Support FORCE=true for non-interactive mode
+        interactive = ENV["FORCE"] != "true" && ENV["NON_INTERACTIVE"] != "true"
+        rollbacker = MigrationGuard::Rollbacker.new(interactive: interactive)
         rollbacker.rollback_orphaned
       end
 
@@ -86,7 +88,11 @@ module MigrationGuard
         output = historian.format_history_output
 
         # Always show output to console for user-facing commands
-        puts output unless output.empty? # rubocop:disable Rails/Output
+        if output.empty?
+          puts Colorizer.info("No migration history found matching the specified criteria.") # rubocop:disable Rails/Output
+        else
+          puts output # rubocop:disable Rails/Output
+        end
       end
 
       def authors_report
@@ -96,7 +102,11 @@ module MigrationGuard
         output = author_reporter.format_authors_report
 
         # Always show output to console for user-facing commands
-        puts output unless output.empty? # rubocop:disable Rails/Output
+        if output.empty?
+          puts Colorizer.info("No migration author data found.") # rubocop:disable Rails/Output
+        else
+          puts output # rubocop:disable Rails/Output
+        end
       end
 
       def recover
@@ -152,12 +162,12 @@ module MigrationGuard
       private
 
       def create_recovery_executor
-        if ENV["AUTO"] == "true"
+        if ENV["AUTO"] == "true" || ENV["NON_INTERACTIVE"] == "true" || ENV["FORCE"] == "true"
           puts Colorizer.info("Running in automatic mode...") # rubocop:disable Rails/Output
           MigrationGuard::RecoveryExecutor.new(interactive: false)
         else
           puts Colorizer.info("Running in interactive mode...") # rubocop:disable Rails/Output
-          puts "Use AUTO=true to automatically apply first recovery option for each issue" # rubocop:disable Rails/Output
+          puts "Use AUTO=true or NON_INTERACTIVE=true to automatically apply first recovery option for each issue" # rubocop:disable Rails/Output
           MigrationGuard::RecoveryExecutor.new(interactive: true)
         end
       end

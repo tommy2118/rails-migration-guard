@@ -273,6 +273,11 @@ RSpec.describe MigrationGuard::RecoveryExecutor do
       }
     end
 
+    before do
+      # Mock TTY to ensure interactive mode works in tests
+      allow($stdin).to receive(:tty?).and_return(true)
+    end
+
     it "prompts for user input" do
       # Create a real issue with a migration record
       migration = MigrationGuard::MigrationGuardRecord.create!(

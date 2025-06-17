@@ -67,6 +67,8 @@ RSpec.describe MigrationGuard::Rollbacker do
       main_branch: "main",
       migration_versions_in_trunk: ["20240101000001"]
     )
+    # Mock TTY for interactive tests
+    allow($stdin).to receive(:tty?).and_return(true)
     # Capture stdout output from puts
     allow($stdout).to receive(:puts) { |msg| io.puts(msg) }
     # Also capture Rails.logger for Logger messages

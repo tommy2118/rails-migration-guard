@@ -14,10 +14,15 @@ module MigrationGuard
   # RecoveryExecutor performs recovery actions for inconsistent migration states
   class RecoveryExecutor
     def initialize(interactive: true)
-      @interactive = interactive
+      # Auto-detect TTY availability if interactive mode is requested
+      @interactive = interactive && $stdin.tty?
       @backup_manager = Recovery::BackupManager.new
       @actions = initialize_actions
       @executing_recovery = false
+
+      return unless interactive && !@interactive
+
+      Rails.logger&.info "[MigrationGuard] Non-TTY environment detected, switching to non-interactive mode"
     end
 
     def execute_recovery(issue, option = nil)
