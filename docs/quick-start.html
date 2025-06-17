@@ -1,0 +1,543 @@
+---
+layout: default
+title: Quick Start Guide
+---
+
+<div class="bg-gradient-to-br from-brand-50 via-white to-accent-50 py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center" data-animate>
+            <h1 class="text-4xl font-bold text-gray-900 mb-6">
+                Rails Migration Guard: <span class="gradient-text">Quick Start Guide</span>
+            </h1>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                Get up and running quickly with Rails Migration Guard and learn the most common workflows for managing your Rails migrations effectively.
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <!-- Installation Section -->
+    <section class="mb-16" data-animate>
+        <div class="flex items-center mb-4">
+            <div class="bg-brand-100 rounded-lg p-2 mr-3">
+                <svg class="w-6 h-6 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"></path>
+                </svg>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-900">Installation in 60 Seconds</h2>
+        </div>
+        
+        <p class="text-lg text-gray-600 mb-6">
+            Add Rails Migration Guard to your Gemfile:
+        </p>
+        
+        <div class="code-block rounded-lg p-6 mb-6">
+            <pre><code class="language-ruby text-gray-100"># Gemfile
+group :development, :staging do
+  gem 'rails_migration_guard'
+end</code></pre>
+        </div>
+        
+        <p class="text-lg text-gray-600 mb-6">
+            Then install and set up:
+        </p>
+        
+        <div class="code-block rounded-lg p-6 mb-6">
+            <pre><code class="language-bash text-gray-100"># Install the gem
+bundle install
+
+# Generate initializer and migration
+rails generate migration_guard:install
+
+# Run the migration to create tracking table
+rails db:migrate
+
+# Optional: Install Git hooks for automatic checks
+rails generate migration_guard:hooks</code></pre>
+        </div>
+        
+        <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded-r-lg">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-green-700">
+                        That's it! Rails Migration Guard is now tracking your migrations and will alert you to potential issues.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- First Day Workflow Section -->
+    <section class="mb-16" data-animate>
+        <div class="flex items-center mb-4">
+            <div class="bg-accent-100 rounded-lg p-2 mr-3">
+                <svg class="w-6 h-6 text-accent-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-900">First Day Workflow</h2>
+        </div>
+        
+        <p class="text-lg text-gray-600 mb-6">
+            Here's what to do on your first day using Rails Migration Guard:
+        </p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200">
+                <div class="flex items-center mb-4">
+                    <span class="flex items-center justify-center h-8 w-8 rounded-full bg-brand-100 text-brand-600 font-semibold mr-3">1</span>
+                    <h3 class="font-semibold text-xl text-gray-900">Check Migration Status</h3>
+                </div>
+                <p class="text-gray-600 mb-4">See the current state of migrations relative to your main branch:</p>
+                <div class="code-block rounded-lg p-4">
+                    <pre><code class="language-bash text-gray-100">rails db:migration:status</code></pre>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200">
+                <div class="flex items-center mb-4">
+                    <span class="flex items-center justify-center h-8 w-8 rounded-full bg-brand-100 text-brand-600 font-semibold mr-3">2</span>
+                    <h3 class="font-semibold text-xl text-gray-900">Generate a Migration</h3>
+                </div>
+                <p class="text-gray-600 mb-4">Create migrations as usual with Rails:</p>
+                <div class="code-block rounded-lg p-4">
+                    <pre><code class="language-bash text-gray-100">rails generate migration AddUserPreferences</code></pre>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200">
+                <div class="flex items-center mb-4">
+                    <span class="flex items-center justify-center h-8 w-8 rounded-full bg-brand-100 text-brand-600 font-semibold mr-3">3</span>
+                    <h3 class="font-semibold text-xl text-gray-900">Run Migrations</h3>
+                </div>
+                <p class="text-gray-600 mb-4">Use standard Rails commands - they're automatically tracked:</p>
+                <div class="code-block rounded-lg p-4">
+                    <pre><code class="language-bash text-gray-100">rails db:migrate</code></pre>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200">
+                <div class="flex items-center mb-4">
+                    <span class="flex items-center justify-center h-8 w-8 rounded-full bg-brand-100 text-brand-600 font-semibold mr-3">4</span>
+                    <h3 class="font-semibold text-xl text-gray-900">Check for Orphaned Migrations</h3>
+                </div>
+                <p class="text-gray-600 mb-4">After switching branches or before committing:</p>
+                <div class="code-block rounded-lg p-4">
+                    <pre><code class="language-bash text-gray-100">rails db:migration:status</code></pre>
+                </div>
+            </div>
+            
+            <div class="md:col-span-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200">
+                <div class="flex items-center mb-4">
+                    <span class="flex items-center justify-center h-8 w-8 rounded-full bg-brand-100 text-brand-600 font-semibold mr-3">5</span>
+                    <h3 class="font-semibold text-xl text-gray-900">Clean Up if Needed</h3>
+                </div>
+                <p class="text-gray-600 mb-4">Roll back orphaned migrations interactively:</p>
+                <div class="code-block rounded-lg p-4">
+                    <pre><code class="language-bash text-gray-100">rails db:migration:rollback_orphaned</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Essential Commands Section -->
+    <section class="mb-16" data-animate>
+        <div class="flex items-center mb-4">
+            <div class="bg-purple-100 rounded-lg p-2 mr-3">
+                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-900">Essential Commands</h2>
+        </div>
+        
+        <p class="text-lg text-gray-600 mb-6">
+            Here are the commands you'll use most frequently:
+        </p>
+        
+        <div class="overflow-hidden shadow-md rounded-lg border border-gray-200 mb-6">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Command</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purpose</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap font-mono text-sm text-brand-600">`rails db:migration:status`</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">Check migration status relative to main branch</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap font-mono text-sm text-brand-600">`rails db:migration:rollback_orphaned`</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">Interactively roll back orphaned migrations</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap font-mono text-sm text-brand-600">`rails db:migration:history`</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">View migration history with filtering options</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap font-mono text-sm text-brand-600">`rails db:migration:recover`</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">Fix inconsistent migration states</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap font-mono text-sm text-brand-600">`rails db:migration:doctor`</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">Run diagnostics on your setup</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap font-mono text-sm text-brand-600">`rails db:migration:authors`</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">See contribution statistics by developer</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+    
+    <!-- Branch Switching Workflow Section -->
+    <section class="mb-16" data-animate>
+        <div class="flex items-center mb-4">
+            <div class="bg-indigo-100 rounded-lg p-2 mr-3">
+                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                </svg>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-900">Branch Switching Workflow</h2>
+        </div>
+        
+        <p class="text-lg text-gray-600 mb-6">
+            When switching between feature branches, follow this workflow to avoid migration issues:
+        </p>
+        
+        <div class="code-block rounded-lg p-6 mb-6">
+            <pre><code class="language-bash text-gray-100"># Before switching branches
+git stash     # Stash any changes if needed
+rails db:migration:status   # Check for orphaned migrations
+
+# If orphaned migrations are found
+rails db:migration:rollback_orphaned
+
+# Switch branches
+git checkout other-branch
+
+# After switching
+rails db:migration:status   # Check if any migrations are missing
+rails db:migrate            # Apply any missing migrations</code></pre>
+        </div>
+        
+        <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-blue-700">
+                        With the Git hooks installed, you'll automatically be notified about migration changes when switching branches.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Handling Orphaned Migrations Section -->
+    <section class="mb-16" data-animate>
+        <div class="flex items-center mb-4">
+            <div class="bg-yellow-100 rounded-lg p-2 mr-3">
+                <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-900">Handling Orphaned Migrations</h2>
+        </div>
+        
+        <p class="text-lg text-gray-600 mb-6">
+            Orphaned migrations are those that exist on your local branch but not in the main branch. They can cause schema inconsistencies if not handled properly.
+        </p>
+        
+        <div class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+            <div class="px-6 py-4 bg-yellow-50">
+                <h3 class="text-xl font-semibold text-gray-900">Identifying Orphaned Migrations</h3>
+            </div>
+            <div class="px-6 py-4">
+                <div class="code-block rounded-lg p-4 mb-4">
+                    <pre><code class="language-bash text-gray-100">rails db:migration:status</code></pre>
+                </div>
+                <p class="text-gray-600">Look for migrations marked with "⚠ Orphaned" in the output.</p>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+            <div class="px-6 py-4 bg-yellow-50">
+                <h3 class="text-xl font-semibold text-gray-900">Options for Handling Orphaned Migrations</h3>
+            </div>
+            <div class="px-6 py-4">
+                <div class="space-y-6">
+                    <div>
+                        <h4 class="flex items-center text-lg font-medium text-gray-900 mb-2">
+                            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 text-green-500 flex items-center justify-center mr-2">1</span>
+                            Roll them back (recommended if they're not needed)
+                        </h4>
+                        <div class="code-block rounded-lg p-4 ml-8">
+                            <pre><code class="language-bash text-gray-100">rails db:migration:rollback_orphaned</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="flex items-center text-lg font-medium text-gray-900 mb-2">
+                            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center mr-2">2</span>
+                            Commit them (if they should be part of your feature branch)
+                        </h4>
+                        <div class="code-block rounded-lg p-4 ml-8">
+                            <pre><code class="language-bash text-gray-100">git add db/migrate/20240601123456_add_user_preferences.rb
+git commit -m "Add migration for user preferences"</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="flex items-center text-lg font-medium text-gray-900 mb-2">
+                            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-purple-100 text-purple-500 flex items-center justify-center mr-2">3</span>
+                            Sandbox Test (to see effects without applying)
+                        </h4>
+                        <div class="code-block rounded-lg p-4 ml-8">
+                            <pre><code class="language-ruby text-gray-100"># In config/initializers/migration_guard.rb
+MigrationGuard.configure do |config|
+  config.sandbox_mode = true
+end</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Team Collaboration Section -->
+    <section class="mb-16" data-animate>
+        <div class="flex items-center mb-4">
+            <div class="bg-pink-100 rounded-lg p-2 mr-3">
+                <svg class="w-6 h-6 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                </svg>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-900">Team Collaboration Tips</h2>
+        </div>
+        
+        <p class="text-lg text-gray-600 mb-6">
+            For effective team collaboration:
+        </p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6">
+                <h3 class="text-xl font-semibold text-gray-900 mb-3">Before Creating PRs</h3>
+                <p class="text-gray-600 mb-4">Check and clean up orphaned migrations:</p>
+                <div class="code-block rounded-lg p-4">
+                    <pre><code class="language-bash text-gray-100">rails db:migration:status
+rails db:migration:rollback_orphaned  # If needed</code></pre>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6">
+                <h3 class="text-xl font-semibold text-gray-900 mb-3">Use Author Tracking</h3>
+                <p class="text-gray-600 mb-4">See who's creating migrations:</p>
+                <div class="code-block rounded-lg p-4">
+                    <pre><code class="language-bash text-gray-100">rails db:migration:authors</code></pre>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6">
+                <h3 class="text-xl font-semibold text-gray-900 mb-3">Filter History by Author</h3>
+                <p class="text-gray-600 mb-4">When helping teammates:</p>
+                <div class="code-block rounded-lg p-4">
+                    <pre><code class="language-bash text-gray-100">rails db:migration:history AUTHOR=alice@example.com</code></pre>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6">
+                <h3 class="text-xl font-semibold text-gray-900 mb-3">Set Up CI Checks</h3>
+                <p class="text-gray-600 mb-4">Add to your CI pipeline:</p>
+                <div class="code-block rounded-lg p-4">
+                    <pre><code class="language-bash text-gray-100">bundle exec rails db:migration:ci</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Troubleshooting Section -->
+    <section class="mb-16" data-animate>
+        <div class="flex items-center mb-4">
+            <div class="bg-red-100 rounded-lg p-2 mr-3">
+                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"></path>
+                </svg>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-900">Troubleshooting Common Issues</h2>
+        </div>
+        
+        <div class="space-y-6">
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="px-6 py-4 bg-red-50">
+                    <h3 class="text-xl font-semibold text-gray-900">"Migration not found" Errors</h3>
+                </div>
+                <div class="px-6 py-4">
+                    <p class="text-gray-600 mb-4">This usually means you have orphaned migrations. Check status and roll back if needed:</p>
+                    <div class="code-block rounded-lg p-4">
+                        <pre><code class="language-bash text-gray-100">rails db:migration:status
+rails db:migration:rollback_orphaned</code></pre>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="px-6 py-4 bg-red-50">
+                    <h3 class="text-xl font-semibold text-gray-900">Schema Inconsistencies</h3>
+                </div>
+                <div class="px-6 py-4">
+                    <p class="text-gray-600 mb-4">Use the recovery tool to fix database inconsistencies:</p>
+                    <div class="code-block rounded-lg p-4">
+                        <pre><code class="language-bash text-gray-100">rails db:migration:recover</code></pre>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="px-6 py-4 bg-red-50">
+                    <h3 class="text-xl font-semibold text-gray-900">Git Integration Issues</h3>
+                </div>
+                <div class="px-6 py-4">
+                    <p class="text-gray-600 mb-4">If git integration isn't working properly:</p>
+                    <div class="code-block rounded-lg p-4">
+                        <pre><code class="language-bash text-gray-100"># Run diagnostics
+rails db:migration:doctor
+
+# Check your configuration
+# In config/initializers/migration_guard.rb
+MigrationGuard.configure do |config|
+  config.main_branch_names = %w[main master trunk your-branch-name]
+end</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Visual Workflow Section -->
+    <section class="mb-16" data-animate>
+        <div class="flex items-center mb-4">
+            <div class="bg-green-100 rounded-lg p-2 mr-3">
+                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path>
+                </svg>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-900">Visual Example: Typical Workflow</h2>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6 overflow-auto">
+            <pre class="text-gray-800 font-mono text-sm"><code>┌─────────────────────────────────────────┐
+│ 1. Create feature branch                │
+│    git checkout -b feature/new-feature  │
+└────────────────┬────────────────────────┘
+                 │
+┌────────────────▼────────────────────────┐
+│ 2. Generate and run migrations          │
+│    rails generate migration AddNewTable │
+│    rails db:migrate                     │
+└────────────────┬────────────────────────┘
+                 │
+┌────────────────▼────────────────────────┐
+│ 3. Implement feature with the migration │
+│    ... write code ...                   │
+└────────────────┬────────────────────────┘
+                 │
+┌────────────────▼────────────────────────┐
+│ 4. Check status before commit/PR        │
+│    rails db:migration:status            │
+└────────────────┬────────────────────────┘
+                 │
+┌────────────────▼────────────────────────┐
+│ 5. Make sure migration is committed     │
+│    git add db/migrate/20240601_*.rb     │
+│    git commit -m "Add new feature"      │
+└────────────────┬────────────────────────┘
+                 │
+┌────────────────▼────────────────────────┐
+│ 6. Create PR with the migration         │
+│    gh pr create                         │
+└─────────────────────────────────────────┘</code></pre>
+        </div>
+    </section>
+    
+    <!-- Next Steps Section -->
+    <section class="mb-16" data-animate>
+        <div class="flex items-center mb-4">
+            <div class="bg-gray-100 rounded-lg p-2 mr-3">
+                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                </svg>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-900">Next Steps</h2>
+        </div>
+        
+        <p class="text-lg text-gray-600 mb-6">
+            Now that you're up and running, check out:
+        </p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <a href="{{ '/docs/' | relative_url }}" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-6 border border-gray-200 hover:border-brand-200 transform hover:-translate-y-1">
+                <div class="flex items-center mb-4 text-brand-600">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <h3 class="font-semibold text-lg">Full Documentation</h3>
+                </div>
+                <p class="text-gray-600 text-sm">Complete guide to all features and options</p>
+            </a>
+            
+            <a href="{{ '/docs/#configuration' | relative_url }}" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-6 border border-gray-200 hover:border-brand-200 transform hover:-translate-y-1">
+                <div class="flex items-center mb-4 text-brand-600">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <h3 class="font-semibold text-lg">Configuration Options</h3>
+                </div>
+                <p class="text-gray-600 text-sm">Customize for your team's workflow</p>
+            </a>
+            
+            <a href="{{ '/examples/' | relative_url }}" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-6 border border-gray-200 hover:border-brand-200 transform hover:-translate-y-1">
+                <div class="flex items-center mb-4 text-brand-600">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                    <h3 class="font-semibold text-lg">Advanced Examples</h3>
+                </div>
+                <p class="text-gray-600 text-sm">Real-world usage patterns and recipes</p>
+            </a>
+            
+            <a href="{{ '/ci-integration' | relative_url }}" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-6 border border-gray-200 hover:border-brand-200 transform hover:-translate-y-1">
+                <div class="flex items-center mb-4 text-brand-600">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                    </svg>
+                    <h3 class="font-semibold text-lg">CI/CD Integration</h3>
+                </div>
+                <p class="text-gray-600 text-sm">Automate checks in your pipeline</p>
+            </a>
+            
+            <a href="{{ '/github-actions' | relative_url }}" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-6 border border-gray-200 hover:border-brand-200 transform hover:-translate-y-1">
+                <div class="flex items-center mb-4 text-brand-600">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    <h3 class="font-semibold text-lg">GitHub Actions</h3>
+                </div>
+                <p class="text-gray-600 text-sm">Ready-to-use workflows for GitHub</p>
+            </a>
+        </div>
+    </section>
+</div>
