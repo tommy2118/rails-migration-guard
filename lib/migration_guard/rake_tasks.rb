@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "interactive_mode"
+
 module MigrationGuard
   # rubocop:disable Metrics/ModuleLength
   module RakeTasks
@@ -86,7 +88,11 @@ module MigrationGuard
         output = historian.format_history_output
 
         # Always show output to console for user-facing commands
-        puts output unless output.empty? # rubocop:disable Rails/Output
+        if output.empty?
+          puts Colorizer.info("No migration history found matching the specified criteria.") # rubocop:disable Rails/Output
+        else
+          puts output # rubocop:disable Rails/Output
+        end
       end
 
       def authors_report
@@ -96,7 +102,11 @@ module MigrationGuard
         output = author_reporter.format_authors_report
 
         # Always show output to console for user-facing commands
-        puts output unless output.empty? # rubocop:disable Rails/Output
+        if output.empty?
+          puts Colorizer.info("No migration author data found.") # rubocop:disable Rails/Output
+        else
+          puts output # rubocop:disable Rails/Output
+        end
       end
 
       def recover
@@ -152,12 +162,14 @@ module MigrationGuard
       private
 
       def create_recovery_executor
-        if ENV["AUTO"] == "true"
+        if InteractiveMode.forced_non_interactive?
           puts Colorizer.info("Running in automatic mode...") # rubocop:disable Rails/Output
           MigrationGuard::RecoveryExecutor.new(interactive: false)
         else
           puts Colorizer.info("Running in interactive mode...") # rubocop:disable Rails/Output
-          puts "Use AUTO=true to automatically apply first recovery option for each issue" # rubocop:disable Rails/Output
+          # rubocop:disable Rails/Output, Layout/LineLength
+          puts "Use AUTO=true, NON_INTERACTIVE=true, or FORCE=true to automatically apply first recovery option for each issue"
+          # rubocop:enable Rails/Output, Layout/LineLength
           MigrationGuard::RecoveryExecutor.new(interactive: true)
         end
       end

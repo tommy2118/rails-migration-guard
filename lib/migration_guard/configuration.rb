@@ -7,7 +7,8 @@ module MigrationGuard
 
     attr_accessor :enabled_environments, :track_branch, :track_author, :track_timestamp, :sandbox_mode,
                   :warn_on_switch, :warn_after_migration, :block_deploy_with_orphans, :auto_cleanup,
-                  :main_branch_names, :colorize_output, :target_branches, :logger, :visible_debug
+                  :main_branch_names, :colorize_output, :target_branches, :logger, :visible_debug,
+                  :auto_detect_tty
     attr_reader :git_integration_level, :cleanup_after_days, :log_level
 
     def initialize
@@ -37,6 +38,7 @@ module MigrationGuard
       @block_deploy_with_orphans = false
       @auto_cleanup = false
       @cleanup_after_days = 30
+      @auto_detect_tty = true
     end
 
     def set_default_git_config
@@ -97,7 +99,8 @@ module MigrationGuard
         colorize_output: colorize_output,
         target_branches: target_branches,
         log_level: log_level,
-        logger: logger
+        logger: logger,
+        auto_detect_tty: auto_detect_tty
       }
     end
 

@@ -253,6 +253,9 @@ RSpec.describe "Recovery and status rake tasks", type: :integration do
 
       context "when running interactive recovery" do
         it "prompts for recovery actions" do
+          # Mock TTY for interactive mode
+          allow($stdin).to receive(:tty?).and_return(true)
+
           # Simulate selecting recovery option and then exiting
           allow(MigrationGuard::RecoveryExecutor).to receive(:new).and_wrap_original do |method, *args, **kwargs|
             executor = method.call(*args, **kwargs)
