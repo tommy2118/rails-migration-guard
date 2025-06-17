@@ -28,6 +28,7 @@ module MigrationGuard
       check_schema_consistency
       check_missing_migration_files
       check_environment_configuration
+      check_sandbox_mode
 
       print_summary
     end
@@ -279,6 +280,18 @@ module MigrationGuard
       end
     end
     # rubocop:enable Metrics/MethodLength
+
+    def check_sandbox_mode
+      config = MigrationGuard.configuration
+
+      if config.sandbox_mode
+        add_warning("Sandbox mode is enabled",
+                    "Migrations will be rolled back after execution. Disable sandbox_mode for real changes")
+        print_check("Sandbox mode", :warning, "ACTIVE (changes will be rolled back)")
+      else
+        print_check("Sandbox mode", :success, "disabled")
+      end
+    end
 
     def print_check(name, status, details = nil)
       symbol = case status

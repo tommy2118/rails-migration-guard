@@ -335,5 +335,38 @@ RSpec.describe MigrationGuard::DiagnosticRunner do
         end
       end
     end
+
+    context "when testing sandbox mode" do
+      context "when sandbox mode is enabled" do
+        before do
+          allow(MigrationGuard.configuration).to receive(:sandbox_mode).and_return(true)
+        end
+
+        it "reports sandbox mode as active with warning" do
+          runner.run_all_checks
+
+          output = io.string
+          aggregate_failures do
+            expect(output).to include("⚠ Sandbox mode: ACTIVE (changes will be rolled back)")
+            expect(output).to include("Warnings:")
+            expect(output).to include("Sandbox mode is enabled")
+            expect(output).to include("Migrations will be rolled back after execution")
+          end
+        end
+      end
+
+      context "when sandbox mode is disabled" do
+        before do
+          allow(MigrationGuard.configuration).to receive(:sandbox_mode).and_return(false)
+        end
+
+        it "reports sandbox mode as disabled" do
+          runner.run_all_checks
+
+          output = io.string
+          expect(output).to include("✓ Sandbox mode: disabled")
+        end
+      end
+    end
   end
 end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "colorizer"
+require_relative "migration_extension"
 
 module MigrationGuard
   class Reporter # rubocop:disable Metrics/ClassLength
@@ -227,6 +228,10 @@ module MigrationGuard
       else
         output << Colorizer.bold("Migration Status (#{report[:main_branch]} branch)")
       end
+
+      # Add sandbox mode indicator
+      output << Colorizer.warning(MigrationGuard::SandboxMessages::START) if MigrationGuard.configuration.sandbox_mode
+
       output << ("═" * 55)
     end
 

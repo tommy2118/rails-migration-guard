@@ -19,6 +19,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Colorized output with clear status indicators (✓/⚠/✗)
   - Comprehensive validation of schema consistency
   - Guides new developers through proper environment setup
+- **Visual Feedback for Sandbox Mode** (#91) - Enhanced sandbox mode with clear user feedback:
+  - Displays prominent notifications when sandbox mode is active during migrations
+  - Shows "🧪 SANDBOX MODE ACTIVE" message before migration execution
+  - Shows completion message after rollback: "⚠️ SANDBOX: Database changes rolled back"
+  - Added sandbox mode status to `rails db:migration:doctor` diagnostic checks
+  - Added sandbox mode indicator to `rails db:migration:status` output
+  - Configurable via environment variables (supports multiple truthy values: true, 1, yes):
+    - `MIGRATION_GUARD_SANDBOX_QUIET=true` - Disable all sandbox feedback
+    - `MIGRATION_GUARD_SANDBOX_VERBOSE=true` - Enable feedback in test environment
+  - Consistent output method: uses Rails logger when available, falls back to stdout
+  - Improves user experience by preventing confusion about sandbox behavior
 
 ### Fixed
 - **Warning Consolidation** (#105, #127) - Fixed warning spam during multiple migrations:
