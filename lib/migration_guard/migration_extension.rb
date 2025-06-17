@@ -14,10 +14,15 @@ module MigrationGuard
           tracker = MigrationGuard::Tracker.new
           tracker.track_migration(version.to_s, direction)
 
-          # Check for orphaned migrations after running up migrations
+          # Track migrations for batch warning consolidation
           if direction == :up
-            checker = MigrationGuard::PostMigrationChecker.new
-            checker.check_and_warn
+            MigrationGuard::WarningCollector.increment_migration_count
+
+            # Check for orphaned migrations after running up migrations
+            if MigrationGuard::WarningCollector.should_show_individual_warnings?
+              checker = MigrationGuard::PostMigrationChecker.new
+              checker.check_and_warn
+            end
           end
         end
 
@@ -32,10 +37,15 @@ module MigrationGuard
         tracker = MigrationGuard::Tracker.new
         tracker.track_migration(version.to_s, direction)
 
-        # Check for orphaned migrations after running up migrations
+        # Track migrations for batch warning consolidation
         if direction == :up
-          checker = MigrationGuard::PostMigrationChecker.new
-          checker.check_and_warn
+          MigrationGuard::WarningCollector.increment_migration_count
+
+          # Check for orphaned migrations after running up migrations
+          if MigrationGuard::WarningCollector.should_show_individual_warnings?
+            checker = MigrationGuard::PostMigrationChecker.new
+            checker.check_and_warn
+          end
         end
       end
 

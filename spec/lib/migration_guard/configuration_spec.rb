@@ -54,6 +54,7 @@ RSpec.describe MigrationGuard::Configuration do
       expect(config.sandbox_mode).to be false
       expect(config.warn_on_switch).to be true
       expect(config.warn_after_migration).to be true
+      expect(config.warning_frequency).to eq(:smart)
       expect(config.block_deploy_with_orphans).to be false
     end
 
@@ -61,12 +62,27 @@ RSpec.describe MigrationGuard::Configuration do
       config.sandbox_mode = true
       config.warn_on_switch = false
       config.warn_after_migration = false
+      config.warning_frequency = :once
       config.block_deploy_with_orphans = true
 
       expect(config.sandbox_mode).to be true
       expect(config.warn_on_switch).to be false
       expect(config.warn_after_migration).to be false
+      expect(config.warning_frequency).to eq(:once)
       expect(config.block_deploy_with_orphans).to be true
+    end
+  end
+
+  describe "#warning_frequency" do
+    it "defaults to :smart" do
+      expect(config.warning_frequency).to eq(:smart)
+    end
+
+    it "accepts valid frequencies" do
+      %i[each once smart].each do |frequency|
+        config.warning_frequency = frequency
+        expect(config.warning_frequency).to eq(frequency)
+      end
     end
   end
 
@@ -163,6 +179,7 @@ RSpec.describe MigrationGuard::Configuration do
         sandbox_mode: false,
         warn_on_switch: true,
         warn_after_migration: true,
+        warning_frequency: :smart,
         block_deploy_with_orphans: false,
         auto_cleanup: false,
         cleanup_after_days: 30,
@@ -180,6 +197,11 @@ RSpec.describe MigrationGuard::Configuration do
     it "raises error for invalid git integration level" do
       allow(config).to receive(:git_integration_level).and_return(:invalid)
       expect { config.validate }.to raise_error(MigrationGuard::ConfigurationError)
+    end
+
+    it "raises error for invalid warning frequency" do
+      allow(config).to receive(:warning_frequency).and_return(:invalid)
+      expect { config.validate }.to raise_error(MigrationGuard::ConfigurationError, /Invalid warning frequency/)
     end
 
     it "raises error for empty enabled_environments" do

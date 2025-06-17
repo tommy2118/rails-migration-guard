@@ -4,11 +4,12 @@ module MigrationGuard
   class Configuration
     VALID_GIT_INTEGRATION_LEVELS = %i[off warning auto_rollback].freeze
     VALID_LOG_LEVELS = %i[debug info warn error fatal].freeze
+    VALID_WARNING_FREQUENCIES = %i[each once smart].freeze
 
     attr_accessor :enabled_environments, :track_branch, :track_author, :track_timestamp, :sandbox_mode,
                   :warn_on_switch, :warn_after_migration, :block_deploy_with_orphans, :auto_cleanup,
                   :main_branch_names, :colorize_output, :target_branches, :logger, :visible_debug,
-                  :auto_detect_tty
+                  :warning_frequency, :max_warnings_display, :auto_detect_tty
     attr_reader :git_integration_level, :cleanup_after_days, :log_level
 
     def initialize
@@ -35,6 +36,7 @@ module MigrationGuard
       @sandbox_mode = false
       @warn_on_switch = true
       @warn_after_migration = true
+      @warning_frequency = :smart
       @block_deploy_with_orphans = false
       @auto_cleanup = false
       @cleanup_after_days = 30
@@ -92,6 +94,7 @@ module MigrationGuard
         sandbox_mode: sandbox_mode,
         warn_on_switch: warn_on_switch,
         warn_after_migration: warn_after_migration,
+        warning_frequency: warning_frequency,
         block_deploy_with_orphans: block_deploy_with_orphans,
         auto_cleanup: auto_cleanup,
         cleanup_after_days: cleanup_after_days,
@@ -111,6 +114,10 @@ module MigrationGuard
 
       unless VALID_GIT_INTEGRATION_LEVELS.include?(git_integration_level)
         raise ConfigurationError, "Invalid git integration level: #{git_integration_level}"
+      end
+
+      unless VALID_WARNING_FREQUENCIES.include?(warning_frequency)
+        raise ConfigurationError, "Invalid warning frequency: #{warning_frequency}"
       end
 
       true
