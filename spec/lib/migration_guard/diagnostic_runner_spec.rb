@@ -39,6 +39,7 @@ RSpec.describe MigrationGuard::DiagnosticRunner do
         expect(output).to include("✓ Git branch detection")
         expect(output).to include("✓ Orphaned migrations")
         expect(output).to include("✓ Missing migrations")
+        expect(output).to include("✓ Stuck migrations")
         expect(output).to include("✓ Environment configuration")
         expect(output).to include("Overall Status: ALL SYSTEMS OK")
       end
@@ -254,6 +255,51 @@ RSpec.describe MigrationGuard::DiagnosticRunner do
         expect(output).to include("1 tracked as applied but missing from schema")
         expect(output).to include("1 rolled back but still in schema")
         expect(output).to include("1 in schema but not tracked")
+      end
+    end
+
+    context "when stuck migrations exist" do
+      before do
+        # Create a recent rolling_back migration (should not be detected)
+        MigrationGuard::MigrationGuardRecord.create!(
+          version: "20240201000001",
+          status: "rolling_back",
+          branch: "feature/stuck",
+          updated_at: 30.minutes.ago
+        )
+
+        # Create an old rolling_back migration (should be detected)
+        MigrationGuard::MigrationGuardRecord.create!(
+          version: "20240201000002",
+          status: "rolling_back",
+          branch: "feature/stuck",
+          updated_at: 3.hours.ago
+        )
+      end
+
+      it "reports only migrations stuck for more than 1 hour" do
+        runner.run_all_checks
+
+        output = io.string
+        aggregate_failures do
+          expect(output).to include("✗ Stuck migrations")
+          expect(output).to include("1 stuck (oldest: 3h)")
+          expect(output).to include("Issues Found:")
+          expect(output).to include("Stuck migrations detected")
+          expect(output).to include("Migration(s) stuck in rollback state: 20240201000002")
+          expect(output).to include("Run 'rails db:migration:recover' to fix")
+          # Make sure the recent one is not in the stuck migrations error message
+          expect(output).not_to match(/Migration\(s\) stuck in rollback state:.*20240201000001/)
+        end
+      end
+    end
+
+    context "when no stuck migrations exist" do
+      it "reports no stuck migrations found" do
+        runner.run_all_checks
+
+        output = io.string
+        expect(output).to include("✓ Stuck migrations: none found")
       end
     end
   end
