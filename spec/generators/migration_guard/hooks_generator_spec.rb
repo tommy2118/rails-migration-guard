@@ -49,7 +49,11 @@ RSpec.describe MigrationGuard::Generators::HooksGenerator do
         expect(content).to include("#!/bin/sh")
         expect(content).to include("# Rails Migration Guard post-checkout hook")
         expect(content).to include('if [ "$3" = "1" ]; then')
+        expect(content).to include("🔍 Migration Guard: Checking for migration changes...")
         expect(content).to include("bundle exec rails db:migration:check_branch_change[$1,$2,$3]")
+        expect(content).to include("docker ps")
+        expect(content).to include("docker exec")
+        expect(content).not_to include("2>/dev/null || true")
       end
     end
   end
@@ -61,9 +65,13 @@ RSpec.describe MigrationGuard::Generators::HooksGenerator do
       aggregate_failures do
         expect(content).to include("#!/bin/sh")
         expect(content).to include("# Rails Migration Guard pre-push hook")
-        expect(content).to include("bundle exec rails db:migration:check")
-        expect(content).to include("if [ $? -ne 0 ]; then")
+        expect(content).to include("🔍 Migration Guard: Checking for orphaned migrations before push...")
+        expect(content).to include("bundle exec rails db:migration:ci STRICTNESS=strict")
+        expect(content).to include("if [ $exit_code -ne 0 ]; then")
+        expect(content).to include("❌ Push blocked: Migration issues detected!")
         expect(content).to include("exit 1")
+        expect(content).to include("docker ps")
+        expect(content).to include("docker exec")
       end
     end
   end
@@ -103,6 +111,25 @@ RSpec.describe MigrationGuard::Generators::HooksGenerator do
   describe "inheritance" do
     it "inherits from Rails::Generators::Base" do
       expect(described_class.superclass).to eq(Rails::Generators::Base)
+    end
+  end
+
+  describe "#display_completion_message" do
+    it "displays helpful information about the hooks" do
+      expect(generator).to receive(:say).with("\nGit hooks installed successfully!", :green)
+      expect(generator).to receive(:say).with("\nInstalled hooks:")
+      expect(generator).to receive(:say).with("  - post-checkout: Runs migration status check when switching branches")
+      expect(generator).to receive(:say).with("                   Shows warnings about orphaned migrations")
+      expect(generator).to receive(:say).with("                   Supports Docker environments automatically")
+      expect(generator).to receive(:say).with("\nThe hooks respect your git_integration_level configuration:")
+      expect(generator).to receive(:say).with("  - :off     - Hooks installed but produce no output")
+      expect(generator).to receive(:say).with("  - :warning - Shows warnings but doesn't block operations (default)")
+      expect(generator).to receive(:say)
+        .with("  - :auto_rollback - Same as warning (auto-rollback not implemented in hooks)")
+      expect(generator).to receive(:say).with("\nTo uninstall, simply delete the hook files from .git/hooks/")
+      expect(generator).to receive(:say).with("To test: switch branches or try to push with orphaned migrations")
+
+      generator.display_completion_message
     end
   end
 end

@@ -30,12 +30,26 @@ module MigrationGuard
         create_git_hook("pre-push", pre_push_content)
       end
 
-      def display_completion_message
+      def display_completion_message # rubocop:disable Metrics/MethodLength
         say "\nGit hooks installed successfully!", :green
         say "\nInstalled hooks:"
         say "  - post-checkout: Runs migration status check when switching branches"
-        say "  - pre-push: Checks for orphaned migrations before pushing" if options[:pre_push]
+        say "                   Shows warnings about orphaned migrations"
+        say "                   Supports Docker environments automatically"
+
+        if options[:pre_push]
+          say "  - pre-push: Prevents pushing with orphaned or missing migrations"
+          say "              Runs in strict mode to block problematic pushes"
+          say "              Supports Docker environments automatically"
+        end
+
+        say "\nThe hooks respect your git_integration_level configuration:"
+        say "  - :off     - Hooks installed but produce no output"
+        say "  - :warning - Shows warnings but doesn't block operations (default)"
+        say "  - :auto_rollback - Same as warning (auto-rollback not implemented in hooks)"
+
         say "\nTo uninstall, simply delete the hook files from .git/hooks/"
+        say "To test: switch branches or try to push with orphaned migrations"
       end
 
       private
@@ -70,8 +84,23 @@ module MigrationGuard
 
           # Only run on branch checkout (not file checkout)
           if [ "$3" = "1" ]; then
-            # Run the branch change check with the git hook parameters
-            bundle exec rails db:migration:check_branch_change[$1,$2,$3] 2>/dev/null || true
+            echo "🔍 Migration Guard: Checking for migration changes..."
+          #{'  '}
+            # Check if we're in a Docker environment
+            if [ -f "docker-compose.yml" ] && docker ps 2>/dev/null | grep -q "_web_\\|_app_\\|rails"; then
+              # Find the Rails container (common naming patterns)
+              container=$(docker ps --format "{{.Names}}" | grep -E "_web_|_app_|rails" | head -1)
+              if [ -n "$container" ]; then
+                echo "Using Docker environment (container: $container)..."
+                docker exec "$container" rails db:migration:check_branch_change[$1,$2,$3] 2>&1 || echo "Migration check completed"
+              else
+                echo "Docker detected but no Rails container found. Running locally..."
+                bundle exec rails db:migration:check_branch_change[$1,$2,$3] 2>&1 || echo "Migration check completed"
+              fi
+            else
+              # Run locally
+              bundle exec rails db:migration:check_branch_change[$1,$2,$3] 2>&1 || echo "Migration check completed"
+            fi
           fi
         HOOK
       end
@@ -82,25 +111,42 @@ module MigrationGuard
           # Rails Migration Guard pre-push hook
           # Prevents pushing when orphaned migrations are detected
 
-          echo "Checking for orphaned migrations before push..."
+          echo "🔍 Migration Guard: Checking for orphaned migrations before push..."
 
-          # Run migration check
-          bundle exec rails db:migration:check
+          # Check if we're in a Docker environment
+          if [ -f "docker-compose.yml" ] && docker ps 2>/dev/null | grep -q "_web_\\|_app_\\|rails"; then
+            # Find the Rails container (common naming patterns)
+            container=$(docker ps --format "{{.Names}}" | grep -E "_web_|_app_|rails" | head -1)
+            if [ -n "$container" ]; then
+              echo "Using Docker environment (container: $container)..."
+              docker exec "$container" rails db:migration:ci STRICTNESS=strict
+              exit_code=$?
+            else
+              echo "Docker detected but no Rails container found. Running locally..."
+              bundle exec rails db:migration:ci STRICTNESS=strict
+              exit_code=$?
+            fi
+          else
+            # Run locally
+            bundle exec rails db:migration:ci STRICTNESS=strict
+            exit_code=$?
+          fi
 
           # Check exit code
-          if [ $? -ne 0 ]; then
+          if [ $exit_code -ne 0 ]; then
             echo ""
-            echo "❌ Push cancelled: Orphaned migrations detected!"
+            echo "❌ Push blocked: Migration issues detected!"
             echo ""
             echo "Please either:"
             echo "  1. Commit your migrations to include them in this push"
             echo "  2. Roll them back with 'rails db:migration:rollback_orphaned'"
+            echo "  3. Pull latest changes if missing migrations from main branch"
             echo ""
             echo "For more details, run: rails db:migration:status"
             exit 1
           fi
 
-          echo "✅ No orphaned migrations found. Proceeding with push..."
+          echo "✅ No migration issues found. Proceeding with push..."
         HOOK
       end
     end
