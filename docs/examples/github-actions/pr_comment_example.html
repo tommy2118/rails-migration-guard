@@ -1,0 +1,43 @@
+---
+layout: default
+title: PR Comment Example
+---
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div class="text-center mb-12">
+        <h1 class="text-3xl font-bold text-gray-900 mb-4">PR Comment Example</h1>
+        <p class="text-xl text-gray-600">Example of how PR comments look when using Rails Migration Guard with GitHub Actions</p>
+    </div>
+
+    <div class="border border-gray-300 rounded-lg p-6 shadow-md bg-white">
+        <div class="border-b border-gray-200 pb-4 mb-4">
+            <div class="flex items-center">
+                <img src="https://github.com/github.png" alt="GitHub Actions" class="w-8 h-8 rounded-full mr-2">
+                <span class="font-medium text-gray-900">github-actions</span>
+                <span class="text-gray-500 ml-2">commented 2 hours ago</span>
+            </div>
+        </div>
+
+        <div class="prose max-w-none">
+            <h2 class="text-xl font-semibold text-yellow-600">⚠️ Migration Guard Check</h2>
+            
+            <p class="mb-4">Found issues with migrations in this PR:</p>
+            
+            <h3 class="text-lg font-medium mb-2">Orphaned Migrations Detected</h3>
+            <p class="mb-2">The following migrations exist in the database but not in the target branch:</p>
+            <ul class="list-disc list-inside ml-4 mb-4">
+                <li><code>20240601123456_add_user_preferences.rb</code> - Created on branch: feature/user-profiles</li>
+            </ul>
+            
+            <h3 class="text-lg font-medium mb-2">Suggested Actions</h3>
+            <ol class="list-decimal list-inside ml-4 mb-4">
+                <li><strong>For orphaned migrations</strong>: Roll them back or commit the migration files</li>
+                <li><strong>For missing migrations</strong>: Pull latest changes and run <code>rails db:migrate</code></li>
+            </ol>
+            
+            <div class="border-t border-gray-200 mt-4 pt-4 text-gray-500 text-sm italic">
+                This comment will be updated when issues are resolved.
+            </div>
+        </div>
+    </div>
+</div>
