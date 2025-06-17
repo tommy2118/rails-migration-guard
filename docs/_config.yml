@@ -24,10 +24,6 @@ navigation:
     url: "/configuration.html"
   - title: "Examples"
     url: "/examples/"
-  - title: "Team Collaboration"
-    url: "/team-collaboration.html"
-  - title: "Troubleshooting"
-    url: "/troubleshooting.html"
   - title: "GitHub"
     url: "https://github.com/tommy2118/rails-migration-guard"
     external: true
