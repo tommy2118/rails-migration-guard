@@ -117,11 +117,17 @@ RSpec.describe MigrationGuard::Recovery::BaseAction do
   end
 
   describe "logging methods" do
+    let(:logger) { instance_double(Logger) }
+
+    before do
+      allow(Rails).to receive(:logger).and_return(logger)
+    end
+
     describe "#log_success" do
       it "logs success message with colorization" do
         message = "Operation completed successfully"
         expect(MigrationGuard::Colorizer).to receive(:success).with(message).and_return("[SUCCESS] #{message}")
-        expect(Rails.logger).to receive(:info).with("[SUCCESS] #{message}")
+        expect(logger).to receive(:info).with("[SUCCESS] #{message}")
 
         base_action.send(:log_success, message)
       end
@@ -131,7 +137,7 @@ RSpec.describe MigrationGuard::Recovery::BaseAction do
       it "logs error message with colorization" do
         message = "Operation failed"
         expect(MigrationGuard::Colorizer).to receive(:error).with(message).and_return("[ERROR] #{message}")
-        expect(Rails.logger).to receive(:error).with("[ERROR] #{message}")
+        expect(logger).to receive(:error).with("[ERROR] #{message}")
 
         base_action.send(:log_error, message)
       end
@@ -141,9 +147,21 @@ RSpec.describe MigrationGuard::Recovery::BaseAction do
       it "logs info message with colorization" do
         message = "Processing migration"
         expect(MigrationGuard::Colorizer).to receive(:info).with(message).and_return("[INFO] #{message}")
-        expect(Rails.logger).to receive(:info).with("[INFO] #{message}")
+        expect(logger).to receive(:info).with("[INFO] #{message}")
 
         base_action.send(:log_info, message)
+      end
+    end
+
+    context "when Rails.logger is nil" do
+      before do
+        allow(Rails).to receive(:logger).and_return(nil)
+      end
+
+      it "does not raise errors when logging" do
+        expect { base_action.send(:log_success, "test") }.not_to raise_error
+        expect { base_action.send(:log_error, "test") }.not_to raise_error
+        expect { base_action.send(:log_info, "test") }.not_to raise_error
       end
     end
   end
