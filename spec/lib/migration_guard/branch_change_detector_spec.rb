@@ -6,12 +6,14 @@ RSpec.describe MigrationGuard::BranchChangeDetector do
   let(:detector) { described_class.new }
   let(:git_integration) { instance_double(MigrationGuard::GitIntegration) }
   let(:reporter) { instance_double(MigrationGuard::Reporter) }
+  let(:test_logger) { instance_double(Logger) }
 
   before do
     allow(MigrationGuard::GitIntegration).to receive(:new).and_return(git_integration)
     allow(MigrationGuard::Reporter).to receive(:new).and_return(reporter)
     allow(git_integration).to receive(:current_branch).and_return("feature/new-feature")
-    allow(Rails.logger).to receive(:info)
+    allow(Rails).to receive(:logger).and_return(test_logger)
+    allow(test_logger).to receive(:info)
   end
 
   describe "#check_branch_change" do
@@ -47,8 +49,8 @@ RSpec.describe MigrationGuard::BranchChangeDetector do
 
         detector.check_branch_change("abc123", "def456", "1")
 
-        expect(Rails.logger).to have_received(:info).with("")
-        expect(Rails.logger).to have_received(:info).with(%r{Switched from 'main' to 'feature/new-feature'})
+        expect(test_logger).to have_received(:info).with("")
+        expect(test_logger).to have_received(:info).with(%r{Switched from 'main' to 'feature/new-feature'})
       end
 
       it "shows warnings when orphaned migrations exist" do
@@ -64,8 +66,8 @@ RSpec.describe MigrationGuard::BranchChangeDetector do
 
         detector.check_branch_change("abc123", "def456", "1")
 
-        expect(Rails.logger).to have_received(:info).with(/Branch Change Warning/)
-        expect(Rails.logger).to have_received(:info).with(%r{20240115123456.*feature/old-feature})
+        expect(test_logger).to have_received(:info).with(/Branch Change Warning/)
+        expect(test_logger).to have_received(:info).with(%r{20240115123456.*feature/old-feature})
       end
 
       it "handles same branch gracefully" do
@@ -74,7 +76,7 @@ RSpec.describe MigrationGuard::BranchChangeDetector do
 
         detector.check_branch_change("abc123", "def456", "1")
 
-        expect(Rails.logger).not_to have_received(:info)
+        expect(test_logger).not_to have_received(:info)
       end
     end
   end
