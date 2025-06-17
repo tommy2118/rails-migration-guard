@@ -7,7 +7,18 @@ require_relative "../../../lib/migration_guard/migration_extension"
 RSpec.describe MigrationGuard::MigrationExtension, "sandbox visual feedback" do
   # rubocop:enable RSpec/SpecFilePathFormat, RSpec/DescribeMethod
   let(:test_migration_class) do
-    Class.new(ActiveRecord::Migration[7.0]) do
+    # Use the highest supported migration version for the current Rails version
+    migration_version = if Rails.version >= "7.0"
+                          7.0
+                        elsif Rails.version >= "6.1"
+                          6.1
+                        elsif Rails.version >= "6.0"
+                          6.0
+                        else
+                          5.2
+                        end
+    
+    Class.new(ActiveRecord::Migration[migration_version]) do
       include MigrationGuard::MigrationExtension
 
       def self.version
