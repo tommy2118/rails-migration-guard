@@ -227,6 +227,12 @@ module MigrationGuard
       else
         output << Colorizer.bold("Migration Status (#{report[:main_branch]} branch)")
       end
+
+      # Add sandbox mode indicator
+      if MigrationGuard.configuration.sandbox_mode
+        output << Colorizer.warning("🧪 SANDBOX MODE ACTIVE - Changes will be rolled back")
+      end
+
       output << ("═" * 55)
     end
 
