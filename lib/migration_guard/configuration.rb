@@ -37,6 +37,7 @@ module MigrationGuard
       @warn_on_switch = true
       @warn_after_migration = true
       @warning_frequency = :smart
+      @max_warnings_display = 10
       @block_deploy_with_orphans = false
       @auto_cleanup = false
       @cleanup_after_days = 30
@@ -84,7 +85,7 @@ module MigrationGuard
       @log_level = level
     end
 
-    def to_h # rubocop:disable Metrics/MethodLength
+    def to_h # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
       {
         enabled_environments: enabled_environments,
         git_integration_level: git_integration_level,
@@ -95,6 +96,7 @@ module MigrationGuard
         warn_on_switch: warn_on_switch,
         warn_after_migration: warn_after_migration,
         warning_frequency: warning_frequency,
+        max_warnings_display: max_warnings_display,
         block_deploy_with_orphans: block_deploy_with_orphans,
         auto_cleanup: auto_cleanup,
         cleanup_after_days: cleanup_after_days,

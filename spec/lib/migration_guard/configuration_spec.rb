@@ -51,11 +51,15 @@ RSpec.describe MigrationGuard::Configuration do
 
   describe "#behavior_options" do
     it "has sensible defaults" do
-      expect(config.sandbox_mode).to be false
-      expect(config.warn_on_switch).to be true
-      expect(config.warn_after_migration).to be true
-      expect(config.warning_frequency).to eq(:smart)
-      expect(config.block_deploy_with_orphans).to be false
+      aggregate_failures do
+        expect(config.sandbox_mode).to be false
+        expect(config.warn_on_switch).to be true
+        expect(config.warn_after_migration).to be true
+        expect(config.warning_frequency).to eq(:smart)
+        expect(config.max_warnings_display).to eq(10)
+        expect(config.block_deploy_with_orphans).to be false
+        expect(config.auto_detect_tty).to be true
+      end
     end
 
     it "can be customized" do
@@ -63,13 +67,17 @@ RSpec.describe MigrationGuard::Configuration do
       config.warn_on_switch = false
       config.warn_after_migration = false
       config.warning_frequency = :once
+      config.max_warnings_display = 20
       config.block_deploy_with_orphans = true
 
-      expect(config.sandbox_mode).to be true
-      expect(config.warn_on_switch).to be false
-      expect(config.warn_after_migration).to be false
-      expect(config.warning_frequency).to eq(:once)
-      expect(config.block_deploy_with_orphans).to be true
+      aggregate_failures do
+        expect(config.sandbox_mode).to be true
+        expect(config.warn_on_switch).to be false
+        expect(config.warn_after_migration).to be false
+        expect(config.warning_frequency).to eq(:once)
+        expect(config.max_warnings_display).to eq(20)
+        expect(config.block_deploy_with_orphans).to be true
+      end
     end
   end
 
@@ -180,11 +188,13 @@ RSpec.describe MigrationGuard::Configuration do
         warn_on_switch: true,
         warn_after_migration: true,
         warning_frequency: :smart,
+        max_warnings_display: 10,
         block_deploy_with_orphans: false,
         auto_cleanup: false,
         cleanup_after_days: 30,
         main_branch_names: %w[main master trunk],
-        target_branches: nil
+        target_branches: nil,
+        auto_detect_tty: true
       )
     end
   end

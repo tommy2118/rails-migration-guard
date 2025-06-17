@@ -17,6 +17,9 @@ Configure the warning behavior in your initializer:
 MigrationGuard.configure do |config|
   # Options: :each, :once, :smart (default)
   config.warning_frequency = :smart
+  
+  # Maximum number of warnings to display (default: 10)
+  config.max_warnings_display = 10
 end
 ```
 

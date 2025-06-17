@@ -173,7 +173,7 @@ RSpec.describe MigrationGuard::WarningCollector do
         end
       end
 
-      it "limits display to 10 migrations" do
+      it "limits display to configured maximum" do
         orphaned = (1..15).map do |i|
           { version: "2024010100000#{i}", branch: "feature/test-#{i}" }
         end
@@ -191,10 +191,34 @@ RSpec.describe MigrationGuard::WarningCollector do
           expect(output).to include("... and 5 more")
         end
       end
+
+      it "respects custom max_warnings_display configuration" do
+        allow(MigrationGuard.configuration).to receive(:max_warnings_display).and_return(5)
+        orphaned = (1..10).map do |i|
+          { version: "2024010100000#{i}", branch: "feature/test-#{i}" }
+        end
+        allow(reporter).to receive(:orphaned_migrations).and_return(orphaned)
+
+        described_class.start_batch
+        described_class.increment_migration_count
+
+        output = capture_stderr { described_class.end_batch }
+
+        aggregate_failures do
+          expect(output).to include("20240101000001")
+          expect(output).to include("20240101000005")
+          expect(output).not_to include("20240101000006")
+          expect(output).to include("... and 5 more")
+        end
+      end
     end
 
     context "when warnings are disabled" do
       let(:orphaned_migrations) { [{ version: "20240101000001", branch: "feature/test-1" }] }
+
+      before do
+        allow(reporter).to receive(:orphaned_migrations).and_return(orphaned_migrations)
+      end
 
       it "does not display summary" do
         allow(MigrationGuard.configuration).to receive(:warn_after_migration).and_return(false)
