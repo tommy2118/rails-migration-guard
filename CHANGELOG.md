@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Interactive Setup Assistant for New Developers** (#22) - Comprehensive onboarding experience:
+  - New `rails db:migration:setup` command for development environment analysis
+  - Checks Migration Guard installation and configuration status
+  - Analyzes database connection and git repository setup
+  - Detects orphaned and missing migrations with explanations
+  - Provides actionable recommendations for environment setup
+  - Offers interactive command execution for suggested fixes
+  - Shows helpful commands and usage patterns for new team members
+  - Colorized output with clear status indicators (✓/⚠/✗)
+  - Comprehensive validation of schema consistency
+  - Guides new developers through proper environment setup
+
 ### Fixed
 - **Warning Consolidation** (#105, #127) - Fixed warning spam during multiple migrations:
   - `:smart` mode now properly consolidates warnings for batch migrations

@@ -159,6 +159,14 @@ module MigrationGuard
       end
       # rubocop:enable Metrics/MethodLength
 
+      def setup
+        return unless check_enabled
+
+        require_relative "setup_assistant"
+        assistant = MigrationGuard::SetupAssistant.new
+        assistant.run_setup
+      end
+
       private
 
       def create_recovery_executor

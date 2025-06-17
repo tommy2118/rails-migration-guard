@@ -99,5 +99,11 @@ namespace :db do
 
       exit(exit_code) if exit_code != 0
     end
+
+    desc "Interactive setup assistant for new developers"
+    task setup: :environment do
+      ensure_migration_guard_loaded
+      MigrationGuard::RakeTasks.setup
+    end
   end
 end
