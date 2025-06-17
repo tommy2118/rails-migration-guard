@@ -37,16 +37,44 @@ module MigrationGuard
 
     def exec_migration(conn, direction)
       if MigrationGuard.enabled? && MigrationGuard.configuration.sandbox_mode && direction == :up
+        display_sandbox_start_message
         Rails.logger&.debug { "[MigrationGuard] Running migration #{version} in sandbox mode..." }
         conn.transaction(requires_new: true) do
           super
           Rails.logger&.debug "[MigrationGuard] Migration would succeed. Rolling back sandbox..."
           raise ActiveRecord::Rollback
         end
+        display_sandbox_complete_message
         Rails.logger&.debug "[MigrationGuard] Sandbox rollback complete. Run without sandbox to apply."
       else
         super
       end
+    end
+
+    private
+
+    def display_sandbox_start_message
+      return unless should_display_sandbox_messages?
+
+      require_relative "colorizer"
+      puts MigrationGuard::Colorizer.info("🧪 SANDBOX MODE ACTIVE - Database changes will be rolled back") # rubocop:disable Rails/Output
+    end
+
+    def display_sandbox_complete_message
+      return unless should_display_sandbox_messages?
+
+      require_relative "colorizer"
+      # rubocop:disable Layout/LineLength, Rails/Output
+      puts MigrationGuard::Colorizer.warning("⚠️  SANDBOX: Database changes rolled back. Schema.rb updated for inspection.")
+      # rubocop:enable Layout/LineLength, Rails/Output
+    end
+
+    def should_display_sandbox_messages?
+      # Display messages unless explicitly disabled or in test environment
+      return false if ENV["MIGRATION_GUARD_SANDBOX_QUIET"] == "true"
+      return false if Rails.env.test? && !ENV["MIGRATION_GUARD_SANDBOX_VERBOSE"]
+
+      true
     end
   end
 end
