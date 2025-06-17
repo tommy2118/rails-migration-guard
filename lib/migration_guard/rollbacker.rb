@@ -161,7 +161,7 @@ module MigrationGuard
     def confirm_rollback?(prompt)
       return true unless @interactive
 
-      Rails.logger&.debug prompt
+      output_message prompt
       response = gets.chomp.downcase
       return true if response == "y"
 

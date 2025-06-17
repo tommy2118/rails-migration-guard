@@ -5,10 +5,17 @@ require "rails_helper"
 RSpec.describe "Branch switching integration", type: :integration do
   let(:git_integration) { instance_double(MigrationGuard::GitIntegration) }
   let(:detector) { MigrationGuard::BranchChangeDetector.new }
+  let(:test_logger) { instance_double(Logger) }
 
   before do
     allow(MigrationGuard::GitIntegration).to receive(:new).and_return(git_integration)
-    allow(Rails.logger).to receive(:info)
+
+    # Setup Rails.logger properly
+    allow(Rails).to receive(:logger).and_return(test_logger)
+    allow(test_logger).to receive(:info)
+    allow(test_logger).to receive(:debug)
+    allow(test_logger).to receive(:error)
+
     allow(MigrationGuard).to receive(:enabled?).and_return(true)
     allow(MigrationGuard.configuration).to receive(:warn_on_switch).and_return(true)
 
@@ -50,11 +57,11 @@ RSpec.describe "Branch switching integration", type: :integration do
       detector.check_branch_change("abc123", "def456", "1")
 
       # Verify it logged the branch switch
-      expect(Rails.logger).to have_received(:info).with(%r{Switched from 'main' to 'feature/new-feature'})
+      expect(test_logger).to have_received(:info).with(%r{Switched from 'main' to 'feature/new-feature'})
 
       # Verify it warned about orphaned migrations
-      expect(Rails.logger).to have_received(:info).with(/Branch Change Warning/)
-      expect(Rails.logger).to have_received(:info).with(%r{20240115123456.*feature/old-feature})
+      expect(test_logger).to have_received(:info).with(/Branch Change Warning/)
+      expect(test_logger).to have_received(:info).with(%r{20240115123456.*feature/old-feature})
     end
 
     it "respects the warn_on_switch configuration" do
@@ -63,7 +70,7 @@ RSpec.describe "Branch switching integration", type: :integration do
       detector.check_branch_change("abc123", "def456", "1")
 
       # Should not log anything when disabled
-      expect(Rails.logger).not_to have_received(:info)
+      expect(test_logger).not_to have_received(:info)
     end
 
     it "provides helpful suggestions in the warning" do
@@ -73,8 +80,8 @@ RSpec.describe "Branch switching integration", type: :integration do
       detector.check_branch_change("abc123", "def456", "1")
 
       # Check for helpful commands in output
-      expect(Rails.logger).to have_received(:info).with(/rails db:migration:status/)
-      expect(Rails.logger).to have_received(:info).with(/rails db:migration:rollback_orphaned/)
+      expect(test_logger).to have_received(:info).with(/rails db:migration:status/)
+      expect(test_logger).to have_received(:info).with(/rails db:migration:rollback_orphaned/)
     end
   end
 

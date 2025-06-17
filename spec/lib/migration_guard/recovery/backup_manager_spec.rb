@@ -5,10 +5,18 @@ require "rails_helper"
 RSpec.describe MigrationGuard::Recovery::BackupManager do
   let(:backup_manager) { described_class.new }
   let(:timestamp) { "20240116_120000" }
+  let(:test_logger) { instance_double(Logger) }
 
   before do
     allow(Time).to receive(:current).and_return(Time.zone.parse("2024-01-16 12:00:00"))
     allow(FileUtils).to receive(:mkdir_p)
+
+    # Setup Rails.logger
+    allow(Rails).to receive(:logger).and_return(test_logger)
+    allow(test_logger).to receive(:info)
+    allow(test_logger).to receive(:debug)
+    allow(test_logger).to receive(:error)
+    allow(test_logger).to receive(:warn)
   end
 
   describe "#create_backup" do
@@ -18,7 +26,7 @@ RSpec.describe MigrationGuard::Recovery::BackupManager do
       end
 
       it "skips backup creation" do
-        expect(Rails.logger).to receive(:info).with(/Skipping backup for in-memory database/)
+        expect(test_logger).to receive(:info).with(/Skipping backup for in-memory database/)
 
         result = backup_manager.create_backup
 
@@ -88,7 +96,7 @@ RSpec.describe MigrationGuard::Recovery::BackupManager do
       it "handles backup failure" do
         expect(backup_manager).to receive(:system).and_return(nil)
         allow(File).to receive(:exist?).and_return(false)
-        expect(Rails.logger).to receive(:error).with(/Failed to create backup/)
+        expect(test_logger).to receive(:error).with(/Failed to create backup/)
 
         result = backup_manager.create_backup
         expect(result).to be false
@@ -185,7 +193,7 @@ RSpec.describe MigrationGuard::Recovery::BackupManager do
       it "handles missing database file" do
         allow(File).to receive(:exist?).and_return(false)
         allow(File).to receive(:exist?).with(db_path.to_s).and_return(false)
-        expect(Rails.logger).to receive(:error).with(/SQLite database file not found/)
+        expect(test_logger).to receive(:error).with(/SQLite database file not found/)
 
         result = backup_manager.create_backup
         expect(result).to be false
@@ -199,7 +207,7 @@ RSpec.describe MigrationGuard::Recovery::BackupManager do
           }
         )
 
-        expect(Rails.logger).to receive(:warn).with(/Cannot backup in-memory database/)
+        expect(test_logger).to receive(:warn).with(/Cannot backup in-memory database/)
 
         result = backup_manager.create_backup
 
@@ -217,7 +225,7 @@ RSpec.describe MigrationGuard::Recovery::BackupManager do
       end
 
       it "logs warning and returns false" do
-        expect(Rails.logger).to receive(:warn).with(/Backup not supported for UnknownDB/)
+        expect(test_logger).to receive(:warn).with(/Backup not supported for UnknownDB/)
 
         result = backup_manager.create_backup
 
@@ -314,7 +322,7 @@ RSpec.describe MigrationGuard::Recovery::BackupManager do
   describe "#skip_for_memory_database" do
     it "logs info and resets backup path" do
       backup_manager.instance_variable_set(:@backup_path, "/tmp/backup.sql")
-      expect(Rails.logger).to receive(:info).with(/Skipping backup for in-memory database/)
+      expect(test_logger).to receive(:info).with(/Skipping backup for in-memory database/)
 
       result = backup_manager.skip_for_memory_database
 

@@ -4,10 +4,14 @@ require "rails_helper"
 
 RSpec.describe MigrationGuard::Recovery::ManualIntervention do
   let(:manual_intervention) { described_class.new }
+  let(:test_logger) { instance_double(Logger) }
 
   before do
-    # Suppress Rails.logger.debug output during tests
-    allow(Rails.logger).to receive(:debug)
+    # Setup Rails.logger properly
+    allow(Rails).to receive(:logger).and_return(test_logger)
+    allow(test_logger).to receive(:debug)
+    allow(test_logger).to receive(:info)
+    allow(test_logger).to receive(:error)
   end
 
   describe "#show" do
@@ -31,9 +35,8 @@ RSpec.describe MigrationGuard::Recovery::ManualIntervention do
 
   describe "#show_header" do
     it "displays header information" do
-      allow(Rails.logger).to receive(:debug)
-      expect(Rails.logger).to receive(:debug).with(/Review these commands carefully/)
-      expect(Rails.logger).to receive(:debug).with("")
+      expect(test_logger).to receive(:debug).with(/Review these commands carefully/)
+      expect(test_logger).to receive(:debug).with("")
 
       manual_intervention.send(:show_header)
     end
@@ -43,10 +46,10 @@ RSpec.describe MigrationGuard::Recovery::ManualIntervention do
     it "displays footer with update command" do
       issue = { version: "20240116000001" }
 
-      expect(Rails.logger).to receive(:debug).with("")
-      expect(Rails.logger).to receive(:debug).with("After manual intervention, update the tracking record:")
-      expect(Rails.logger).to receive(:debug).with(/MigrationGuardRecord\.find_by.*update!/)
-      expect(Rails.logger).to receive(:debug).with("")
+      expect(test_logger).to receive(:debug).with("")
+      expect(test_logger).to receive(:debug).with("After manual intervention, update the tracking record:")
+      expect(test_logger).to receive(:debug).with(/MigrationGuardRecord\.find_by.*update!/)
+      expect(test_logger).to receive(:debug).with("")
 
       manual_intervention.send(:show_footer, issue)
     end
@@ -106,7 +109,7 @@ RSpec.describe MigrationGuard::Recovery::ManualIntervention do
     it "shows both rollback and restore options" do
       expect(manual_intervention).to receive(:show_rollback_commands).with("20240116000001")
       expect(manual_intervention).to receive(:show_restore_commands).with("20240116000001")
-      expect(Rails.logger).to receive(:debug).with("")
+      expect(test_logger).to receive(:debug).with("")
 
       manual_intervention.send(:show_partial_rollback_sql, issue)
     end
@@ -116,11 +119,11 @@ RSpec.describe MigrationGuard::Recovery::ManualIntervention do
     let(:issue) { { version: "20240116000001" } }
 
     it "shows tracking and removal options" do
-      expect(Rails.logger).to receive(:debug).with("-- To track this migration:")
-      expect(Rails.logger).to receive(:debug).with(/INSERT INTO migration_guard_records/)
-      expect(Rails.logger).to receive(:debug).with("")
-      expect(Rails.logger).to receive(:debug).with("-- To remove from schema:")
-      expect(Rails.logger).to receive(:debug).with("DELETE FROM schema_migrations WHERE version = '20240116000001';")
+      expect(test_logger).to receive(:debug).with("-- To track this migration:")
+      expect(test_logger).to receive(:debug).with(/INSERT INTO migration_guard_records/)
+      expect(test_logger).to receive(:debug).with("")
+      expect(test_logger).to receive(:debug).with("-- To remove from schema:")
+      expect(test_logger).to receive(:debug).with("DELETE FROM schema_migrations WHERE version = '20240116000001';")
 
       manual_intervention.send(:show_orphaned_schema_sql, issue)
     end
@@ -130,11 +133,11 @@ RSpec.describe MigrationGuard::Recovery::ManualIntervention do
     let(:issue) { { version: "20240116000001" } }
 
     it "shows addition and rollback options" do
-      expect(Rails.logger).to receive(:debug).with("-- To add to schema:")
-      expect(Rails.logger).to receive(:debug).with("INSERT INTO schema_migrations (version) VALUES ('20240116000001');")
-      expect(Rails.logger).to receive(:debug).with("")
-      expect(Rails.logger).to receive(:debug).with("-- To mark as rolled back:")
-      expect(Rails.logger).to receive(:debug).with(/UPDATE migration_guard_records SET status = 'rolled_back'/)
+      expect(test_logger).to receive(:debug).with("-- To add to schema:")
+      expect(test_logger).to receive(:debug).with("INSERT INTO schema_migrations (version) VALUES ('20240116000001');")
+      expect(test_logger).to receive(:debug).with("")
+      expect(test_logger).to receive(:debug).with("-- To mark as rolled back:")
+      expect(test_logger).to receive(:debug).with(/UPDATE migration_guard_records SET status = 'rolled_back'/)
 
       manual_intervention.send(:show_missing_from_schema_sql, issue)
     end
@@ -144,8 +147,8 @@ RSpec.describe MigrationGuard::Recovery::ManualIntervention do
     let(:issue) { { version: "20240116000001" } }
 
     it "shows file restoration options" do
-      expect(Rails.logger).to receive(:debug).with("-- Migration file is missing. Options:")
-      expect(Rails.logger).to receive(:debug).with("").twice
+      expect(test_logger).to receive(:debug).with("-- Migration file is missing. Options:")
+      expect(test_logger).to receive(:debug).with("").twice
       expect(manual_intervention).to receive(:show_git_restore_option).with("20240116000001")
       expect(manual_intervention).to receive(:show_mark_resolved_option).with("20240116000001")
 
@@ -158,10 +161,9 @@ RSpec.describe MigrationGuard::Recovery::ManualIntervention do
     let(:issue) { { version: "20240116000001", migrations: migrations } }
 
     it "shows conflict resolution SQL" do
-      allow(Rails.logger).to receive(:debug)
-      expect(Rails.logger).to receive(:debug).with("-- Keep the most recent and delete others:")
-      expect(Rails.logger).to receive(:debug).with("")
-      expect(Rails.logger).to receive(:debug).with(/DELETE FROM migration_guard_records/)
+      expect(test_logger).to receive(:debug).with("-- Keep the most recent and delete others:")
+      expect(test_logger).to receive(:debug).with("")
+      expect(test_logger).to receive(:debug).with(/DELETE FROM migration_guard_records/)
 
       manual_intervention.send(:show_version_conflict_sql, issue)
     end

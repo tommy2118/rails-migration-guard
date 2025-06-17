@@ -393,7 +393,6 @@ For read-only operations (no PR comments):
 permissions:
   contents: read
 ```
-
 ## Migration to GitHub Actions
 
 From other CI systems:

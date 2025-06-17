@@ -5,6 +5,7 @@ require "rails_helper"
 RSpec.describe MigrationGuard::RecoveryExecutor do
   let(:executor) { described_class.new(interactive: false) }
   let(:git_integration) { instance_double(MigrationGuard::GitIntegration) }
+  let(:test_logger) { instance_double(Logger) }
 
   before do
     # Clean up any existing records
@@ -22,6 +23,12 @@ RSpec.describe MigrationGuard::RecoveryExecutor do
 
     # Mock backup creation
     allow(executor).to receive(:create_backup).and_return(true)
+
+    # Setup Rails.logger
+    allow(Rails).to receive(:logger).and_return(test_logger)
+    allow(test_logger).to receive(:debug)
+    allow(test_logger).to receive(:info)
+    allow(test_logger).to receive(:error)
   end
 
   describe "#execute_recovery" do
@@ -167,7 +174,7 @@ RSpec.describe MigrationGuard::RecoveryExecutor do
       end
     end
 
-    context "with consolidate_records option" do
+    context "with consolidate_records option" do # rubocop:disable RSpec/MultipleMemoizedHelpers
       let(:record) do
         MigrationGuard::MigrationGuardRecord.create!(
           version: "20240103000001",
