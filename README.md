@@ -7,7 +7,7 @@
 
 Rails Migration Guard helps prevent orphaned database migrations in development and staging environments. It tracks migration state across git branches, identifies migrations that exist only locally, and provides tools for cleanup and prevention.
 
-📚 **[View Full Documentation](https://tommy2118.github.io/rails-migration-guard/)** | 🎯 **[Examples & Tutorials](https://tommy2118.github.io/rails-migration-guard/examples/)** | 🔧 **[API Reference](https://tommy2118.github.io/rails-migration-guard/docs/#api-reference)**
+📚 **[View Full Documentation](https://tommy2118.github.io/rails-migration-guard/)** | 🚀 **[Quick Start Guide](https://tommy2118.github.io/rails-migration-guard/quick-start)** | 🎯 **[Examples & Tutorials](https://tommy2118.github.io/rails-migration-guard/examples/)** | 🔧 **[API Reference](https://tommy2118.github.io/rails-migration-guard/docs/#api-reference)**
 
 ## Compatibility
 
