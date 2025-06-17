@@ -28,7 +28,7 @@ module MigrationGuard
       begin
         create_backup_if_needed
       rescue StandardError => e
-        Rails.logger.error "Failed to create backup: #{e.message}"
+        Rails.logger&.error "Failed to create backup: #{e.message}"
         # Continue with recovery even if backup fails
       end
 
@@ -132,7 +132,7 @@ module MigrationGuard
     end
 
     def unknown_option?(recovery_method)
-      Rails.logger.error "Unknown recovery option: #{recovery_method}"
+      Rails.logger&.error "Unknown recovery option: #{recovery_method}"
       false
     end
 
@@ -148,22 +148,22 @@ module MigrationGuard
     end
 
     def display_header(issue)
-      Rails.logger.debug { "\n#{Colorizer.info("Recovery options for #{issue[:type].to_s.humanize}:")}" }
-      Rails.logger.debug { "Version: #{issue[:version]}" }
-      Rails.logger.debug { "#{issue[:description]}\n\n" }
+      Rails.logger&.debug { "\n#{Colorizer.info("Recovery options for #{issue[:type].to_s.humanize}:")}" }
+      Rails.logger&.debug { "Version: #{issue[:version]}" }
+      Rails.logger&.debug { "#{issue[:description]}\n\n" }
     end
 
     def display_recovery_options(issue)
       issue[:recovery_options].each_with_index do |option, index|
-        Rails.logger.debug "#{index + 1}. #{Recovery::OptionFormatter.format(option)}"
+        Rails.logger&.debug "#{index + 1}. #{Recovery::OptionFormatter.format(option)}"
       end
     end
 
     def display_additional_options(issue)
       manual_index = issue[:recovery_options].size + 1
-      Rails.logger.debug { "#{manual_index}. Manual intervention (show SQL commands)" }
-      Rails.logger.debug "0. Skip this issue\n\n"
-      Rails.logger.debug { "Select option (0-#{manual_index}): " }
+      Rails.logger&.debug { "#{manual_index}. Manual intervention (show SQL commands)" }
+      Rails.logger&.debug "0. Skip this issue\n\n"
+      Rails.logger&.debug { "Select option (0-#{manual_index}): " }
     end
 
     def get_user_choice(issue)
@@ -178,7 +178,7 @@ module MigrationGuard
       if choice.between?(1, issue[:recovery_options].size)
         issue[:recovery_options][choice - 1]
       else
-        Rails.logger.debug Colorizer.error("Invalid choice. Skipping...")
+        Rails.logger&.debug Colorizer.error("Invalid choice. Skipping...")
         nil
       end
     end

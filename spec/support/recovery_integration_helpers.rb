@@ -240,7 +240,7 @@ module RecoveryIntegrationHelpers
           begin
             executor.execute_recovery(issue, recovery_action)
           rescue StandardError => e
-            Rails.logger.error "Recovery failed: #{e.message}"
+            Rails.logger&.error "Recovery failed: #{e.message}"
             false
           end
         end

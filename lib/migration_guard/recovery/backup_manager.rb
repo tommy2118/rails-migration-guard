@@ -15,7 +15,7 @@ module MigrationGuard
         return skip_for_memory_database if using_memory_database?
 
         setup_backup_path
-        Rails.logger.info Colorizer.info("Creating database backup...")
+        Rails.logger&.info Colorizer.info("Creating database backup...")
 
         adapter_name = ActiveRecord::Base.connection.adapter_name
         result = create_backup_for_adapter(adapter_name)
@@ -26,7 +26,7 @@ module MigrationGuard
       end
 
       def skip_for_memory_database # rubocop:disable Naming/PredicateMethod
-        Rails.logger.info Colorizer.info("Skipping backup for in-memory database")
+        Rails.logger&.info Colorizer.info("Skipping backup for in-memory database")
         @backup_path = nil
         false
       end
@@ -73,7 +73,7 @@ module MigrationGuard
         Dir.glob(File.join(backup_dir, "*.sql")).each do |file|
           if File.mtime(file) < cutoff_time
             File.delete(file)
-            Rails.logger.info "Deleted old backup: #{File.basename(file)}"
+            Rails.logger&.info "Deleted old backup: #{File.basename(file)}"
           end
         end
         true
@@ -87,7 +87,7 @@ module MigrationGuard
         when /sqlite/i
           restore_sqlite_backup(backup_file)
         else
-          Rails.logger.error "Restore not implemented for #{adapter_name}"
+          Rails.logger&.error "Restore not implemented for #{adapter_name}"
           false
         end
       end
@@ -109,17 +109,17 @@ module MigrationGuard
 
       def verify_backup_creation(result) # rubocop:disable Naming/PredicateMethod
         if result && @backup_path && File.exist?(@backup_path)
-          Rails.logger.info Colorizer.success("✓ Backup created: #{@backup_path}")
+          Rails.logger&.info Colorizer.success("✓ Backup created: #{@backup_path}")
           true
         else
           # Don't log error for expected failures (like memory database)
-          Rails.logger.error Colorizer.error("✗ Failed to create backup") unless result == false
+          Rails.logger&.error Colorizer.error("✗ Failed to create backup") unless result == false
           false
         end
       end
 
       def handle_unsupported_adapter(adapter_name) # rubocop:disable Naming/PredicateMethod
-        Rails.logger.warn Colorizer.warning("Backup not supported for #{adapter_name}")
+        Rails.logger&.warn Colorizer.warning("Backup not supported for #{adapter_name}")
         @backup_path = nil
         false
       end
@@ -172,7 +172,7 @@ module MigrationGuard
 
         # Ensure the source file exists before copying
         unless File.exist?(source_path)
-          Rails.logger.error "SQLite database file not found: #{source_path}"
+          Rails.logger&.error "SQLite database file not found: #{source_path}"
           return false
         end
 
@@ -185,7 +185,7 @@ module MigrationGuard
       end
 
       def handle_memory_database # rubocop:disable Naming/PredicateMethod
-        Rails.logger.warn "Cannot backup in-memory database"
+        Rails.logger&.warn "Cannot backup in-memory database"
         @backup_path = nil
         false
       end
@@ -202,10 +202,10 @@ module MigrationGuard
 
         begin
           FileUtils.cp(backup_file, target_path)
-          Rails.logger.info "Restored database from #{backup_file}"
+          Rails.logger&.info "Restored database from #{backup_file}"
           true
         rescue StandardError => e
-          Rails.logger.error "Failed to restore backup: #{e.message}"
+          Rails.logger&.error "Failed to restore backup: #{e.message}"
           false
         end
       end

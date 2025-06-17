@@ -24,7 +24,7 @@ module MigrationGuard
       @checkers.each do |checker|
         @inconsistencies.concat(checker.check)
       rescue ActiveRecord::ConnectionNotEstablished, ActiveRecord::StatementInvalid => e
-        Rails.logger.error "Database error during recovery analysis: #{e.message}"
+        Rails.logger&.error "Database error during recovery analysis: #{e.message}"
         # Continue with other checkers
       end
 
