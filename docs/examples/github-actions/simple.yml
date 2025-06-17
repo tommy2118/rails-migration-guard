@@ -3,47 +3,63 @@ name: Migration Check
 
 on:
   pull_request:
+    branches: [ main, master ]
     paths:
       - 'db/migrate/**'
       - 'db/schema.rb'
+      - 'db/structure.sql'
 
 jobs:
   check-migrations:
+    name: Check migrations
     runs-on: ubuntu-latest
     
     services:
       postgres:
         image: postgres:14
         env:
+          POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: rails_test
+        ports:
+          - 5432:5432
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-        ports:
-          - 5432:5432
-
+    
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history for proper branch comparison
+          fetch-depth: 0  # Required for branch comparison
       
-      - name: Setup Ruby
+      - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
       
-      - name: Setup Database
+      - name: Set up database
         run: |
-          bundle exec rails db:setup
+          bundle exec rails db:create
+          bundle exec rails db:schema:load
         env:
           RAILS_ENV: test
-          DATABASE_URL: postgresql://postgres:postgres@localhost/test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/rails_test
       
-      - name: Check for migration issues
-        run: |
-          bundle exec rails db:migration:ci
+      - name: Check migrations
+        id: check
+        uses: ./.github/actions/migration-guard
+        with:
+          strict: false
+          comment-on-pr: true
+          format: json
         env:
-          RAILS_ENV: test
-          DATABASE_URL: postgresql://postgres:postgres@localhost/test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/rails_test
+      
+      - name: Show results
+        run: |
+          echo "Migration check status: ${{ steps.check.outputs.status }}"
+          echo "Orphaned migrations: ${{ steps.check.outputs.orphaned-count }}"
+          echo "Missing migrations: ${{ steps.check.outputs.missing-count }}"
