@@ -17,6 +17,23 @@ RSpec.describe MigrationGuard::MigrationExtension, "sandbox visual feedback" do
       def up
         # Empty migration for testing
       end
+      
+      # Expose private methods for testing
+      def test_env_var_truthy?(env_var_name)
+        env_var_truthy?(env_var_name)
+      end
+      
+      def test_should_display_sandbox_messages?
+        should_display_sandbox_messages?
+      end
+      
+      def test_display_sandbox_start_message
+        display_sandbox_start_message
+      end
+      
+      def test_display_sandbox_complete_message
+        display_sandbox_complete_message
+      end
     end
   end
 
@@ -43,7 +60,7 @@ RSpec.describe MigrationGuard::MigrationExtension, "sandbox visual feedback" do
       it "returns true for various truthy values" do
         %w[true TRUE True 1 yes YES Yes].each do |value|
           ENV["TEST_VAR"] = value
-          expect(migration_instance.send(:env_var_truthy?, "TEST_VAR")).to be true
+          expect(migration_instance.test_env_var_truthy?("TEST_VAR")).to be true
         end
         ENV.delete("TEST_VAR")
       end
@@ -51,14 +68,14 @@ RSpec.describe MigrationGuard::MigrationExtension, "sandbox visual feedback" do
       it "returns false for falsy values" do
         %w[false FALSE False 0 no NO No anything_else].each do |value|
           ENV["TEST_VAR"] = value
-          expect(migration_instance.send(:env_var_truthy?, "TEST_VAR")).to be false
+          expect(migration_instance.test_env_var_truthy?("TEST_VAR")).to be false
         end
         ENV.delete("TEST_VAR")
       end
 
       it "returns false for nil/unset values" do
         ENV.delete("TEST_VAR")
-        expect(migration_instance.send(:env_var_truthy?, "TEST_VAR")).to be false
+        expect(migration_instance.test_env_var_truthy?("TEST_VAR")).to be false
       end
     end
   end
@@ -68,7 +85,7 @@ RSpec.describe MigrationGuard::MigrationExtension, "sandbox visual feedback" do
       it "returns true in development environment" do
         allow(Rails).to receive(:env).and_return(ActiveSupport::StringInquirer.new("development"))
 
-        expect(migration_instance.send(:should_display_sandbox_messages?)).to be true
+        expect(migration_instance.test_should_display_sandbox_messages?).to be true
       end
 
       it "returns false when MIGRATION_GUARD_SANDBOX_QUIET is set to various truthy values" do
@@ -76,7 +93,7 @@ RSpec.describe MigrationGuard::MigrationExtension, "sandbox visual feedback" do
         
         %w[true TRUE 1 yes YES].each do |value|
           ENV["MIGRATION_GUARD_SANDBOX_QUIET"] = value
-          expect(migration_instance.send(:should_display_sandbox_messages?)).to be false
+          expect(migration_instance.test_should_display_sandbox_messages?).to be false
         end
 
         ENV.delete("MIGRATION_GUARD_SANDBOX_QUIET")
@@ -86,7 +103,7 @@ RSpec.describe MigrationGuard::MigrationExtension, "sandbox visual feedback" do
         allow(Rails).to receive(:env).and_return(ActiveSupport::StringInquirer.new("development"))
         ENV["MIGRATION_GUARD_SANDBOX_QUIET"] = "false"
 
-        expect(migration_instance.send(:should_display_sandbox_messages?)).to be true
+        expect(migration_instance.test_should_display_sandbox_messages?).to be true
 
         ENV.delete("MIGRATION_GUARD_SANDBOX_QUIET")
       end
@@ -94,7 +111,7 @@ RSpec.describe MigrationGuard::MigrationExtension, "sandbox visual feedback" do
       it "returns false in test environment without verbose flag" do
         allow(Rails).to receive(:env).and_return(ActiveSupport::StringInquirer.new("test"))
 
-        expect(migration_instance.send(:should_display_sandbox_messages?)).to be false
+        expect(migration_instance.test_should_display_sandbox_messages?).to be false
       end
 
       it "returns true in test environment with various verbose flag values" do
@@ -102,7 +119,7 @@ RSpec.describe MigrationGuard::MigrationExtension, "sandbox visual feedback" do
         
         %w[true TRUE 1 yes YES].each do |value|
           ENV["MIGRATION_GUARD_SANDBOX_VERBOSE"] = value
-          expect(migration_instance.send(:should_display_sandbox_messages?)).to be true
+          expect(migration_instance.test_should_display_sandbox_messages?).to be true
         end
 
         ENV.delete("MIGRATION_GUARD_SANDBOX_VERBOSE")
@@ -123,12 +140,12 @@ RSpec.describe MigrationGuard::MigrationExtension, "sandbox visual feedback" do
 
         it "uses Rails logger for start message" do
           expect(logger).to receive(:info).with(match(/🧪 SANDBOX MODE ACTIVE/))
-          migration_instance.send(:display_sandbox_start_message)
+          migration_instance.test_display_sandbox_start_message
         end
 
         it "uses Rails logger for complete message" do
           expect(logger).to receive(:warn).with(match(/⚠️  SANDBOX: Database changes rolled back/))
-          migration_instance.send(:display_sandbox_complete_message)
+          migration_instance.test_display_sandbox_complete_message
         end
       end
 
@@ -138,13 +155,13 @@ RSpec.describe MigrationGuard::MigrationExtension, "sandbox visual feedback" do
         end
 
         it "displays start message to stdout when conditions are met" do
-          expect { migration_instance.send(:display_sandbox_start_message) }
+          expect { migration_instance.test_display_sandbox_start_message }
             .to output(/🧪 SANDBOX MODE ACTIVE - Database changes will be rolled back/)
             .to_stdout
         end
 
         it "displays complete message to stdout when conditions are met" do
-          expect { migration_instance.send(:display_sandbox_complete_message) }
+          expect { migration_instance.test_display_sandbox_complete_message }
             .to output(/⚠️  SANDBOX: Database changes rolled back. Schema.rb updated for inspection./)
             .to_stdout
         end
@@ -152,16 +169,17 @@ RSpec.describe MigrationGuard::MigrationExtension, "sandbox visual feedback" do
 
       context "when messages should not be displayed" do
         before do
+          # Mock the private method that gets called internally
           allow(migration_instance).to receive(:should_display_sandbox_messages?).and_return(false)
         end
 
         it "does not display start message" do
-          expect { migration_instance.send(:display_sandbox_start_message) }
+          expect { migration_instance.test_display_sandbox_start_message }
             .not_to output.to_stdout
         end
 
         it "does not display complete message" do
-          expect { migration_instance.send(:display_sandbox_complete_message) }
+          expect { migration_instance.test_display_sandbox_complete_message }
             .not_to output.to_stdout
         end
       end
