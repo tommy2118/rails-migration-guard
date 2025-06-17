@@ -126,30 +126,42 @@ RSpec.describe MigrationGuard::Recovery::BaseAction do
     describe "#log_success" do
       it "logs success message with colorization" do
         message = "Operation completed successfully"
-        expect(MigrationGuard::Colorizer).to receive(:success).with(message).and_return("[SUCCESS] #{message}")
-        expect(logger).to receive(:info).with("[SUCCESS] #{message}")
+        colorized_message = "[SUCCESS] #{message}"
+
+        allow(MigrationGuard::Colorizer).to receive(:success).with(message).and_return(colorized_message)
+        expect(logger).to receive(:info).with(colorized_message)
 
         base_action.send(:log_success, message)
+
+        expect(MigrationGuard::Colorizer).to have_received(:success).with(message)
       end
     end
 
     describe "#log_error" do
       it "logs error message with colorization" do
         message = "Operation failed"
-        expect(MigrationGuard::Colorizer).to receive(:error).with(message).and_return("[ERROR] #{message}")
-        expect(logger).to receive(:error).with("[ERROR] #{message}")
+        colorized_message = "[ERROR] #{message}"
+
+        allow(MigrationGuard::Colorizer).to receive(:error).with(message).and_return(colorized_message)
+        expect(logger).to receive(:error).with(colorized_message)
 
         base_action.send(:log_error, message)
+
+        expect(MigrationGuard::Colorizer).to have_received(:error).with(message)
       end
     end
 
     describe "#log_info" do
       it "logs info message with colorization" do
         message = "Processing migration"
-        expect(MigrationGuard::Colorizer).to receive(:info).with(message).and_return("[INFO] #{message}")
-        expect(logger).to receive(:info).with("[INFO] #{message}")
+        colorized_message = "[INFO] #{message}"
+
+        allow(MigrationGuard::Colorizer).to receive(:info).with(message).and_return(colorized_message)
+        expect(logger).to receive(:info).with(colorized_message)
 
         base_action.send(:log_info, message)
+
+        expect(MigrationGuard::Colorizer).to have_received(:info).with(message)
       end
     end
 
