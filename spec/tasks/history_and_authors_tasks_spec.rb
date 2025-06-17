@@ -5,6 +5,7 @@ require "rake"
 
 RSpec.describe "History and authors rake tasks", type: :integration do
   let(:rake_output) { StringIO.new }
+  let(:stdout_output) { StringIO.new }
   let(:original_logger) { Rails.logger }
   let(:test_logger) { Logger.new(rake_output) }
 
@@ -21,6 +22,9 @@ RSpec.describe "History and authors rake tasks", type: :integration do
     allow(Rails).to receive(:logger).and_return(test_logger)
     allow(MigrationGuard).to receive(:enabled?).and_return(true)
 
+    # Capture stdout as well as logger output
+    allow($stdout).to receive(:puts) { |msg| stdout_output.puts(msg) }
+
     MigrationGuard::MigrationGuardRecord.delete_all
   end
 
@@ -29,7 +33,8 @@ RSpec.describe "History and authors rake tasks", type: :integration do
   end
 
   def task_output
-    rake_output.string
+    # Combine both logger and stdout output
+    rake_output.string + stdout_output.string
   end
 
   def create_migration_history(version, **attributes)

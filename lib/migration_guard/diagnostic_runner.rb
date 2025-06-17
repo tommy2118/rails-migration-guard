@@ -22,6 +22,7 @@ module MigrationGuard
       check_target_branch_configuration
       check_orphaned_migrations
       check_missing_migrations
+      check_schema_consistency
       check_environment_configuration
 
       print_summary
@@ -119,6 +120,78 @@ module MigrationGuard
     rescue StandardError => e
       add_issue("Failed to check missing migrations", e.message)
       print_check("Missing migrations", :error)
+    end
+
+    def check_schema_consistency
+      issues = analyze_schema_consistency
+
+      if issues.empty?
+        print_check("Schema consistency", :success, "schema_migrations in sync")
+      else
+        report_schema_issues(issues)
+      end
+    rescue StandardError => e
+      add_issue("Schema consistency check failed", e.message)
+      print_check("Schema consistency", :error)
+    end
+
+    def analyze_schema_consistency
+      schema_versions = fetch_schema_migrations
+      tracked_versions = MigrationGuard::MigrationGuardRecord.pluck(:version)
+
+      {
+        missing_from_schema: find_missing_from_schema(schema_versions),
+        rolled_back_in_schema: find_rolled_back_in_schema(schema_versions),
+        untracked_in_schema: schema_versions - tracked_versions
+      }.reject { |_, v| v.empty? }
+    end
+
+    def find_missing_from_schema(schema_versions)
+      MigrationGuard::MigrationGuardRecord.applied
+                                          .reject { |r| schema_versions.include?(r.version) }
+    end
+
+    def find_rolled_back_in_schema(schema_versions)
+      MigrationGuard::MigrationGuardRecord.rolled_back
+                                          .select { |r| schema_versions.include?(r.version) }
+    end
+
+    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+    def report_schema_issues(issues)
+      summary_parts = []
+
+      if issues[:missing_from_schema]
+        count = issues[:missing_from_schema].size
+        summary_parts << "#{count} tracked as applied but missing from schema"
+        versions = issues[:missing_from_schema].map(&:version).join(", ")
+        add_issue("Schema inconsistency detected",
+                  "Migrations tracked as 'applied' but missing from schema_migrations: #{versions}")
+      end
+
+      if issues[:rolled_back_in_schema]
+        count = issues[:rolled_back_in_schema].size
+        summary_parts << "#{count} rolled back but still in schema"
+        versions = issues[:rolled_back_in_schema].map(&:version).join(", ")
+        add_issue("Rolled back migrations in schema",
+                  "Migrations tracked as 'rolled_back' but still in schema_migrations: #{versions}")
+      end
+
+      if issues[:untracked_in_schema]
+        count = issues[:untracked_in_schema].size
+        summary_parts << "#{count} in schema but not tracked"
+        versions = issues[:untracked_in_schema].join(", ")
+        add_warning("Untracked migrations in schema",
+                    "Migrations in schema_migrations but not tracked: #{versions}")
+      end
+
+      print_check("Schema consistency", :error, summary_parts.join(", "))
+    end
+    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
+
+    def fetch_schema_migrations
+      ActiveRecord::Base.connection.select_values("SELECT version FROM schema_migrations")
+    rescue StandardError
+      []
     end
 
     # rubocop:disable Metrics/MethodLength
