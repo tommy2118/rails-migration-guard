@@ -36,7 +36,7 @@ RSpec.describe "Docker and CI Support" do
 
       it "automatically switches RecoveryExecutor to non-interactive mode" do
         expect(Rails.logger).to receive(:info)
-          .with("[MigrationGuard] Non-TTY environment detected, switching to non-interactive mode")
+          .with("[MigrationGuard] Non-TTY environment detected, running in non-interactive mode")
         executor = MigrationGuard::RecoveryExecutor.new
         expect(executor.send(:interactive?)).to be false
       end

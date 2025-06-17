@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "interactive_mode"
+
 module MigrationGuard
   # rubocop:disable Metrics/ModuleLength
   module RakeTasks
@@ -25,9 +27,7 @@ module MigrationGuard
       def rollback_orphaned
         return unless check_enabled
 
-        # Support FORCE=true for non-interactive mode
-        interactive = ENV["FORCE"] != "true" && ENV["NON_INTERACTIVE"] != "true"
-        rollbacker = MigrationGuard::Rollbacker.new(interactive: interactive)
+        rollbacker = MigrationGuard::Rollbacker.new
         rollbacker.rollback_orphaned
       end
 
@@ -162,12 +162,14 @@ module MigrationGuard
       private
 
       def create_recovery_executor
-        if ENV["AUTO"] == "true" || ENV["NON_INTERACTIVE"] == "true" || ENV["FORCE"] == "true"
+        if InteractiveMode.forced_non_interactive?
           puts Colorizer.info("Running in automatic mode...") # rubocop:disable Rails/Output
           MigrationGuard::RecoveryExecutor.new(interactive: false)
         else
           puts Colorizer.info("Running in interactive mode...") # rubocop:disable Rails/Output
-          puts "Use AUTO=true or NON_INTERACTIVE=true to automatically apply first recovery option for each issue" # rubocop:disable Rails/Output
+          # rubocop:disable Rails/Output, Layout/LineLength
+          puts "Use AUTO=true, NON_INTERACTIVE=true, or FORCE=true to automatically apply first recovery option for each issue"
+          # rubocop:enable Rails/Output, Layout/LineLength
           MigrationGuard::RecoveryExecutor.new(interactive: true)
         end
       end

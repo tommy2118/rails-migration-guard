@@ -1,19 +1,19 @@
 # frozen_string_literal: true
 
 require_relative "colorizer"
+require_relative "interactive_mode"
 
 module MigrationGuard
   # rubocop:disable Metrics/ClassLength
   class Rollbacker
     def initialize(interactive: true)
-      # Auto-detect TTY availability if interactive mode is requested
-      @interactive = interactive && $stdin.tty?
+      # Use centralized interactive mode detection
+      @interactive = InteractiveMode.interactive?(requested_interactive: interactive)
       @git_integration = GitIntegration.new
       @reporter = Reporter.new
 
-      if interactive && !@interactive
-        MigrationGuard::Logger.info("Non-TTY environment detected, running in non-interactive mode")
-      end
+      # Log TTY detection if needed
+      InteractiveMode.log_tty_detection(interactive, @interactive, :migration_guard_logger)
 
       MigrationGuard::Logger.debug("Initialized Rollbacker", interactive: @interactive)
     end

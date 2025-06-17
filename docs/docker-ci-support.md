@@ -2,6 +2,11 @@
 
 Rails Migration Guard now provides full support for Docker containers and CI/CD environments through automatic TTY detection and environment variable overrides.
 
+> **Related Documentation:**
+> - [CI Integration Guide](ci-integration.md) - Detailed CI/CD setup
+> - [Troubleshooting Guide](troubleshooting.md) - Common issues and solutions
+> - [Configuration Reference](configuration.md) - All configuration options
+
 ## Automatic TTY Detection
 
 When running in environments without TTY support (like Docker containers or CI systems), Rails Migration Guard automatically switches to non-interactive mode:
@@ -151,12 +156,46 @@ bundle exec rails db:migration:doctor
 - Prompts for confirmation
 - Shows options for recovery
 - Waits for user input
+- Displays colored output (when enabled)
 
 ### Non-Interactive Mode (No TTY or forced)
 - Skips all prompts
 - Proceeds with default actions
 - Uses first recovery option
 - Suitable for automation
+- Color output depends on NO_COLOR environment variable
+
+## Terminal Colors in Docker
+
+Rails Migration Guard respects terminal color settings:
+
+### Enabling Colors in Docker
+```bash
+# Colors enabled by default if TTY is allocated
+docker run -it myapp rails db:migration:status
+
+# Force colors in non-TTY environments
+docker exec -T -e FORCE_COLOR=1 myapp rails db:migration:status
+```
+
+### Disabling Colors
+```bash
+# Disable colors globally
+NO_COLOR=1 rails db:migration:status
+
+# Or via configuration
+# config/initializers/migration_guard.rb
+MigrationGuard.configure do |config|
+  config.colorize_output = false
+end
+```
+
+### CI/CD Color Support
+Most CI systems support ANSI colors:
+- **GitHub Actions**: Colors enabled by default
+- **GitLab CI**: Set `FORCE_COLOR=1` for color output
+- **CircleCI**: Colors enabled by default
+- **Jenkins**: May require ANSI Color plugin
 
 ## Best Practices
 

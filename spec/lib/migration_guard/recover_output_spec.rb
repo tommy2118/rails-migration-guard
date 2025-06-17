@@ -68,7 +68,7 @@ RSpec.describe "MigrationGuard recover command output" do
             expect(output).to include("❌ Recovery issues detected")
             expect(output).to include("Orphaned migrations: 1")
             expect(output).to include("Running in interactive mode...")
-            expect(output).to include("Use AUTO=true or NON_INTERACTIVE=true to automatically apply")
+            expect(output).to include("Use AUTO=true, NON_INTERACTIVE=true, or FORCE=true to automatically apply")
             expect(output).to include("Processing: Orphaned migration")
             expect(output).to include("✓ Issue resolved")
             expect(output).to include("Recovery process completed.")
