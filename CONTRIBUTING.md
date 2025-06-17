@@ -202,7 +202,7 @@ end
 
 ### Issue Labels
 
-Familiarize yourself with our [label system](.github/project-roadmap.md#issue-labels):
+Familiarize yourself with our [label system](https://github.com/tommy2118/rails-migration-guard/blob/master/.github/project-roadmap.md#issue-labels):
 
 - **Type**: `bug`, `enhancement`, `documentation`, etc.
 - **Priority**: `P0-critical`, `P1-high`, `P2-medium`, `P3-low`
