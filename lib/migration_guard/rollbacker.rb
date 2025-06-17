@@ -78,6 +78,9 @@ module MigrationGuard
       target_migration = find_target_migration(context, version, migration.version)
       execute_down_migration(target_migration)
 
+      # Ensure the migration is removed from schema_migrations
+      remove_from_schema_migrations(migration.version)
+
       MigrationGuard::Logger.debug("Down migration executed successfully", version: migration.version)
     rescue RollbackError
       raise
@@ -213,6 +216,26 @@ module MigrationGuard
       rescue StandardError
         ["db/migrate"]
       end
+    end
+
+    def remove_from_schema_migrations(version)
+      # Check if the version exists in schema_migrations
+      exists = ActiveRecord::Base.connection.select_value(
+        ActiveRecord::Base.sanitize_sql(
+          ["SELECT 1 FROM schema_migrations WHERE version = ? LIMIT 1", version.to_s]
+        )
+      )
+
+      return unless exists
+
+      # Remove it if it exists
+      ActiveRecord::Base.connection.execute(
+        ActiveRecord::Base.sanitize_sql(
+          ["DELETE FROM schema_migrations WHERE version = ?", version.to_s]
+        )
+      )
+
+      MigrationGuard::Logger.debug("Removed version from schema_migrations", version: version)
     end
 
     def migration_file_exists?(version)

@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 module MigrationGuard
-  module RakeTasks # rubocop:disable Metrics/ModuleLength
+  # rubocop:disable Metrics/ModuleLength
+  module RakeTasks
+    # rubocop:disable Metrics/ClassLength
     class << self
       def check_enabled
         return true if MigrationGuard.enabled?
@@ -14,7 +16,10 @@ module MigrationGuard
         return unless check_enabled
 
         reporter = MigrationGuard::Reporter.new
-        Rails.logger.info reporter.format_status_output
+        output = reporter.format_status_output
+
+        # Always show output to console for user-facing commands
+        puts output unless output.empty? # rubocop:disable Rails/Output
       end
 
       def rollback_orphaned
@@ -78,14 +83,20 @@ module MigrationGuard
         return unless check_enabled
 
         historian = MigrationGuard::Historian.new(options)
-        Rails.logger.info historian.format_history_output
+        output = historian.format_history_output
+
+        # Always show output to console for user-facing commands
+        puts output unless output.empty? # rubocop:disable Rails/Output
       end
 
       def authors_report
         return unless check_enabled
 
         author_reporter = MigrationGuard::AuthorReporter.new
-        Rails.logger.info author_reporter.format_authors_report
+        output = author_reporter.format_authors_report
+
+        # Always show output to console for user-facing commands
+        puts output unless output.empty? # rubocop:disable Rails/Output
       end
 
       def recover
@@ -196,5 +207,7 @@ module MigrationGuard
         Rails.logger.info "  Auto cleanup: #{config.auto_cleanup}"
       end
     end
+    # rubocop:enable Metrics/ClassLength
   end
+  # rubocop:enable Metrics/ModuleLength
 end

@@ -219,5 +219,42 @@ RSpec.describe MigrationGuard::DiagnosticRunner do
         end
       end
     end
+
+    context "when schema inconsistencies exist" do
+      before do
+        # Create a migration tracked as applied but not in schema_migrations
+        MigrationGuard::MigrationGuardRecord.create!(
+          version: "20240101000001",
+          status: "applied",
+          branch: "main"
+        )
+
+        # Add a migration to schema_migrations but not tracked
+        ActiveRecord::Base.connection.execute("INSERT INTO schema_migrations (version) VALUES ('20240101000002')")
+
+        # Create a rolled back migration that's still in schema_migrations
+        MigrationGuard::MigrationGuardRecord.create!(
+          version: "20240101000003",
+          status: "rolled_back",
+          branch: "feature"
+        )
+        ActiveRecord::Base.connection.execute("INSERT INTO schema_migrations (version) VALUES ('20240101000003')")
+      end
+
+      after do
+        sql = "DELETE FROM schema_migrations WHERE version IN ('20240101000002', '20240101000003')"
+        ActiveRecord::Base.connection.execute(sql)
+      end
+
+      it "reports schema consistency issues" do
+        runner.run_all_checks
+
+        output = io.string
+        expect(output).to include("✗ Schema consistency")
+        expect(output).to include("1 tracked as applied but missing from schema")
+        expect(output).to include("1 rolled back but still in schema")
+        expect(output).to include("1 in schema but not tracked")
+      end
+    end
   end
 end

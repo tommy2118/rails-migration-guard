@@ -24,7 +24,7 @@ RSpec.describe MigrationGuard::RakeTasks do
 
         expect(MigrationGuard::Reporter).to receive(:new).and_return(reporter)
         expect(reporter).to receive(:format_status_output).and_return(formatted_output)
-        expect(logger).to receive(:info).with(formatted_output)
+        expect($stdout).to receive(:puts).with(formatted_output)
 
         described_class.status
       end
