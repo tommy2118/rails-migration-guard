@@ -15,6 +15,7 @@ module MigrationGuard
     # Load generators
     generators do
       require_relative "../generators/migration_guard/install/install_generator"
+      require_relative "../generators/migration_guard/hooks/hooks_generator"
     end
 
     # Initialize MigrationGuard after Rails has loaded
