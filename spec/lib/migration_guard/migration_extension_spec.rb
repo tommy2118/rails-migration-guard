@@ -135,12 +135,14 @@ RSpec.describe MigrationGuard::MigrationExtension do
     end
   end
 
-  describe "sandbox mode" do
+  describe "sandbox mode" do # rubocop:disable RSpec/MultipleMemoizedHelpers
     let(:connection) { ActiveRecord::Base.connection }
+    let(:test_logger) { instance_double(Logger) }
 
     before do
       allow(MigrationGuard.configuration).to receive(:sandbox_mode).and_return(true)
-      allow(Rails.logger).to receive(:debug).and_call_original
+      allow(Rails).to receive(:logger).and_return(test_logger)
+      allow(test_logger).to receive(:debug)
     end
 
     it "rolls back migration in sandbox mode" do
@@ -153,7 +155,7 @@ RSpec.describe MigrationGuard::MigrationExtension do
     it "logs sandbox operation" do
       allow(connection).to receive(:transaction).and_yield
 
-      expect(Rails.logger).to receive(:debug).at_least(:once)
+      expect(test_logger).to receive(:debug).at_least(:once)
       expect { migration_instance.exec_migration(connection, :up) }.to raise_error(ActiveRecord::Rollback)
     end
 
@@ -162,7 +164,7 @@ RSpec.describe MigrationGuard::MigrationExtension do
       migration_instance.exec_migration(connection, :down)
     end
 
-    context "when sandbox mode is disabled" do
+    context "when sandbox mode is disabled" do # rubocop:disable RSpec/MultipleMemoizedHelpers
       before do
         allow(MigrationGuard.configuration).to receive(:sandbox_mode).and_return(false)
       end
