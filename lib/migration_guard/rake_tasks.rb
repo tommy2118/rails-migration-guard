@@ -8,7 +8,7 @@ module MigrationGuard
       def check_enabled
         return true if MigrationGuard.enabled?
 
-        Rails.logger.info "MigrationGuard is not enabled in #{Rails.env}"
+        Rails.logger&.info "MigrationGuard is not enabled in #{Rails.env}"
         false
       end
 
@@ -186,27 +186,27 @@ module MigrationGuard
         git_integration = MigrationGuard::GitIntegration.new
         current = git_integration.current_branch
         main = git_integration.main_branch
-        Rails.logger.info "✓ Git integration working"
-        Rails.logger.info "  Current branch: #{current}"
-        Rails.logger.info "  Main branch: #{main}"
+        Rails.logger&.info "✓ Git integration working"
+        Rails.logger&.info "  Current branch: #{current}"
+        Rails.logger&.info "  Main branch: #{main}"
       rescue StandardError => e
-        Rails.logger.error "✗ Git integration failed: #{e.message}"
+        Rails.logger&.error "✗ Git integration failed: #{e.message}"
       end
 
       def check_database_connection
         count = MigrationGuard::MigrationGuardRecord.count
-        Rails.logger.info "✓ Database connection working"
-        Rails.logger.info "  Tracking records: #{count}"
+        Rails.logger&.info "✓ Database connection working"
+        Rails.logger&.info "  Tracking records: #{count}"
       rescue StandardError => e
-        Rails.logger.error "✗ Database connection failed: #{e.message}"
+        Rails.logger&.error "✗ Database connection failed: #{e.message}"
       end
 
       def show_configuration
         config = MigrationGuard.configuration
-        Rails.logger.info "Configuration:"
-        Rails.logger.info "  Enabled environments: #{config.enabled_environments.join(', ')}"
-        Rails.logger.info "  Git integration level: #{config.git_integration_level}"
-        Rails.logger.info "  Auto cleanup: #{config.auto_cleanup}"
+        Rails.logger&.info "Configuration:"
+        Rails.logger&.info "  Enabled environments: #{config.enabled_environments.join(', ')}"
+        Rails.logger&.info "  Git integration level: #{config.git_integration_level}"
+        Rails.logger&.info "  Auto cleanup: #{config.auto_cleanup}"
       end
     end
     # rubocop:enable Metrics/ClassLength

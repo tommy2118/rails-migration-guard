@@ -386,8 +386,8 @@ RSpec.describe "MigrationGuard rake task integration", type: :integration do
       end
 
       it "doesn't crash when logger is unavailable" do
-        # With MigrationGuard disabled and nil logger, the check_enabled method will fail
-        expect { run_rake_task("db:migration:status") }.to raise_error(NoMethodError)
+        # With safe navigation operator, the rake task should handle nil logger gracefully
+        expect { run_rake_task("db:migration:status") }.not_to raise_error
       end
     end
   end
