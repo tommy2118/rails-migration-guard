@@ -593,13 +593,13 @@ Status checks or rollback operations are slow with large migration histories.
 2. **Update the gem if needed:**
    ```ruby
    # Gemfile
-   gem 'rails-migration-guard', '~> 2.0'  # Check latest version
+   gem 'rails_migration_guard', '~> 2.0'  # Check latest version
    ```
 
 3. **For older Rails versions:**
    ```ruby
    # Use an older version of the gem
-   gem 'rails-migration-guard', '~> 1.0'  # For Rails < 6.1
+   gem 'rails_migration_guard', '~> 1.0'  # For Rails < 6.1
    ```
 
 ## Common Error Messages
@@ -655,7 +655,7 @@ If you're still experiencing issues:
 
 2. **Check the gem version:**
    ```bash
-   bundle show rails-migration-guard
+   bundle show rails_migration_guard
    ```
 
 3. **Enable debug logging:**
@@ -665,7 +665,7 @@ If you're still experiencing issues:
    ```
 
 4. **Report issues:**
-   - GitHub Issues: https://github.com/your-org/rails-migration-guard/issues
+   - GitHub Issues: https://github.com/tommy2118/rails-migration-guard/issues
    - Include output from `rails db:migration:doctor`
    - Provide Rails version, Ruby version, and database type
 
