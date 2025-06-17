@@ -63,14 +63,14 @@ module MigrationGuard
 
     def check_for_orphaned_migrations(previous_branch, current_branch)
       MigrationGuard::Logger.info("Branch switch detected", from: previous_branch, to: current_branch)
-      Rails.logger.info ""
-      Rails.logger.info Colorizer.info("Switched from '#{previous_branch}' to '#{current_branch}'")
+      Rails.logger&.info ""
+      Rails.logger&.info Colorizer.info("Switched from '#{previous_branch}' to '#{current_branch}'")
 
       warning = format_branch_change_warnings
       return unless warning
 
       MigrationGuard::Logger.warn("Orphaned migrations detected on branch switch")
-      Rails.logger.info warning
+      Rails.logger&.info warning
     end
 
     def add_warning_header(output)

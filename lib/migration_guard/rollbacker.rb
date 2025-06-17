@@ -124,6 +124,8 @@ module MigrationGuard
 
     def handle_rollback_error(migration, error)
       MigrationGuard::Logger.error("Rollback failed", version: migration.version, error: error.message)
+      output_message Colorizer.error("❌ Rollback failed for migration #{migration.version}")
+      output_message Colorizer.error("   Error: #{error.message}")
       raise RollbackError, "Failed to roll back migration #{migration.version}: #{error.message}"
     end
 
@@ -132,7 +134,7 @@ module MigrationGuard
     end
 
     def output_message(message)
-      Rails.logger.debug message
+      puts message # rubocop:disable Rails/Output
     end
 
     def display_no_orphaned_migrations
@@ -159,7 +161,7 @@ module MigrationGuard
     def confirm_rollback?(prompt)
       return true unless @interactive
 
-      Rails.logger.debug prompt
+      Rails.logger&.debug prompt
       response = gets.chomp.downcase
       return true if response == "y"
 

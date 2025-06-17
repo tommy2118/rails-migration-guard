@@ -8,7 +8,7 @@ module MigrationGuard
       def check_enabled
         return true if MigrationGuard.enabled?
 
-        Rails.logger.info "MigrationGuard is not enabled in #{Rails.env}"
+        Rails.logger&.info "MigrationGuard is not enabled in #{Rails.env}"
         false
       end
 
@@ -40,14 +40,14 @@ module MigrationGuard
         return unless check_enabled
 
         unless version
-          Rails.logger.error "Usage: rails db:migration:rollback_specific VERSION=xxx"
+          puts Colorizer.error("Usage: rails db:migration:rollback_specific VERSION=xxx") # rubocop:disable Rails/Output
           return
         end
 
         rollbacker = MigrationGuard::Rollbacker.new
         rollbacker.rollback_specific(version)
       rescue MigrationGuard::MigrationNotFoundError, MigrationGuard::RollbackError => e
-        Rails.logger.error e.message
+        puts Colorizer.error("❌ #{e.message}") # rubocop:disable Rails/Output
       end
 
       def cleanup(force: false)
@@ -55,14 +55,14 @@ module MigrationGuard
 
         unless force || ENV["FORCE"] == "true"
           days = MigrationGuard.configuration.cleanup_after_days
-          Rails.logger.warn "This will delete migration tracking records older than #{days} days."
-          Rails.logger.warn "To proceed, run with FORCE=true"
+          puts Colorizer.warning("This will delete migration tracking records older than #{days} days.") # rubocop:disable Rails/Output
+          puts Colorizer.warning("To proceed, run with FORCE=true") # rubocop:disable Rails/Output
           return
         end
 
         tracker = MigrationGuard::Tracker.new
         count = tracker.cleanup_old_records
-        Rails.logger.info "Cleaned up #{count} old migration tracking records"
+        puts Colorizer.success("✓ Cleaned up #{count} old migration tracking records") # rubocop:disable Rails/Output
       end
 
       def doctor
@@ -106,12 +106,12 @@ module MigrationGuard
         issues = analyzer.analyze
 
         if issues.empty?
-          Rails.logger.info analyzer.format_analysis_report
+          puts analyzer.format_analysis_report # rubocop:disable Rails/Output
           return
         end
 
-        Rails.logger.info analyzer.format_analysis_report
-        Rails.logger.info "\n"
+        puts analyzer.format_analysis_report # rubocop:disable Rails/Output
+        puts # rubocop:disable Rails/Output
 
         executor = create_recovery_executor
         process_recovery_issues(issues, executor)
@@ -153,58 +153,60 @@ module MigrationGuard
 
       def create_recovery_executor
         if ENV["AUTO"] == "true"
-          Rails.logger.info Colorizer.info("Running in automatic mode...")
+          puts Colorizer.info("Running in automatic mode...") # rubocop:disable Rails/Output
           MigrationGuard::RecoveryExecutor.new(interactive: false)
         else
-          Rails.logger.info Colorizer.info("Running in interactive mode...")
-          Rails.logger.info "Use AUTO=true to automatically apply first recovery option for each issue"
+          puts Colorizer.info("Running in interactive mode...") # rubocop:disable Rails/Output
+          puts "Use AUTO=true to automatically apply first recovery option for each issue" # rubocop:disable Rails/Output
           MigrationGuard::RecoveryExecutor.new(interactive: true)
         end
       end
 
       def process_recovery_issues(issues, executor)
         issues.each do |issue|
-          Rails.logger.info "\n#{Colorizer.info("Processing: #{issue[:type].to_s.humanize}")}"
+          puts # rubocop:disable Rails/Output
+          puts Colorizer.info("Processing: #{issue[:type].to_s.humanize}") # rubocop:disable Rails/Output
           success = executor.execute_recovery(issue)
 
           if success
-            Rails.logger.info Colorizer.success("✓ Issue resolved")
+            puts Colorizer.success("✓ Issue resolved") # rubocop:disable Rails/Output
           else
-            Rails.logger.info Colorizer.warning("⚠ Issue not resolved - manual intervention may be required")
+            puts Colorizer.warning("⚠ Issue not resolved - manual intervention may be required") # rubocop:disable Rails/Output
           end
         end
       end
 
       def log_recovery_completion(executor)
-        Rails.logger.info "\n#{Colorizer.info('Recovery process completed.')}"
-        Rails.logger.info "Backup saved at: #{executor.backup_path}" if executor.backup_path
+        puts # rubocop:disable Rails/Output
+        puts Colorizer.info("Recovery process completed.") # rubocop:disable Rails/Output
+        puts Colorizer.info("Backup saved at: #{executor.backup_path}") if executor.backup_path # rubocop:disable Rails/Output
       end
 
       def check_git_integration
         git_integration = MigrationGuard::GitIntegration.new
         current = git_integration.current_branch
         main = git_integration.main_branch
-        Rails.logger.info "✓ Git integration working"
-        Rails.logger.info "  Current branch: #{current}"
-        Rails.logger.info "  Main branch: #{main}"
+        Rails.logger&.info "✓ Git integration working"
+        Rails.logger&.info "  Current branch: #{current}"
+        Rails.logger&.info "  Main branch: #{main}"
       rescue StandardError => e
-        Rails.logger.error "✗ Git integration failed: #{e.message}"
+        Rails.logger&.error "✗ Git integration failed: #{e.message}"
       end
 
       def check_database_connection
         count = MigrationGuard::MigrationGuardRecord.count
-        Rails.logger.info "✓ Database connection working"
-        Rails.logger.info "  Tracking records: #{count}"
+        Rails.logger&.info "✓ Database connection working"
+        Rails.logger&.info "  Tracking records: #{count}"
       rescue StandardError => e
-        Rails.logger.error "✗ Database connection failed: #{e.message}"
+        Rails.logger&.error "✗ Database connection failed: #{e.message}"
       end
 
       def show_configuration
         config = MigrationGuard.configuration
-        Rails.logger.info "Configuration:"
-        Rails.logger.info "  Enabled environments: #{config.enabled_environments.join(', ')}"
-        Rails.logger.info "  Git integration level: #{config.git_integration_level}"
-        Rails.logger.info "  Auto cleanup: #{config.auto_cleanup}"
+        Rails.logger&.info "Configuration:"
+        Rails.logger&.info "  Enabled environments: #{config.enabled_environments.join(', ')}"
+        Rails.logger&.info "  Git integration level: #{config.git_integration_level}"
+        Rails.logger&.info "  Auto cleanup: #{config.auto_cleanup}"
       end
     end
     # rubocop:enable Metrics/ClassLength
