@@ -1,15 +1,21 @@
 # frozen_string_literal: true
 
 require_relative "colorizer"
+require_relative "interactive_mode"
 
 module MigrationGuard
   # rubocop:disable Metrics/ClassLength
   class Rollbacker
     def initialize(interactive: true)
-      @interactive = interactive
+      # Use centralized interactive mode detection
+      @interactive = InteractiveMode.interactive?(requested_interactive: interactive)
       @git_integration = GitIntegration.new
       @reporter = Reporter.new
-      MigrationGuard::Logger.debug("Initialized Rollbacker", interactive: interactive)
+
+      # Log TTY detection if needed
+      InteractiveMode.log_tty_detection(interactive, @interactive, :migration_guard_logger)
+
+      MigrationGuard::Logger.debug("Initialized Rollbacker", interactive: @interactive)
     end
 
     def rollback_orphaned

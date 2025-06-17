@@ -220,6 +220,9 @@ RSpec.describe "Rollback rake tasks", type: :integration do
       end
 
       it "handles missing migration file gracefully" do
+        # Mock TTY for interactive mode
+        allow($stdin).to receive(:tty?).and_return(true)
+
         # Create a controlled rollbacker instance
         rollbacker = MigrationGuard::Rollbacker.new(interactive: true)
         allow(rollbacker).to receive(:gets).and_return("y")

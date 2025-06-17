@@ -16,7 +16,7 @@ namespace :db do
       MigrationGuard::RakeTasks.status
     end
 
-    desc "Roll back orphaned migrations interactively"
+    desc "Roll back orphaned migrations interactively (use FORCE=true for non-interactive)"
     task rollback_orphaned: :environment do
       ensure_migration_guard_loaded
       MigrationGuard::RakeTasks.rollback_orphaned
@@ -77,7 +77,7 @@ namespace :db do
       MigrationGuard::RakeTasks.authors_report
     end
 
-    desc "Analyze and recover from inconsistent migration states"
+    desc "Analyze and recover from inconsistent migration states (use AUTO=true, FORCE=true, or NON_INTERACTIVE=true)"
     task recover: :environment do
       ensure_migration_guard_loaded
       MigrationGuard::RakeTasks.recover

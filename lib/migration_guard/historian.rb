@@ -293,7 +293,7 @@ module MigrationGuard
     def truncate_string(string, length)
       return string if string.length <= length
 
-      "#{string[0..length - 4]}..."
+      "#{string[0..(length - 4)]}..."
     end
   end
   # rubocop:enable Metrics/ClassLength

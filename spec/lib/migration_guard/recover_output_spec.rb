@@ -17,6 +17,8 @@ RSpec.describe "MigrationGuard recover command output" do
     allow(MigrationGuard::RecoveryAnalyzer).to receive(:new).and_return(analyzer)
     allow(MigrationGuard::RecoveryExecutor).to receive(:new).and_return(executor)
     allow(executor).to receive(:backup_path).and_return(nil)
+    # Mock TTY to default to true for tests
+    allow($stdin).to receive(:tty?).and_return(true)
   end
 
   describe "#recover" do
@@ -48,10 +50,13 @@ RSpec.describe "MigrationGuard recover command output" do
       before do
         allow(analyzer).to receive_messages(analyze: issues, format_analysis_report: report)
         allow(ENV).to receive(:[]).with("AUTO").and_return(nil)
+        allow(ENV).to receive(:[]).with("NON_INTERACTIVE").and_return(nil)
+        allow(ENV).to receive(:[]).with("FORCE").and_return(nil)
       end
 
       context "when in interactive mode" do
         before do
+          allow($stdin).to receive(:tty?).and_return(true)
           allow(executor).to receive(:execute_recovery).and_return(true)
         end
 
@@ -63,7 +68,7 @@ RSpec.describe "MigrationGuard recover command output" do
             expect(output).to include("❌ Recovery issues detected")
             expect(output).to include("Orphaned migrations: 1")
             expect(output).to include("Running in interactive mode...")
-            expect(output).to include("Use AUTO=true to automatically apply first recovery option")
+            expect(output).to include("Use AUTO=true, NON_INTERACTIVE=true, or FORCE=true to automatically apply")
             expect(output).to include("Processing: Orphaned migration")
             expect(output).to include("✓ Issue resolved")
             expect(output).to include("Recovery process completed.")

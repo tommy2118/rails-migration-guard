@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "migration_guard/colorizer"
+require "migration_guard/interactive_mode"
 require "migration_guard/recovery/base_action"
 require "migration_guard/recovery/backup_manager"
 require "migration_guard/recovery/rollback_action"
@@ -14,10 +15,14 @@ module MigrationGuard
   # RecoveryExecutor performs recovery actions for inconsistent migration states
   class RecoveryExecutor
     def initialize(interactive: true)
-      @interactive = interactive
+      # Use centralized interactive mode detection
+      @interactive = InteractiveMode.interactive?(requested_interactive: interactive)
       @backup_manager = Recovery::BackupManager.new
       @actions = initialize_actions
       @executing_recovery = false
+
+      # Log TTY detection if needed
+      InteractiveMode.log_tty_detection(interactive, @interactive, :rails_logger)
     end
 
     def execute_recovery(issue, option = nil)
