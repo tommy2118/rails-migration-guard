@@ -14,6 +14,9 @@ module TestApp
   class Application < Rails::Application
     config.root = File.expand_path("../", __dir__)
     config.eager_load = false
+
+    # Rails 8.0+ timezone handling
+    config.active_support.to_time_preserves_timezone = :zone if Rails.version >= "8.0"
   end
 end
 
