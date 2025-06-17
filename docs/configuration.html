@@ -1,0 +1,425 @@
+---
+layout: default
+title: Configuration Guide
+---
+
+<div class="documentation">
+  <h1>Configuration Guide for Rails Migration Guard</h1>
+  
+  <p>Rails Migration Guard is highly configurable to adapt to your team's workflow and requirements. This guide covers all configuration options and provides examples for common scenarios.</p>
+  
+  <div class="table-of-contents">
+    <h2>Table of Contents</h2>
+    <ol>
+      <li><a href="#basic-configuration">Basic Configuration</a></li>
+      <li><a href="#git-integration-options">Git Integration Options</a></li>
+      <li><a href="#tracking-options">Tracking Options</a></li>
+      <li><a href="#behavior-options">Behavior Options</a></li>
+      <li><a href="#cleanup-policies">Cleanup Policies</a></li>
+      <li><a href="#branch-configuration">Branch Configuration</a></li>
+      <li><a href="#advanced-git-options">Advanced Git Options</a></li>
+      <li><a href="#logging-options">Logging Options</a></li>
+      <li><a href="#common-configurations">Common Configurations</a></li>
+    </ol>
+  </div>
+  
+  <section id="basic-configuration">
+    <h2>Basic Configuration</h2>
+    
+    <p>Rails Migration Guard creates a configuration file at <code>config/initializers/migration_guard.rb</code> during installation. Here's the default configuration:</p>
+    
+    <pre><code># config/initializers/migration_guard.rb
+MigrationGuard.configure do |config|
+  # Environments where MigrationGuard is active
+  config.enabled_environments = [:development, :staging]
+end</code></pre>
+    
+    <h3>Complete Configuration Example</h3>
+    
+    <pre><code># config/initializers/migration_guard.rb
+MigrationGuard.configure do |config|
+  # Environments where MigrationGuard is active
+  config.enabled_environments = [:development, :staging]
+
+  # Git integration level
+  # :off - No git integration
+  # :warning - Warn about orphaned migrations
+  # :auto_rollback - Automatically suggest rollback
+  config.git_integration_level = :warning
+
+  # Track additional information
+  config.track_branch = true
+  config.track_author = true      # Captures git user.email
+  config.track_timestamp = true
+
+  # Behavior options
+  config.warn_on_switch = true             # Warn when switching branches
+  config.block_deploy_with_orphans = false # Block deploys with orphaned migrations
+
+  # Cleanup policies
+  config.auto_cleanup = false              # Automatically clean up old records
+  config.cleanup_after_days = 30           # Days before cleanup
+
+  # Main branch names to check against
+  config.main_branch_names = %w[main master trunk]
+  
+  # Target branches to compare migrations against (optional)
+  # When set, migrations will be compared against all specified branches
+  # instead of just the main branch. Useful for teams with multiple
+  # long-lived branches (e.g., develop, staging, production)
+  # config.target_branches = %w[main develop staging]
+  
+  # Git integration settings (see Troubleshooting Guide for edge cases)
+  # config.git_timeout = 5.seconds
+  # config.handle_git_errors = true  # Continue without git on errors
+  # config.sanitize_git_input = true  # Clean branch names automatically
+  
+  # Logging configuration
+  # config.log_level = :info  # :debug, :info, :warn, :error, :fatal
+  # config.logger = Rails.logger  # or Logger.new('log/migration_guard.log')
+  
+  # Enable debug logging via environment variable
+  # ENV['MIGRATION_GUARD_DEBUG'] = 'true'
+end</code></pre>
+  </section>
+  
+  <section id="git-integration-options">
+    <h2>Git Integration Options</h2>
+    
+    <h3>Git Integration Levels</h3>
+    
+    <pre><code>MigrationGuard.configure do |config|
+  # Git integration levels
+  config.git_integration_level = :warning  # Default
+  
+  # Other options:
+  # config.git_integration_level = :off          # Disable git integration completely
+  # config.git_integration_level = :auto_rollback # Automatically suggest rollback for orphaned migrations
+end</code></pre>
+    
+    <p><strong>Available Levels:</strong></p>
+    <ul>
+      <li><code>:off</code> - No git integration, disabled completely</li>
+      <li><code>:minimal</code> - Basic tracking only, no comparisons or warnings</li>
+      <li><code>:warning</code> - Track and warn about orphaned migrations</li>
+      <li><code>:auto_rollback</code> - Suggest rollback operations for orphaned migrations</li>
+      <li><code>:strict</code> - Block operations when orphaned migrations are detected</li>
+    </ul>
+  </section>
+  
+  <section id="tracking-options">
+    <h2>Tracking Options</h2>
+    
+    <pre><code>MigrationGuard.configure do |config|
+  # Information to track with each migration
+  config.track_branch = true        # Record which branch the migration was run on
+  config.track_author = true        # Record git user.email as author
+  config.track_timestamp = true     # Record timestamps for each operation
+  
+  # Additional tracking options
+  config.track_operation = true     # Record what operation was performed (migrate/rollback)
+  config.track_environment = true   # Record which Rails environment was used
+  config.track_metadata = true      # Allow storing additional metadata with migrations
+end</code></pre>
+    
+    <h3>Author Tracking</h3>
+    
+    <pre><code># Custom author resolution
+MigrationGuard.configure do |config|
+  # Use Devise current_user.email if available
+  config.author_resolver = lambda do
+    if defined?(Devise) && Devise.respond_to?(:current_user) && Devise.current_user
+      Devise.current_user.email
+    else
+      `git config user.email`.strip.presence
+    end
+  end
+  
+  # Fallback when author can't be determined
+  config.author_fallback = ENV['USER'] || 'unknown'
+end</code></pre>
+  </section>
+  
+  <section id="behavior-options">
+    <h2>Behavior Options</h2>
+    
+    <pre><code>MigrationGuard.configure do |config|
+  # Warning behaviors
+  config.warn_on_switch = true        # Warn when switching branches with orphaned migrations
+  config.warn_on_startup = true       # Warn during Rails boot if orphaned migrations exist
+  
+  # Blocking behaviors
+  config.block_deploy_with_orphans = false  # Block deploys when orphaned migrations exist
+  config.block_migrate_with_orphans = false # Block further migrations when orphans exist
+  
+  # Sandbox mode (test migrations without applying them)
+  config.sandbox_mode = false         # When true, simulates migrations without executing them
+  
+  # Callbacks
+  config.before_track = lambda do |record|
+    # Custom logic before tracking a migration
+    record.metadata ||= {}
+    record.metadata[:host] = Socket.gethostname
+  end
+  
+  config.after_track = lambda do |record|
+    # Custom logic after tracking a migration
+    Rails.logger.info "Tracked migration #{record.version} on #{record.branch}"
+  end
+end</code></pre>
+    
+    <h3>Interactive Mode Control</h3>
+    
+    <pre><code>MigrationGuard.configure do |config|
+  # Automatic detection of interactive environment
+  config.auto_detect_interactive = true  # Auto-detect TTY
+  
+  # Force non-interactive mode (useful for CI/CD)
+  config.force_non_interactive = ENV['CI'].present?
+  
+  # Interactive prompt timeout
+  config.interactive_timeout = 30.seconds  # How long to wait for user input
+end</code></pre>
+  </section>
+  
+  <section id="cleanup-policies">
+    <h2>Cleanup Policies</h2>
+    
+    <pre><code>MigrationGuard.configure do |config|
+  # Automatic cleanup of old records
+  config.auto_cleanup = false          # Enable automatic cleanup
+  config.cleanup_after_days = 30       # Remove records older than this
+  
+  # Selective cleanup
+  config.cleanup_statuses = ['rolled_back']  # Only clean up these statuses
+  
+  # Cleanup schedule
+  config.cleanup_frequency = 1.day     # How often to run cleanup
+  
+  # Orphaned migrations cleanup
+  config.auto_cleanup_orphaned = false # Automatically clean up orphaned migrations
+  config.orphaned_cleanup_delay = 7.days # Wait period before cleaning orphaned
+end</code></pre>
+  </section>
+  
+  <section id="branch-configuration">
+    <h2>Branch Configuration</h2>
+    
+    <pre><code>MigrationGuard.configure do |config|
+  # Main branches to check against
+  config.main_branch_names = %w[main master trunk]
+  
+  # Multiple target branches
+  config.target_branches = %w[main develop staging]
+  
+  # Remote branches
+  config.check_remote_branches = true
+  config.remote_prefix = 'origin/'
+  
+  # Protected branches (never suggest rollback on these)
+  config.protected_branches = %w[main master production]
+end</code></pre>
+    
+    <h3>Branch Detection</h3>
+    
+    <pre><code>MigrationGuard.configure do |config|
+  # Custom branch detection
+  config.branch_resolver = lambda do
+    # Get branch from ENV in CI environments
+    ENV['CI_BRANCH'] || ENV['GITHUB_REF_NAME'] || `git rev-parse --abbrev-ref HEAD`.strip
+  end
+  
+  # Fallback when branch can't be determined
+  config.branch_fallback = 'unknown'
+  
+  # Branch name sanitization
+  config.sanitize_branch_names = true
+  config.branch_sanitizer = lambda do |branch_name|
+    branch_name.gsub(/[^a-zA-Z0-9\-_\/]/, '-')
+  end
+end</code></pre>
+  </section>
+  
+  <section id="advanced-git-options">
+    <h2>Advanced Git Options</h2>
+    
+    <pre><code>MigrationGuard.configure do |config|
+  # Git command options
+  config.git_timeout = 5.seconds       # Timeout for git commands
+  config.git_env = { 'LC_ALL' => 'C' } # Environment variables for git commands
+  config.git_options = '--no-pager'    # Extra options for git commands
+  
+  # Error handling
+  config.handle_git_errors = true      # Continue without git on errors
+  config.on_git_error = lambda do |error|
+    Rails.logger.warn "Git error: #{error.message}"
+    # Notify error tracking service
+    Sentry.capture_exception(error) if defined?(Sentry)
+  end
+  
+  # Advanced git integration
+  config.git_dir = Rails.root.join('.git').to_s  # Custom git directory
+  config.migration_paths = ['db/migrate']        # Paths to check for migrations
+end</code></pre>
+    
+    <h3>Detached HEAD Handling</h3>
+    
+    <pre><code>MigrationGuard.configure do |config|
+  # What to do in detached HEAD state
+  config.track_in_detached_head = true
+  
+  # Custom branch name for detached HEAD
+  config.on_detached_head = lambda do
+    "detached-#{`git rev-parse --short HEAD`.strip}"
+  end
+end</code></pre>
+  </section>
+  
+  <section id="logging-options">
+    <h2>Logging Options</h2>
+    
+    <pre><code>MigrationGuard.configure do |config|
+  # Log level
+  config.log_level = :info  # :debug, :info, :warn, :error, :fatal
+  
+  # Custom logger
+  config.logger = Rails.logger
+  # config.logger = Logger.new('log/migration_guard.log')
+  
+  # Debug mode via ENV variable
+  if ENV['MIGRATION_GUARD_DEBUG'] == 'true'
+    config.log_level = :debug
+  end
+  
+  # Performance logging
+  config.log_performance = true  # Log timing information
+  config.slow_operation_threshold = 1.second  # Log warning for slow operations
+end</code></pre>
+  </section>
+  
+  <section id="common-configurations">
+    <h2>Common Configurations</h2>
+    
+    <h3>For Development Teams</h3>
+    
+    <pre><code>MigrationGuard.configure do |config|
+  config.enabled_environments = [:development, :staging]
+  config.git_integration_level = :warning
+  config.warn_on_switch = true
+  config.track_author = true
+  config.track_branch = true
+  
+  # Auto-stash migrations when switching branches
+  config.auto_stash_migrations = true
+  config.stash_message = "MigrationGuard: Auto-stashed migrations"
+  
+  # Author tracking for team visibility
+  config.track_author = true
+end</code></pre>
+    
+    <h3>For CI/CD Environments</h3>
+    
+    <pre><code>MigrationGuard.configure do |config|
+  # Only enable in CI
+  config.enabled = ENV['CI'].present?
+  
+  # Non-interactive mode for CI
+  config.force_non_interactive = true
+  
+  # Set exit codes for CI
+  config.error_exit_code = 2  # Different from 1 to distinguish from other errors
+  
+  # JSON output for CI parsing
+  config.ci_output_format = :json
+  
+  # Block deployments with orphans
+  config.block_deploy_with_orphans = true if Rails.env.staging?
+end</code></pre>
+    
+    <h3>For Large Codebases</h3>
+    
+    <pre><code>MigrationGuard.configure do |config|
+  # Performance optimizations
+  config.git_timeout = 30.seconds
+  config.enable_caching = true
+  config.cache_duration = 5.minutes
+  
+  # Only check specific migration paths
+  config.migration_paths = ['db/migrate', 'engines/*/db/migrate']
+  
+  # Limit history depth
+  config.max_history_depth = 100
+  
+  # Enable auto-cleanup to prevent database bloat
+  config.auto_cleanup = true
+  config.cleanup_after_days = 30
+end</code></pre>
+    
+    <h3>For Strict Environments</h3>
+    
+    <pre><code>MigrationGuard.configure do |config|
+  # Stricter settings for teams that need tight control
+  config.git_integration_level = :strict
+  config.block_migrate_with_orphans = true
+  config.block_deploy_with_orphans = true
+  
+  # Notify on issues
+  config.on_orphaned_migration = lambda do |migration|
+    # Send Slack notification
+    SlackNotifier.notify("Orphaned migration detected: #{migration.version}")
+  end
+  
+  # Enhanced logging
+  config.log_level = :info
+  config.logger = Logger.new('log/migration_guard.log')
+end</code></pre>
+  </section>
+  
+  <section id="environment-variables">
+    <h2>Environment Variables</h2>
+    
+    <p>Rails Migration Guard supports various environment variables to control behavior without changing configuration:</p>
+    
+    <table>
+      <thead>
+        <tr>
+          <th>Variable</th>
+          <th>Description</th>
+          <th>Example</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>MIGRATION_GUARD_DEBUG</code></td>
+          <td>Enable debug logging</td>
+          <td><code>MIGRATION_GUARD_DEBUG=true rails db:migrate</code></td>
+        </tr>
+        <tr>
+          <td><code>FORCE</code></td>
+          <td>Force operations without prompts</td>
+          <td><code>FORCE=true rails db:migration:rollback_orphaned</code></td>
+        </tr>
+        <tr>
+          <td><code>NON_INTERACTIVE</code></td>
+          <td>Disable interactive prompts</td>
+          <td><code>NON_INTERACTIVE=true rails db:migration:recover</code></td>
+        </tr>
+        <tr>
+          <td><code>AUTO</code></td>
+          <td>Automatically apply first recovery option</td>
+          <td><code>AUTO=true rails db:migration:recover</code></td>
+        </tr>
+        <tr>
+          <td><code>FORMAT</code></td>
+          <td>Output format (text, json, yaml)</td>
+          <td><code>FORMAT=json rails db:migration:status</code></td>
+        </tr>
+        <tr>
+          <td><code>STRICT</code></td>
+          <td>Fail on any issues (for CI)</td>
+          <td><code>STRICT=true rails db:migration:ci</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</div>
