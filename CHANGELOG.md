@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Rails 8.0 Compatibility** (#72) - Full support for Rails 8.0:
+  - Updated test suite to run on Rails 8.0.2
+  - Fixed timezone deprecation warnings with `config.active_support.to_time_preserves_timezone = :zone`
+  - Confirmed compatibility with Rails 8.0 migration APIs
+  - CI matrix includes Ruby 3.2+ with Rails 8.0 (Rails 8.0 requires Ruby 3.2+)
+  - All tests passing without deprecation warnings
+
+### Added
 - **Migration Recovery Tools** (#29) - Comprehensive tools for recovering from failed rollbacks:
   - New `rails db:migration:recover` rake task for analyzing and fixing inconsistent migration states
   - Detects four types of migration inconsistencies:
