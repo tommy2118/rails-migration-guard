@@ -338,6 +338,38 @@ RSpec.describe "Recovery and status rake tasks", type: :integration do
         expect(output).to include("Overall Status: NEEDS ATTENTION")
       end
     end
+
+    context "with stuck migrations" do
+      before do
+        # Create a migration stuck in rolling_back status for more than 10 minutes
+        MigrationGuard::MigrationGuardRecord.create!(
+          version: "20240301000001",
+          status: "rolling_back",
+          branch: "feature/stuck-branch",
+          updated_at: 20.minutes.ago
+        )
+
+        # rubocop:disable RSpec/AnyInstance
+        allow_any_instance_of(MigrationGuard::DiagnosticRunner).to receive(:puts) do |_, message|
+          Rails.logger.info message if message.present?
+        end
+        # rubocop:enable RSpec/AnyInstance
+      end
+
+      it "detects and reports stuck migrations" do
+        Rake::Task["db:migration:doctor"].execute
+
+        output = task_output
+        aggregate_failures do
+          expect(output).to include("✗ Stuck migrations")
+          expect(output).to include("1 stuck")
+          expect(output).to include("Stuck migrations detected")
+          expect(output).to include("20240301000001")
+          expect(output).to include("Run 'rails db:migration:recover' to fix")
+          expect(output).to include("NEEDS ATTENTION")
+        end
+      end
+    end
   end
 
   describe "output format options" do

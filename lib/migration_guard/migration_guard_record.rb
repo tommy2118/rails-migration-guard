@@ -16,6 +16,7 @@ module MigrationGuard
     scope :history_ordered, -> { order(created_at: :desc) }
     scope :for_version, ->(version) { where(version: version) }
     scope :within_days, ->(days) { where("created_at > ?", days.days.ago) }
+    scope :stuck_in_rollback, ->(timeout) { where(status: "rolling_back").where(updated_at: ..timeout) }
 
     def self.setup_serialization
       serialize :metadata, JSON if connection_pool.connected? && !connection.adapter_name.match?(/PostgreSQL|MySQL/)

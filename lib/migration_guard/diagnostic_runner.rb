@@ -1,11 +1,13 @@
 # frozen_string_literal: true
 
 require_relative "colorizer"
+require_relative "time_formatters"
 
 module MigrationGuard
   # Comprehensive diagnostic runner for troubleshooting MigrationGuard issues
   # rubocop:disable Metrics/ClassLength
   class DiagnosticRunner
+    include TimeFormatters
     def initialize
       @issues = []
       @warnings = []
@@ -22,6 +24,7 @@ module MigrationGuard
       check_target_branch_configuration
       check_orphaned_migrations
       check_missing_migrations
+      check_stuck_migrations
       check_schema_consistency
       check_missing_migration_files
       check_environment_configuration
@@ -121,6 +124,19 @@ module MigrationGuard
     rescue StandardError => e
       add_issue("Failed to check missing migrations", e.message)
       print_check("Missing migrations", :error)
+    end
+
+    def check_stuck_migrations
+      stuck_migrations = find_stuck_migrations
+
+      if stuck_migrations.empty?
+        print_check("Stuck migrations", :success, "none found")
+      else
+        report_stuck_migrations(stuck_migrations)
+      end
+    rescue StandardError => e
+      add_issue("Failed to check stuck migrations", e.message)
+      print_check("Stuck migrations", :error)
     end
 
     def check_schema_consistency
@@ -327,6 +343,27 @@ module MigrationGuard
 
     def days_old(timestamp)
       ((Time.current - timestamp) / 1.day).round
+    end
+
+    def find_stuck_migrations
+      # Find migrations that have been in "rolling_back" status for more than the configured timeout
+      timeout_minutes = MigrationGuard.configuration.stuck_migration_timeout
+      timeout = timeout_minutes.minutes.ago
+      MigrationGuard::MigrationGuardRecord.stuck_in_rollback(timeout)
+    end
+
+    def report_stuck_migrations(stuck_migrations)
+      count = stuck_migrations.size
+      oldest_time = stuck_migrations.minimum(:updated_at)
+      time_stuck = format_time_since(oldest_time) if oldest_time
+
+      versions = stuck_migrations.map(&:version).join(", ")
+      add_issue("Stuck migrations detected",
+                "Migration(s) stuck in rollback state: #{versions}. Run 'rails db:migration:recover' to fix")
+
+      details = "#{count} stuck"
+      details += " (oldest: #{time_stuck})" if time_stuck
+      print_check("Stuck migrations", :error, details)
     end
   end
   # rubocop:enable Metrics/ClassLength

@@ -4,8 +4,6 @@ module MigrationGuard
   module Recovery
     # Checks for partial rollback issues
     class RollbackChecker < IssueChecker
-      ROLLBACK_TIMEOUT = 1.hour
-
       def check
         find_stuck_rollbacks.map do |record|
           build_issue(record)
@@ -15,9 +13,8 @@ module MigrationGuard
       private
 
       def find_stuck_rollbacks
-        MigrationGuardRecord
-          .where(status: "rolling_back")
-          .where(updated_at: ..ROLLBACK_TIMEOUT.ago)
+        timeout = MigrationGuard.configuration.stuck_migration_timeout.minutes.ago
+        MigrationGuardRecord.stuck_in_rollback(timeout)
       end
 
       def build_issue(record)

@@ -42,8 +42,8 @@ RSpec.describe MigrationGuard::Recovery::RollbackChecker do
           version: "20240116000001",
           status: "rolling_back",
           branch: "feature/test",
-          created_at: 30.minutes.ago,
-          updated_at: 30.minutes.ago,
+          created_at: 5.minutes.ago,
+          updated_at: 5.minutes.ago,
           metadata: {}
         )
 
@@ -58,9 +58,9 @@ RSpec.describe MigrationGuard::Recovery::RollbackChecker do
           version: "20240116000001",
           status: "rolling_back",
           branch: "feature/stuck",
-          created_at: 2.hours.ago,
-          updated_at: 2.hours.ago,
-          metadata: { "started_at" => 2.hours.ago.iso8601 }
+          created_at: 20.minutes.ago,
+          updated_at: 20.minutes.ago,
+          metadata: { "started_at" => 20.minutes.ago.iso8601 }
         )
       end
 
@@ -89,8 +89,8 @@ RSpec.describe MigrationGuard::Recovery::RollbackChecker do
           version: "20240116000001",
           status: "rolling_back",
           branch: "feature/stuck1",
-          created_at: 2.hours.ago,
-          updated_at: 2.hours.ago,
+          created_at: 15.minutes.ago,
+          updated_at: 15.minutes.ago,
           metadata: {}
         )
       end
@@ -100,8 +100,8 @@ RSpec.describe MigrationGuard::Recovery::RollbackChecker do
           version: "20240116000002",
           status: "rolling_back",
           branch: "feature/stuck2",
-          created_at: 3.hours.ago,
-          updated_at: 3.hours.ago,
+          created_at: 30.minutes.ago,
+          updated_at: 30.minutes.ago,
           metadata: {}
         )
       end
@@ -130,8 +130,8 @@ RSpec.describe MigrationGuard::Recovery::RollbackChecker do
           version: "20240116000001",
           status: "rolling_back",
           branch: "feature/recent",
-          created_at: 30.minutes.ago,
-          updated_at: 30.minutes.ago,
+          created_at: 5.minutes.ago,
+          updated_at: 5.minutes.ago,
           metadata: {}
         )
 
@@ -140,8 +140,8 @@ RSpec.describe MigrationGuard::Recovery::RollbackChecker do
           version: "20240116000002",
           status: "rolling_back",
           branch: "feature/stuck",
-          created_at: 2.hours.ago,
-          updated_at: 2.hours.ago,
+          created_at: 20.minutes.ago,
+          updated_at: 20.minutes.ago,
           metadata: {}
         )
       end
@@ -163,8 +163,8 @@ RSpec.describe MigrationGuard::Recovery::RollbackChecker do
           version: "20240116000001",
           status: "rolling_back",
           branch: "feature/boundary",
-          created_at: 1.hour.ago,
-          updated_at: 1.hour.ago,
+          created_at: 10.minutes.ago,
+          updated_at: 10.minutes.ago,
           metadata: {}
         )
       end
@@ -179,9 +179,9 @@ RSpec.describe MigrationGuard::Recovery::RollbackChecker do
       end
     end
 
-    describe "ROLLBACK_TIMEOUT constant" do
-      it "is set to 1 hour" do
-        expect(described_class::ROLLBACK_TIMEOUT).to eq(1.hour)
+    describe "configuration" do
+      it "respects the configured stuck_migration_timeout" do
+        expect(MigrationGuard.configuration.stuck_migration_timeout).to eq(10)
       end
     end
   end
