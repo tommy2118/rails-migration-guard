@@ -117,7 +117,7 @@ RSpec.describe MigrationGuard::RakeTasks do
           expect(rollbacker).to receive(:rollback_specific)
             .with(version)
             .and_raise(MigrationGuard::MigrationNotFoundError, error_message)
-          expect(logger).to receive(:error).with(error_message)
+          expect($stdout).to receive(:puts).with(/❌.*#{Regexp.escape(error_message)}/)
 
           described_class.rollback_specific(version)
         end
@@ -130,7 +130,7 @@ RSpec.describe MigrationGuard::RakeTasks do
           expect(MigrationGuard::Rollbacker).to receive(:new).and_return(rollbacker)
           expect(rollbacker).to receive(:rollback_specific).with(version)
                                                            .and_raise(MigrationGuard::RollbackError, error_message)
-          expect(logger).to receive(:error).with(error_message)
+          expect($stdout).to receive(:puts).with(/❌.*#{Regexp.escape(error_message)}/)
 
           described_class.rollback_specific(version)
         end
@@ -138,7 +138,7 @@ RSpec.describe MigrationGuard::RakeTasks do
 
       context "without a version" do
         it "logs usage instructions and returns" do
-          expect(logger).to receive(:error).with("Usage: rails db:migration:rollback_specific VERSION=xxx")
+          expect($stdout).to receive(:puts).with(/Usage: rails db:migration:rollback_specific VERSION=xxx/)
           expect(MigrationGuard::Rollbacker).not_to receive(:new)
 
           described_class.rollback_specific(nil)

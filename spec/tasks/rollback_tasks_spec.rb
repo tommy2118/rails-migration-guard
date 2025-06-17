@@ -3,8 +3,10 @@
 require "rails_helper"
 require "rake"
 
+# rubocop:disable RSpec/MultipleMemoizedHelpers
 RSpec.describe "Rollback rake tasks", type: :integration do
   let(:rake_output) { StringIO.new }
+  let(:stdout_output) { StringIO.new }
   let(:original_logger) { Rails.logger }
   let(:test_logger) { Logger.new(rake_output) }
   let(:git_integration) { instance_double(MigrationGuard::GitIntegration) }
@@ -21,6 +23,9 @@ RSpec.describe "Rollback rake tasks", type: :integration do
     end
     allow(Rails).to receive(:logger).and_return(test_logger)
     allow(MigrationGuard).to receive(:enabled?).and_return(true)
+
+    # Capture stdout output
+    allow($stdout).to receive(:puts) { |msg| stdout_output.puts(msg) }
 
     # Setup git mocks
     allow(MigrationGuard::GitIntegration).to receive(:new).and_return(git_integration)
@@ -43,7 +48,8 @@ RSpec.describe "Rollback rake tasks", type: :integration do
   end
 
   def task_output
-    rake_output.string
+    # Combine both logger and stdout output
+    rake_output.string + stdout_output.string
   end
 
   def create_orphaned_migration(version, status: "applied", branch: "feature/test")
@@ -263,7 +269,6 @@ RSpec.describe "Rollback rake tasks", type: :integration do
       FileUtils.rm_rf(Dir.glob(migration_dir.join("*.rb")))
     end
 
-    # rubocop:disable RSpec/MultipleMemoizedHelpers
     context "with valid migration" do
       let(:version) { "20240101000001" }
 
@@ -325,7 +330,7 @@ RSpec.describe "Rollback rake tasks", type: :integration do
     end
     # rubocop:enable RSpec/MultipleMemoizedHelpers
 
-    context "when encountering error scenarios" do
+    context "when encountering error scenarios" do # rubocop:disable RSpec/MultipleMemoizedHelpers
       it "shows error for non-existent version" do
         ENV["VERSION"] = "99999999999999"
         Rake::Task["db:migration:rollback_specific"].execute

@@ -40,14 +40,14 @@ module MigrationGuard
         return unless check_enabled
 
         unless version
-          Rails.logger.error "Usage: rails db:migration:rollback_specific VERSION=xxx"
+          puts Colorizer.error("Usage: rails db:migration:rollback_specific VERSION=xxx") # rubocop:disable Rails/Output
           return
         end
 
         rollbacker = MigrationGuard::Rollbacker.new
         rollbacker.rollback_specific(version)
       rescue MigrationGuard::MigrationNotFoundError, MigrationGuard::RollbackError => e
-        Rails.logger.error e.message
+        puts Colorizer.error("❌ #{e.message}") # rubocop:disable Rails/Output
       end
 
       def cleanup(force: false)
