@@ -1,43 +1,120 @@
----
-layout: default
-title: PR Comment Example
----
-
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-    <div class="text-center mb-12">
-        <h1 class="text-3xl font-bold text-gray-900 mb-4">PR Comment Example</h1>
-        <p class="text-xl text-gray-600">Example of how PR comments look when using Rails Migration Guard with GitHub Actions</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PR Comment Example</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      color: #24292e;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .comment-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      margin-right: 15px;
+    }
+    .bot-name {
+      font-weight: 600;
+      color: #24292e;
+    }
+    .timestamp {
+      color: #586069;
+      font-size: 14px;
+    }
+    .comment-body {
+      border: 1px solid #e1e4e8;
+      border-radius: 6px;
+      padding: 15px;
+      background-color: #fff;
+    }
+    .section-title {
+      margin-top: 16px;
+      margin-bottom: 8px;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .divider {
+      height: 1px;
+      background-color: #e1e4e8;
+      margin: 16px 0;
+    }
+    .migration-item {
+      font-family: monospace;
+      background-color: #f6f8fa;
+      padding: 2px 5px;
+      border-radius: 3px;
+    }
+    .action-item {
+      margin-bottom: 8px;
+    }
+    .footer {
+      color: #586069;
+      font-size: 12px;
+      font-style: italic;
+      margin-top: 16px;
+    }
+    .warning-icon {
+      color: #f9a825;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="comment-header">
+    <img src="https://avatars.githubusercontent.com/u/44036562?v=4" alt="GitHub Actions Bot" class="avatar">
+    <div>
+      <div class="bot-name">github-actions[bot]</div>
+      <div class="timestamp">commented just now</div>
     </div>
-
-    <div class="border border-gray-300 rounded-lg p-6 shadow-md bg-white">
-        <div class="border-b border-gray-200 pb-4 mb-4">
-            <div class="flex items-center">
-                <img src="https://github.com/github.png" alt="GitHub Actions" class="w-8 h-8 rounded-full mr-2">
-                <span class="font-medium text-gray-900">github-actions</span>
-                <span class="text-gray-500 ml-2">commented 2 hours ago</span>
-            </div>
-        </div>
-
-        <div class="prose max-w-none">
-            <h2 class="text-xl font-semibold text-yellow-600">⚠️ Migration Guard Check</h2>
-            
-            <p class="mb-4">Found issues with migrations in this PR:</p>
-            
-            <h3 class="text-lg font-medium mb-2">Orphaned Migrations Detected</h3>
-            <p class="mb-2">The following migrations exist in the database but not in the target branch:</p>
-            <ul class="list-disc list-inside ml-4 mb-4">
-                <li><code>20240601123456_add_user_preferences.rb</code> - Created on branch: feature/user-profiles</li>
-            </ul>
-            
-            <h3 class="text-lg font-medium mb-2">Suggested Actions</h3>
-            <ol class="list-decimal list-inside ml-4 mb-4">
-                <li><strong>For orphaned migrations</strong>: Roll them back or commit the migration files</li>
-                <li><strong>For missing migrations</strong>: Pull latest changes and run <code>rails db:migrate</code></li>
-            </ol>
-            
-            <div class="border-t border-gray-200 mt-4 pt-4 text-gray-500 text-sm italic">
-                This comment will be updated when issues are resolved.
-            </div>
-        </div>
-    </div>
-</div>
+  </div>
+  
+  <div class="comment-body">
+    <h2>
+      <span class="warning-icon">⚠️</span>
+      Migration Guard Check
+    </h2>
+    
+    <p>Found issues with migrations in this PR:</p>
+    
+    <h3 class="section-title">Orphaned Migrations Detected</h3>
+    <p>The following migrations exist in the database but not in the target branch:</p>
+    <ul>
+      <li>
+        <code class="migration-item">20240115123456_add_user_profiles.rb</code>
+        - Created on branch: feature/user-profiles
+      </li>
+      <li>
+        <code class="migration-item">20240116123456_add_user_preferences.rb</code>
+        - Created on branch: feature/user-prefs
+      </li>
+    </ul>
+    
+    <h3 class="section-title">Suggested Actions</h3>
+    <ol>
+      <li class="action-item">
+        <strong>For orphaned migrations</strong>: Roll them back or commit the migration files
+      </li>
+      <li class="action-item">
+        <strong>For missing migrations</strong>: Pull latest changes and run <code>rails db:migrate</code>
+      </li>
+    </ol>
+    
+    <div class="divider"></div>
+    
+    <p class="footer">
+      This comment will be updated when issues are resolved.
+    </p>
+  </div>
+</body>
+</html>
