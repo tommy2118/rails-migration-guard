@@ -36,6 +36,9 @@ RSpec.describe MigrationGuard::MigrationExtension do
     allow(MigrationGuard::Tracker).to receive(:new).and_return(tracker)
     allow(MigrationGuard::PostMigrationChecker).to receive(:new).and_return(post_migration_checker)
     allow(tracker).to receive(:track_migration)
+
+    # Reset WarningCollector to ensure consistent test behavior
+    MigrationGuard::WarningCollector.reset!
   end
 
   describe "automatic tracking on migrate" do
@@ -56,6 +59,9 @@ RSpec.describe MigrationGuard::MigrationExtension do
       end
 
       it "checks for orphaned migrations after running up" do
+        # Ensure WarningCollector is not in batch mode
+        allow(MigrationGuard::WarningCollector).to receive(:should_show_individual_warnings?).and_return(true)
+
         expect(post_migration_checker).to receive(:check_and_warn)
         test_migration_class.migrate(:up)
       end
@@ -63,6 +69,25 @@ RSpec.describe MigrationGuard::MigrationExtension do
       it "does not check for orphaned migrations after running down" do
         expect(post_migration_checker).not_to receive(:check_and_warn)
         test_migration_class.migrate(:down)
+      end
+
+      context "when warnings are consolidated" do
+        before do
+          allow(MigrationGuard::WarningCollector).to receive(:should_show_individual_warnings?).and_return(false)
+        end
+
+        it "does not check for orphaned migrations immediately" do
+          expect(post_migration_checker).not_to receive(:check_and_warn)
+          test_migration_class.migrate(:up)
+        end
+
+        it "increments migration count" do
+          # Since increment is called in the class method and tracking may call it
+          # from the instance method, we expect it to be called at least once
+          expect(MigrationGuard::WarningCollector).to receive(:increment_migration_count).at_least(:once)
+
+          test_migration_class.migrate(:up)
+        end
       end
     end
 
@@ -78,6 +103,9 @@ RSpec.describe MigrationGuard::MigrationExtension do
       end
 
       it "checks for orphaned migrations after running up" do
+        # Ensure WarningCollector is not in batch mode
+        allow(MigrationGuard::WarningCollector).to receive(:should_show_individual_warnings?).and_return(true)
+
         expect(post_migration_checker).to receive(:check_and_warn)
         migration_instance.migrate(:up)
       end

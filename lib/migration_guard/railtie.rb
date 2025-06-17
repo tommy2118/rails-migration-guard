@@ -23,6 +23,7 @@ module MigrationGuard
         # Hook into ActiveRecord::Migration
         ActiveSupport.on_load(:active_record) do
           require_relative "migration_extension"
+          require_relative "migrator_extension"
         end
 
         # Setup the MigrationGuardRecord model
