@@ -1,76 +1,102 @@
 # Scheduled GitHub Actions workflow for Rails Migration Guard
-name: Migration Drift Check
+name: Scheduled Migration Check
 
 on:
   schedule:
-    - cron: '0 9 * * 1-5'  # 9 AM UTC weekdays
-  workflow_dispatch:       # Allow manual triggering
+    - cron: '0 8 * * 1-5'  # 8 AM UTC weekdays
+  workflow_dispatch:  # Allow manual triggering
 
 jobs:
-  check-migrations:
+  check-staging-drift:
+    name: Check staging migration drift
     runs-on: ubuntu-latest
     
-    services:
-      postgres:
-        image: postgres:14
-        env:
-          POSTGRES_PASSWORD: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          ref: main                   # Check against main branch
-          fetch-depth: 0              # Full history for proper comparison
+          ref: main
+          fetch-depth: 0  # Required for branch comparison
       
-      - name: Setup Ruby
+      - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
       
-      - name: Setup Database
-        run: |
-          bundle exec rails db:setup
+      - name: Check migrations
+        id: check
+        uses: ./.github/actions/migration-guard
+        with:
+          rails-env: staging
+          format: json
         env:
-          RAILS_ENV: test
-          DATABASE_URL: postgresql://postgres:postgres@localhost/test
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
       
-      - name: Check for migration issues
-        run: |
-          bundle exec rails db:migration:ci
-        env:
-          RAILS_ENV: test
-          DATABASE_URL: postgresql://postgres:postgres@localhost/test
+      - name: Create GitHub issue for drift
+        if: steps.check.outputs.orphaned-count > 0 || steps.check.outputs.missing-count > 0
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const orphanedCount = parseInt('${{ steps.check.outputs.orphaned-count }}');
+            const missingCount = parseInt('${{ steps.check.outputs.missing-count }}');
+            
+            let issueTitle = 'Migration drift detected in staging';
+            let issueBody = '## Migration Drift Report\n\n';
+            
+            if (orphanedCount > 0) {
+              issueBody += `### Orphaned Migrations\n${orphanedCount} migrations exist in the database but not in the main branch.\n\n`;
+            }
+            
+            if (missingCount > 0) {
+              issueBody += `### Missing Migrations\n${missingCount} migrations exist in the main branch but are not applied to the database.\n\n`;
+            }
+            
+            issueBody += '### Action Required\n';
+            issueBody += 'Please review the staging environment and synchronize the database migrations.\n\n';
+            issueBody += 'Run `rails db:migration:status RAILS_ENV=staging` for details.';
+            
+            const response = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: issueTitle,
+              body: issueBody,
+              labels: ['migration-drift', 'needs-attention']
+            });
+            
+            console.log(`Created issue #${response.data.number}: ${response.data.html_url}`);
       
-      - name: Notify on failure
-        if: failure()
+      - name: Notify Slack
+        if: steps.check.outputs.orphaned-count > 0 || steps.check.outputs.missing-count > 0
         uses: slackapi/slack-github-action@v1
         with:
           payload: |
             {
-              "text": "⚠️ Migration drift detected in main branch!",
+              "text": "Migration drift detected in staging environment",
               "blocks": [
                 {
-                  "type": "section",
+                  "type": "header",
                   "text": {
-                    "type": "mrkdwn",
-                    "text": "*⚠️ Migration drift detected in main branch!*\nPlease check the database state and resolve any inconsistencies."
+                    "type": "plain_text",
+                    "text": "⚠️ Migration Drift Detected"
                   }
                 },
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "See the <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|workflow run> for details."
+                    "text": "*Staging Environment Migration Status:*\n• Orphaned migrations: ${{ steps.check.outputs.orphaned-count }}\n• Missing migrations: ${{ steps.check.outputs.missing-count }}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "Please check GitHub issues for details and required actions."
                   }
                 }
               ]
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
