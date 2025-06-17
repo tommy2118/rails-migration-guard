@@ -21,6 +21,13 @@ MigrationGuard.configure do |config|
   config.warn_after_migration = true # Warn about orphaned migrations after running migrations
   config.block_deploy_with_orphans = false # Block deploys with orphaned migrations
 
+  # Warning frequency for migration batches
+  # - :each    - Show warnings after each migration (default for backward compatibility)
+  # - :once    - Show warnings only once at the end of all migrations
+  # - :smart   - Show warnings individually for single migrations, summary for batches (default)
+  # - :summary - Always show summary format, even for single migrations
+  # config.warning_frequency = :smart
+
   # Cleanup policies
   config.auto_cleanup = false              # Automatically clean up old records
   config.cleanup_after_days = 30           # Days before cleanup

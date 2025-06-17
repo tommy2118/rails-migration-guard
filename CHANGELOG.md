@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Warning Consolidation** (#105, #127) - Fixed warning spam during multiple migrations:
+  - `:smart` mode now properly consolidates warnings for batch migrations
+  - Added new `:summary` mode that always shows consolidated format
+  - Single migrations in smart mode show regular warnings
+  - Multiple migrations show a summary at the end
+  - Reduces noise and improves UX during migration runs
+
 ### Added
 - **Enhanced Doctor Command** (#86) - Doctor now detects stuck migrations:
   - Detects migrations stuck in "rolling_back" status 
