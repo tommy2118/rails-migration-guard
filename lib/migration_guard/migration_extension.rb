@@ -8,20 +8,12 @@ module MigrationGuard
 
     module ClassMethods
       def migrate(direction)
-        result = super
-
-        if MigrationGuard.enabled? && respond_to?(:version)
-          tracker = MigrationGuard::Tracker.new
-          tracker.track_migration(version.to_s, direction)
-
-          # Check for orphaned migrations after running up migrations
-          if direction == :up
-            checker = MigrationGuard::PostMigrationChecker.new
-            checker.check_and_warn
-          end
+        # Track in class method only if we have version
+        if MigrationGuard.enabled? && respond_to?(:version) && direction == :up
+          MigrationGuard::WarningCollector.increment_migration_count
         end
 
-        result
+        super
       end
     end
 
@@ -33,7 +25,7 @@ module MigrationGuard
         tracker.track_migration(version.to_s, direction)
 
         # Check for orphaned migrations after running up migrations
-        if direction == :up
+        if direction == :up && MigrationGuard::WarningCollector.should_show_individual_warnings?
           checker = MigrationGuard::PostMigrationChecker.new
           checker.check_and_warn
         end

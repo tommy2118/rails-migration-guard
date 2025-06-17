@@ -51,22 +51,46 @@ RSpec.describe MigrationGuard::Configuration do
 
   describe "#behavior_options" do
     it "has sensible defaults" do
-      expect(config.sandbox_mode).to be false
-      expect(config.warn_on_switch).to be true
-      expect(config.warn_after_migration).to be true
-      expect(config.block_deploy_with_orphans).to be false
+      aggregate_failures do
+        expect(config.sandbox_mode).to be false
+        expect(config.warn_on_switch).to be true
+        expect(config.warn_after_migration).to be true
+        expect(config.warning_frequency).to eq(:smart)
+        expect(config.max_warnings_display).to eq(10)
+        expect(config.block_deploy_with_orphans).to be false
+        expect(config.auto_detect_tty).to be true
+      end
     end
 
     it "can be customized" do
       config.sandbox_mode = true
       config.warn_on_switch = false
       config.warn_after_migration = false
+      config.warning_frequency = :once
+      config.max_warnings_display = 20
       config.block_deploy_with_orphans = true
 
-      expect(config.sandbox_mode).to be true
-      expect(config.warn_on_switch).to be false
-      expect(config.warn_after_migration).to be false
-      expect(config.block_deploy_with_orphans).to be true
+      aggregate_failures do
+        expect(config.sandbox_mode).to be true
+        expect(config.warn_on_switch).to be false
+        expect(config.warn_after_migration).to be false
+        expect(config.warning_frequency).to eq(:once)
+        expect(config.max_warnings_display).to eq(20)
+        expect(config.block_deploy_with_orphans).to be true
+      end
+    end
+  end
+
+  describe "#warning_frequency" do
+    it "defaults to :smart" do
+      expect(config.warning_frequency).to eq(:smart)
+    end
+
+    it "accepts valid frequencies" do
+      %i[each once smart].each do |frequency|
+        config.warning_frequency = frequency
+        expect(config.warning_frequency).to eq(frequency)
+      end
     end
   end
 
@@ -163,11 +187,14 @@ RSpec.describe MigrationGuard::Configuration do
         sandbox_mode: false,
         warn_on_switch: true,
         warn_after_migration: true,
+        warning_frequency: :smart,
+        max_warnings_display: 10,
         block_deploy_with_orphans: false,
         auto_cleanup: false,
         cleanup_after_days: 30,
         main_branch_names: %w[main master trunk],
-        target_branches: nil
+        target_branches: nil,
+        auto_detect_tty: true
       )
     end
   end
@@ -180,6 +207,11 @@ RSpec.describe MigrationGuard::Configuration do
     it "raises error for invalid git integration level" do
       allow(config).to receive(:git_integration_level).and_return(:invalid)
       expect { config.validate }.to raise_error(MigrationGuard::ConfigurationError)
+    end
+
+    it "raises error for invalid warning frequency" do
+      allow(config).to receive(:warning_frequency).and_return(:invalid)
+      expect { config.validate }.to raise_error(MigrationGuard::ConfigurationError, /Invalid warning frequency/)
     end
 
     it "raises error for empty enabled_environments" do

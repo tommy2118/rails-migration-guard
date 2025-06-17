@@ -1,0 +1,55 @@
+# Matrix build GitHub Actions workflow for Rails Migration Guard
+name: Migration Check Matrix
+
+on:
+  pull_request:
+    paths:
+      - 'db/migrate/**'
+      - 'db/schema.rb'
+
+jobs:
+  check-migrations:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        ruby: ['3.1', '3.2', '3.3']
+        rails: ['7.0', '7.1', '7.2']
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for proper branch comparison
+      
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      
+      - name: Setup Database
+        run: |
+          bundle exec rails db:setup
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost/test
+      
+      - name: Check for migration issues
+        run: |
+          bundle exec rails db:migration:ci STRICT=${{ matrix.rails == '7.2' }}
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost/test

@@ -1,0 +1,76 @@
+# Scheduled GitHub Actions workflow for Rails Migration Guard
+name: Migration Drift Check
+
+on:
+  schedule:
+    - cron: '0 9 * * 1-5'  # 9 AM UTC weekdays
+  workflow_dispatch:       # Allow manual triggering
+
+jobs:
+  check-migrations:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main                   # Check against main branch
+          fetch-depth: 0              # Full history for proper comparison
+      
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      
+      - name: Setup Database
+        run: |
+          bundle exec rails db:setup
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost/test
+      
+      - name: Check for migration issues
+        run: |
+          bundle exec rails db:migration:ci
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost/test
+      
+      - name: Notify on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "⚠️ Migration drift detected in main branch!",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*⚠️ Migration drift detected in main branch!*\nPlease check the database state and resolve any inconsistencies."
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "See the <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|workflow run> for details."
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

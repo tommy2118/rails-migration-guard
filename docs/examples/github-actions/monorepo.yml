@@ -1,0 +1,97 @@
+# Monorepo GitHub Actions workflow for Rails Migration Guard
+name: Migration Check Monorepo
+
+on:
+  pull_request:
+    paths:
+      - 'apps/*/db/migrate/**'
+      - 'apps/*/db/schema.rb'
+
+jobs:
+  check-api-migrations:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./apps/api
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for proper branch comparison
+      
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+          working-directory: ./apps/api
+      
+      - name: Setup Database
+        run: |
+          bundle exec rails db:setup
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost/api_test
+      
+      - name: Check for migration issues
+        run: |
+          bundle exec rails db:migration:ci
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost/api_test
+
+  check-admin-migrations:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./apps/admin
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for proper branch comparison
+      
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+          working-directory: ./apps/admin
+      
+      - name: Setup Database
+        run: |
+          bundle exec rails db:setup
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost/admin_test
+      
+      - name: Check for migration issues
+        run: |
+          bundle exec rails db:migration:ci
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost/admin_test

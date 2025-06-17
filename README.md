@@ -1,6 +1,6 @@
 # Rails Migration Guard
 
-[![Gem Version](https://badge.fury.io/rb/rails-migration-guard.svg)](https://badge.fury.io/rb/rails-migration-guard)
+[![Gem Version](https://badge.fury.io/rb/rails_migration_guard.svg)](https://badge.fury.io/rb/rails_migration_guard)
 [![Build Status](https://github.com/tommy2118/rails-migration-guard/workflows/CI/badge.svg)](https://github.com/tommy2118/rails-migration-guard/actions)
 [![GitHub issues](https://img.shields.io/github/issues/tommy2118/rails-migration-guard)](https://github.com/tommy2118/rails-migration-guard/issues)
 [![GitHub license](https://img.shields.io/github/license/tommy2118/rails-migration-guard)](https://github.com/tommy2118/rails-migration-guard/blob/master/MIT-LICENSE)
@@ -235,7 +235,7 @@ NON_INTERACTIVE=true rails db:migration:recover
 AUTO=true rails db:migration:recover  # Auto-apply first recovery option
 ```
 
-See [Docker & CI/CD Documentation](docs/docker-ci-support.md) for detailed examples.
+See [Docker & CI/CD Documentation](https://tommy2118.github.io/rails-migration-guard/ci-integration.html#docker-support) for detailed examples.
 
 ### Sandbox Mode
 
@@ -349,11 +349,11 @@ jobs:
           comment-on-pr: true
 ```
 
-**📘 See the [GitHub Actions guide](docs/github-actions.md) for detailed setup and advanced configurations.**
+**📘 See the [GitHub Actions guide](https://tommy2118.github.io/rails-migration-guard/github-actions.html) for detailed setup and advanced configurations.**
 
 ### Other CI Platforms
 
-See the [CI Integration guide](docs/ci-integration.md) for examples with:
+See the [CI Integration guide](https://tommy2118.github.io/rails-migration-guard/ci-integration.html) for examples with:
 - GitLab CI
 - CircleCI
 - Jenkins
@@ -405,11 +405,11 @@ Debug logs include:
 
 ## Troubleshooting
 
-For comprehensive troubleshooting information, see our [Troubleshooting Guide](TROUBLESHOOTING.md).
+For comprehensive troubleshooting information, see our [Troubleshooting Guide](https://tommy2118.github.io/rails-migration-guard/troubleshooting.html).
 
 Common issues:
 - **"Migration not found" errors**: Usually means you have orphaned migrations. Run `rails db:migration:status` to identify them.
-- **Git integration not working**: Ensure you're in a git repository and have git installed. See [Git Integration Edge Cases](TROUBLESHOOTING.md#git-integration-edge-cases) for advanced scenarios.
+- **Git integration not working**: Ensure you're in a git repository and have git installed. See [Git Integration Edge Cases](https://tommy2118.github.io/rails-migration-guard/troubleshooting.html#git-integration-edge-cases) for advanced scenarios.
 - **Special branch names**: Branch names with spaces, special characters, or unicode may need special handling. See the troubleshooting guide.
 - **Performance concerns**: The gem has minimal overhead. Set `git_integration_level: :off` to disable git operations if needed.
 
@@ -461,4 +461,4 @@ Created and maintained by Tommy A. Caruso.
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for a history of changes.
+See [CHANGELOG.md](https://github.com/tommy2118/rails-migration-guard/blob/master/CHANGELOG.md) for a history of changes.
