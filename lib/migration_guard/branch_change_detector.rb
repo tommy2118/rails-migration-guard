@@ -69,14 +69,18 @@ module MigrationGuard
 
     def check_for_orphaned_migrations(previous_branch, current_branch)
       MigrationGuard::Logger.info("Branch switch detected", from: previous_branch, to: current_branch)
-      puts "" # rubocop:disable Rails/Output
-      puts Colorizer.info("Switched from '#{previous_branch}' to '#{current_branch}'") # rubocop:disable Rails/Output
+
+      # Use STDOUT directly and flush to ensure output is visible in git hooks
+      $stdout.puts ""
+      $stdout.puts Colorizer.info("Switched from '#{previous_branch}' to '#{current_branch}'")
+      $stdout.flush
 
       warning = format_branch_change_warnings
       return unless warning
 
       MigrationGuard::Logger.warn("Orphaned migrations detected on branch switch")
-      puts warning # rubocop:disable Rails/Output
+      $stdout.puts warning
+      $stdout.flush
     end
 
     def add_warning_header(output)

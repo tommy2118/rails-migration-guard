@@ -295,6 +295,30 @@ RSpec.describe MigrationGuard::AuthorReporter do
       data = author_reporter.collect_authors_data
       expect(data.size).to eq(2) # Still only dev1 and dev2
     end
+
+    it "handles unexpected status values gracefully" do
+      # Create a migration with an unexpected status
+      MigrationGuard::MigrationGuardRecord.create!(
+        version: "20240107000001",
+        author: "dev3@example.com",
+        status: "rolling_back"
+      )
+      MigrationGuard::MigrationGuardRecord.create!(
+        version: "20240108000001",
+        author: "dev3@example.com",
+        status: "custom_status"
+      )
+
+      data = author_reporter.collect_authors_data
+      dev3_data = data.find { |d| d[:author] == "dev3@example.com" }
+
+      aggregate_failures do
+        expect(dev3_data).not_to be_nil
+        expect(dev3_data[:total]).to eq(2)
+        expect(dev3_data[:rolling_back]).to eq(1)
+        expect(dev3_data[:custom_status]).to eq(1)
+      end
+    end
   end
 
   describe "private methods" do

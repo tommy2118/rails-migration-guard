@@ -92,14 +92,14 @@ module MigrationGuard
               container=$(docker ps --format "{{.Names}}" | grep -E "_web_|_app_|rails" | head -1)
               if [ -n "$container" ]; then
                 echo "Using Docker environment (container: $container)..."
-                docker exec "$container" rails db:migration:check_branch_change[$1,$2,$3] 2>&1 || echo "Migration check completed"
+                docker exec "$container" rails db:migration:check_branch_change[$1,$2,$3] || true
               else
                 echo "Docker detected but no Rails container found. Running locally..."
-                bundle exec rails db:migration:check_branch_change[$1,$2,$3] 2>&1 || echo "Migration check completed"
+                bundle exec rails db:migration:check_branch_change[$1,$2,$3] || true
               fi
             else
               # Run locally
-              bundle exec rails db:migration:check_branch_change[$1,$2,$3] 2>&1 || echo "Migration check completed"
+              bundle exec rails db:migration:check_branch_change[$1,$2,$3] || true
             fi
           fi
         HOOK

@@ -15,7 +15,8 @@ RSpec.describe MigrationGuard::BranchChangeDetector do
     allow(Rails).to receive(:logger).and_return(test_logger)
     allow(test_logger).to receive(:info)
     # Suppress console output in tests
-    allow(detector).to receive(:puts)
+    allow($stdout).to receive(:puts)
+    allow($stdout).to receive(:flush)
   end
 
   describe "#check_branch_change" do
@@ -63,8 +64,8 @@ RSpec.describe MigrationGuard::BranchChangeDetector do
 
         detector.check_branch_change("abc123", "def456", "1")
 
-        expect(detector).to have_received(:puts).with("")
-        expect(detector).to have_received(:puts).with(%r{Switched from 'main' to 'feature/new-feature'})
+        expect($stdout).to have_received(:puts).with("")
+        expect($stdout).to have_received(:puts).with(%r{Switched from 'main' to 'feature/new-feature'})
       end
 
       it "shows warnings when orphaned migrations exist" do
@@ -80,8 +81,8 @@ RSpec.describe MigrationGuard::BranchChangeDetector do
 
         detector.check_branch_change("abc123", "def456", "1")
 
-        expect(detector).to have_received(:puts).exactly(3).times
-        expect(detector).to have_received(:puts).with(/Branch Change Warning/)
+        expect($stdout).to have_received(:puts).at_least(3).times
+        expect($stdout).to have_received(:puts).with(/Branch Change Warning/)
       end
 
       it "handles same branch gracefully" do

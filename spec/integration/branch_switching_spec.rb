@@ -55,23 +55,24 @@ RSpec.describe "Branch switching integration", type: :integration do
       allow(detector).to receive(:branch_name_from_ref).with("def456").and_return("feature/new-feature")
 
       # Suppress output in tests
-      allow(detector).to receive(:puts)
+      allow($stdout).to receive(:puts)
+      allow($stdout).to receive(:flush)
 
       detector.check_branch_change("abc123", "def456", "1")
 
       # Verify it output the branch switch
-      expect(detector).to have_received(:puts).with("")
-      expect(detector).to have_received(:puts).with(%r{Switched from 'main' to 'feature/new-feature'})
+      expect($stdout).to have_received(:puts).with("")
+      expect($stdout).to have_received(:puts).with(%r{Switched from 'main' to 'feature/new-feature'})
 
       # Verify it warned about orphaned migrations
-      expect(detector).to have_received(:puts).with(/Branch Change Warning/)
+      expect($stdout).to have_received(:puts).with(/Branch Change Warning/)
     end
 
     it "respects the warn_on_switch configuration" do
       allow(MigrationGuard.configuration).to receive(:warn_on_switch).and_return(false)
 
       # Verify puts is not called
-      expect(detector).not_to receive(:puts)
+      expect($stdout).not_to receive(:puts)
 
       detector.check_branch_change("abc123", "def456", "1")
     end
@@ -82,7 +83,8 @@ RSpec.describe "Branch switching integration", type: :integration do
 
       # Capture output
       output = []
-      allow(detector).to receive(:puts) { |msg| output << msg if msg }
+      allow($stdout).to receive(:puts) { |msg| output << msg if msg }
+      allow($stdout).to receive(:flush)
 
       detector.check_branch_change("abc123", "def456", "1")
 

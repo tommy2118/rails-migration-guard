@@ -26,7 +26,7 @@ module MigrationGuard
     end
     # rubocop:enable Metrics/AbcSize
 
-    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def collect_authors_data
       records = MigrationGuardRecord.where.not(author: [nil, ""])
 
@@ -43,10 +43,13 @@ module MigrationGuard
           rolled_back: 0,
           orphaned: 0,
           synced: 0,
+          rolling_back: 0,
           latest_migration: authors_latest[author]
         }
 
         authors_summary[author][:total] += count
+        # Ensure the status key exists before incrementing
+        authors_summary[author][status.to_sym] ||= 0
         authors_summary[author][status.to_sym] += count
       end
 
@@ -60,7 +63,7 @@ module MigrationGuard
         end
       end
     end
-    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
+    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     private
 
