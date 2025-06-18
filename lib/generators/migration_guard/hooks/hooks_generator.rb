@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "rails/generators"
+require "fileutils"
 
 module MigrationGuard
   module Generators
@@ -65,7 +66,7 @@ module MigrationGuard
           end
 
           backup_path = "#{hook_path}.backup"
-          copy_file hook_path, backup_path
+          FileUtils.cp(hook_path, backup_path)
           say "Backed up existing #{name} hook to #{backup_path}", :yellow
         end
 
