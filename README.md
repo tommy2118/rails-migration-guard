@@ -239,12 +239,119 @@ See [Docker & CI/CD Documentation](https://tommy2118.github.io/rails-migration-g
 
 ### Sandbox Mode
 
-Test migrations without applying them:
+Sandbox mode allows you to test migrations without permanently applying changes to your database. This is perfect for:
+- Testing complex migrations before running them for real
+- Verifying migration behavior in development
+- Debugging migration issues safely
+- Reviewing schema.rb changes without committing to database changes
+
+#### How It Works
+
+When sandbox mode is enabled:
+1. Migration runs inside a database transaction
+2. All database changes are applied temporarily
+3. `schema.rb` is updated to reflect the changes
+4. Database changes are automatically rolled back
+5. You can inspect the schema.rb file to see what would happen
+
+#### Configuration
 
 ```ruby
 # config/initializers/migration_guard.rb
 MigrationGuard.configure do |config|
-  config.sandbox_mode = true
+  config.sandbox_mode = true  # Enable sandbox mode for all migrations
+end
+```
+
+#### Visual Feedback
+
+Sandbox mode provides clear visual indicators:
+
+```bash
+$ rails db:migrate
+🧪 SANDBOX MODE ACTIVE - Database changes will be rolled back
+== 20240617123456 CreateUsers: migrating =====================================
+-- create_table(:users)
+   -> 0.0010s
+== 20240617123456 CreateUsers: migrated (0.0015s) ============================
+⚠️  SANDBOX: Database changes rolled back. Schema.rb updated for inspection.
+```
+
+#### Environment Variables
+
+Control sandbox mode output with environment variables:
+
+```bash
+# Disable all sandbox mode messages (silent mode)
+export MIGRATION_GUARD_SANDBOX_QUIET=true
+
+# Enable sandbox messages in test environment (normally suppressed)
+export MIGRATION_GUARD_SANDBOX_VERBOSE=true
+```
+
+#### Use Cases
+
+**1. Testing a Complex Migration**
+```ruby
+# Enable sandbox mode temporarily
+MigrationGuard.configuration.sandbox_mode = true
+
+# Run your migration
+$ rails db:migrate
+
+# Check schema.rb to see the changes
+$ git diff db/schema.rb
+
+# If satisfied, disable sandbox mode and run for real
+MigrationGuard.configuration.sandbox_mode = false
+$ rails db:migrate
+```
+
+**2. Debugging Migration Failures**
+```ruby
+# If a migration is failing, use sandbox mode to debug
+config.sandbox_mode = true
+
+# The migration will run but roll back, allowing you to:
+# - See how far it gets before failing
+# - Inspect partial schema changes
+# - Test fixes without corrupting your database
+```
+
+**3. Team Collaboration**
+```ruby
+# Before merging a PR with migrations, reviewers can:
+config.sandbox_mode = true
+$ rails db:migrate
+
+# Review the schema.rb changes without applying them
+# Perfect for code reviews!
+```
+
+#### Limitations
+
+- **DDL Transactions**: Some databases (like MySQL) don't support DDL operations within transactions. In these cases, sandbox mode may not roll back structural changes.
+- **Data Changes**: While structure changes roll back, be careful with migrations that modify large amounts of data.
+- **Non-transactional Operations**: Operations like creating indexes concurrently in PostgreSQL may not roll back.
+- **Down Migrations**: Sandbox mode only applies to `up` migrations (running `db:migrate`), not rollbacks.
+
+#### Best Practices
+
+1. **Development First**: Always test migrations in sandbox mode during development
+2. **Schema Review**: Use `git diff db/schema.rb` to review changes before committing
+3. **CI Integration**: Consider adding a sandbox mode test step in your CI pipeline
+4. **Team Communication**: Document when migrations have been tested in sandbox mode
+
+#### Programmatic Usage
+
+```ruby
+# Temporarily enable sandbox mode in code
+original_mode = MigrationGuard.configuration.sandbox_mode
+begin
+  MigrationGuard.configuration.sandbox_mode = true
+  # Run migrations or tests
+ensure
+  MigrationGuard.configuration.sandbox_mode = original_mode
 end
 ```
 

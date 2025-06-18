@@ -1,0 +1,257 @@
+---
+layout: default
+title: Sandbox Mode Guide - Rails Migration Guard
+---
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <nav class="mb-8">
+        <a href="{{ '/' | relative_url }}" class="text-blue-600 hover:text-blue-800">Home</a>
+        <span class="mx-2 text-gray-400">/</span>
+        <a href="{{ '/docs/' | relative_url }}" class="text-blue-600 hover:text-blue-800">Documentation</a>
+        <span class="mx-2 text-gray-400">/</span>
+        <span class="text-gray-700">Sandbox Mode</span>
+    </nav>
+
+    <h1 class="text-4xl font-bold text-gray-900 mb-8">Sandbox Mode Guide</h1>
+    
+    <div class="prose prose-lg max-w-none">
+        <p class="lead text-xl text-gray-600 mb-8">
+            Sandbox mode allows you to test migrations without permanently applying changes to your database. 
+            Perfect for testing complex migrations, debugging issues, and reviewing changes during code reviews.
+        </p>
+
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-8">
+            <h3 class="text-lg font-semibold text-blue-900 mb-2">Key Benefits</h3>
+            <ul class="list-disc list-inside text-blue-800 space-y-1">
+                <li>Test migrations without permanent changes</li>
+                <li>Preview schema.rb changes before committing</li>
+                <li>Debug failing migrations safely</li>
+                <li>Review migrations during code reviews</li>
+                <li>Validate migration logic in CI/CD pipelines</li>
+            </ul>
+        </div>
+
+        <h2 class="text-2xl font-semibold text-gray-900 mt-12 mb-6">How It Works</h2>
+        
+        <div class="bg-gray-50 rounded-lg p-6 mb-8">
+            <ol class="space-y-3">
+                <li class="flex items-start">
+                    <span class="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-semibold mr-3">1</span>
+                    <span><strong>Transaction Start:</strong> A new database transaction begins</span>
+                </li>
+                <li class="flex items-start">
+                    <span class="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-semibold mr-3">2</span>
+                    <span><strong>Migration Execution:</strong> Your migration runs normally</span>
+                </li>
+                <li class="flex items-start">
+                    <span class="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-semibold mr-3">3</span>
+                    <span><strong>Schema Update:</strong> db/schema.rb is updated with the changes</span>
+                </li>
+                <li class="flex items-start">
+                    <span class="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-semibold mr-3">4</span>
+                    <span><strong>Automatic Rollback:</strong> The transaction is rolled back</span>
+                </li>
+                <li class="flex items-start">
+                    <span class="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-semibold mr-3">5</span>
+                    <span><strong>Result:</strong> You can inspect schema.rb, but database remains unchanged</span>
+                </li>
+            </ol>
+        </div>
+
+        <h2 class="text-2xl font-semibold text-gray-900 mt-12 mb-6">Configuration</h2>
+        
+        <div class="bg-gray-900 rounded-lg p-6 mb-8">
+            <pre class="text-gray-100 overflow-x-auto"><code># config/initializers/migration_guard.rb
+MigrationGuard.configure do |config|
+  # Enable sandbox mode for all migrations
+  config.sandbox_mode = true
+  
+  # Or enable conditionally
+  config.sandbox_mode = Rails.env.development?
+  
+  # Or based on environment variable
+  config.sandbox_mode = ENV['SANDBOX_MIGRATIONS'] == 'true'
+end</code></pre>
+        </div>
+
+        <h2 class="text-2xl font-semibold text-gray-900 mt-12 mb-6">Visual Feedback</h2>
+        
+        <p class="mb-4">Sandbox mode provides clear visual indicators during migration:</p>
+        
+        <div class="bg-gray-900 rounded-lg p-6 mb-8">
+            <pre class="text-gray-100 overflow-x-auto"><code>$ rails db:migrate
+
+<span class="text-yellow-400">🧪 SANDBOX MODE ACTIVE - Database changes will be rolled back</span>
+<span class="text-green-400">== 20240617123456 CreateUsers: migrating =====================================</span>
+<span class="text-gray-400">-- create_table(:users)</span>
+<span class="text-gray-400">   -> 0.0010s</span>
+<span class="text-green-400">== 20240617123456 CreateUsers: migrated (0.0015s) ============================</span>
+<span class="text-yellow-400">⚠️  SANDBOX: Database changes rolled back. Schema.rb updated for inspection.</span></code></pre>
+        </div>
+
+        <h2 class="text-2xl font-semibold text-gray-900 mt-12 mb-6">Environment Variables</h2>
+        
+        <div class="space-y-4 mb-8">
+            <div class="bg-white border border-gray-200 rounded-lg p-4">
+                <h4 class="font-mono text-sm text-blue-600 mb-2">MIGRATION_GUARD_SANDBOX_QUIET=true</h4>
+                <p class="text-gray-600">Disable all sandbox mode messages (silent mode)</p>
+            </div>
+            
+            <div class="bg-white border border-gray-200 rounded-lg p-4">
+                <h4 class="font-mono text-sm text-blue-600 mb-2">MIGRATION_GUARD_SANDBOX_VERBOSE=true</h4>
+                <p class="text-gray-600">Enable sandbox messages in test environment (normally suppressed)</p>
+            </div>
+        </div>
+
+        <h2 class="text-2xl font-semibold text-gray-900 mt-12 mb-6">Common Use Cases</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white border border-gray-200 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Testing Complex Migrations</h3>
+                <p class="text-gray-600 mb-4">Test migrations that modify critical data or structure before running them for real.</p>
+                <code class="text-sm bg-gray-100 px-2 py-1 rounded">config.sandbox_mode = true</code>
+            </div>
+            
+            <div class="bg-white border border-gray-200 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Debugging Failures</h3>
+                <p class="text-gray-600 mb-4">Debug migration failures without corrupting your database state.</p>
+                <code class="text-sm bg-gray-100 px-2 py-1 rounded">rails db:migrate --trace</code>
+            </div>
+            
+            <div class="bg-white border border-gray-200 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Code Reviews</h3>
+                <p class="text-gray-600 mb-4">Reviewers can test migrations and inspect schema changes safely.</p>
+                <code class="text-sm bg-gray-100 px-2 py-1 rounded">git diff db/schema.rb</code>
+            </div>
+            
+            <div class="bg-white border border-gray-200 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Team Training</h3>
+                <p class="text-gray-600 mb-4">New developers can practice with migrations without risk.</p>
+                <code class="text-sm bg-gray-100 px-2 py-1 rounded">ENV['NEW_DEV_MODE']=true</code>
+            </div>
+        </div>
+
+        <h2 class="text-2xl font-semibold text-gray-900 mt-12 mb-6">Database Limitations</h2>
+        
+        <div class="bg-yellow-50 border-l-4 border-yellow-500 p-6 mb-8">
+            <h3 class="text-lg font-semibold text-yellow-900 mb-4">Important Considerations</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <h4 class="font-semibold text-yellow-800">MySQL/MariaDB</h4>
+                    <ul class="list-disc list-inside text-yellow-700 mt-1">
+                        <li>DDL operations (CREATE TABLE, ALTER TABLE) cannot be rolled back</li>
+                        <li>Schema changes may persist even in sandbox mode</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold text-yellow-800">PostgreSQL</h4>
+                    <ul class="list-disc list-inside text-yellow-700 mt-1">
+                        <li>Most DDL operations are transactional and will roll back</li>
+                        <li>CREATE INDEX CONCURRENTLY cannot be rolled back</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold text-yellow-800">SQLite</h4>
+                    <ul class="list-disc list-inside text-yellow-700 mt-1">
+                        <li>Full transactional DDL support</li>
+                        <li>All changes roll back properly</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="text-2xl font-semibold text-gray-900 mt-12 mb-6">Best Practices</h2>
+        
+        <div class="space-y-4 mb-8">
+            <div class="flex items-start">
+                <svg class="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <div>
+                    <h4 class="font-semibold text-gray-900">Always test in sandbox first</h4>
+                    <p class="text-gray-600">Make it a habit to test every migration in sandbox mode during development.</p>
+                </div>
+            </div>
+            
+            <div class="flex items-start">
+                <svg class="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <div>
+                    <h4 class="font-semibold text-gray-900">Review schema.rb changes</h4>
+                    <p class="text-gray-600">Always check the schema diff to ensure changes match expectations.</p>
+                </div>
+            </div>
+            
+            <div class="flex items-start">
+                <svg class="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <div>
+                    <h4 class="font-semibold text-gray-900">Document sandbox testing</h4>
+                    <p class="text-gray-600">Add comments to migrations noting they've been tested in sandbox mode.</p>
+                </div>
+            </div>
+            
+            <div class="flex items-start">
+                <svg class="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <div>
+                    <h4 class="font-semibold text-gray-900">Use in CI/CD pipelines</h4>
+                    <p class="text-gray-600">Add sandbox mode testing to your continuous integration workflow.</p>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="text-2xl font-semibold text-gray-900 mt-12 mb-6">Example Workflow</h2>
+        
+        <div class="bg-gray-50 rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Testing a Migration</h3>
+            
+            <ol class="space-y-4">
+                <li>
+                    <p class="font-semibold mb-2">1. Enable sandbox mode</p>
+                    <code class="block bg-gray-900 text-gray-100 p-3 rounded">MigrationGuard.configuration.sandbox_mode = true</code>
+                </li>
+                
+                <li>
+                    <p class="font-semibold mb-2">2. Run the migration</p>
+                    <code class="block bg-gray-900 text-gray-100 p-3 rounded">$ rails db:migrate</code>
+                </li>
+                
+                <li>
+                    <p class="font-semibold mb-2">3. Review schema changes</p>
+                    <code class="block bg-gray-900 text-gray-100 p-3 rounded">$ git diff db/schema.rb</code>
+                </li>
+                
+                <li>
+                    <p class="font-semibold mb-2">4. If satisfied, run for real</p>
+                    <code class="block bg-gray-900 text-gray-100 p-3 rounded">MigrationGuard.configuration.sandbox_mode = false<br>$ rails db:migrate</code>
+                </li>
+            </ol>
+        </div>
+
+        <div class="mt-12 p-6 bg-blue-50 rounded-lg">
+            <h3 class="text-lg font-semibold text-blue-900 mb-2">Need More Help?</h3>
+            <p class="text-blue-800 mb-4">Check out our comprehensive documentation for more advanced usage and troubleshooting.</p>
+            <div class="space-x-4">
+                <a href="{{ '/docs/sandbox-mode.md' | relative_url }}" class="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Full Documentation
+                </a>
+                <a href="{{ '/troubleshooting.html' | relative_url }}" class="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Troubleshooting Guide
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
