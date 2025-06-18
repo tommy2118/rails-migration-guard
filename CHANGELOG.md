@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Git Hooks Generator** (#135) - Fixed template path error when backing up existing hooks:
+  - Replaced Rails' `copy_file` method with `FileUtils.cp` for file system operations
+  - Added proper tests for backup functionality
+  - Generator now correctly handles existing git hooks
+
 ### Added
 - **Interactive Setup Assistant for New Developers** (#22) - Comprehensive onboarding experience:
   - New `rails db:migration:setup` command for development environment analysis
