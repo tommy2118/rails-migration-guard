@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "English"
 module MigrationGuard
   module Recovery
     # Manages database backups for recovery operations
@@ -124,12 +125,25 @@ module MigrationGuard
         false
       end
 
-      def create_postgres_backup
+      def create_postgres_backup # rubocop:disable Naming/PredicateMethod
         config = database_config
         command = build_postgres_command(config)
         env = postgres_environment(config)
 
-        system(env, *command)
+        success = system(env, *command)
+        exit_status = $CHILD_STATUS
+
+        unless success
+          if exit_status.nil?
+            raise BackupError, "pg_dump command not found. Please ensure PostgreSQL client tools are installed."
+          end
+
+          raise BackupError, "PostgreSQL backup failed with exit code #{exit_status.exitstatus}. " \
+                             "Check database credentials and permissions."
+
+        end
+
+        true
       end
 
       def build_postgres_command(config)
@@ -147,11 +161,24 @@ module MigrationGuard
         config[:password] ? { "PGPASSWORD" => config[:password] } : {}
       end
 
-      def create_mysql_backup
+      def create_mysql_backup # rubocop:disable Naming/PredicateMethod
         config = database_config
         command = build_mysql_command(config)
 
-        system(*command, out: @backup_path.to_s)
+        success = system(*command, out: @backup_path.to_s)
+        exit_status = $CHILD_STATUS
+
+        unless success
+          if exit_status.nil?
+            raise BackupError, "mysqldump command not found. Please ensure MySQL client tools are installed."
+          end
+
+          raise BackupError, "MySQL backup failed with exit code #{exit_status.exitstatus}. " \
+                             "Check database credentials and permissions."
+
+        end
+
+        true
       end
 
       def build_mysql_command(config)
@@ -164,6 +191,7 @@ module MigrationGuard
         ].tap { |cmd| cmd << "-p#{config[:password]}" if config[:password] }
       end
 
+      # rubocop:disable Metrics/MethodLength
       def create_sqlite_backup
         config = database_config
         source_path = config[:database]
@@ -171,14 +199,29 @@ module MigrationGuard
         return handle_memory_database if memory_database?(source_path)
 
         # Ensure the source file exists before copying
-        unless File.exist?(source_path)
-          Rails.logger&.error "SQLite database file not found: #{source_path}"
-          return false
+        raise BackupError, "SQLite database file not found: #{source_path}" unless File.exist?(source_path)
+
+        # Check if we have read permission
+        raise BackupError, "No read permission for SQLite database: #{source_path}" unless File.readable?(source_path)
+
+        # Ensure backup directory exists
+        backup_dir = File.dirname(@backup_path)
+
+        begin
+          FileUtils.mkdir_p(backup_dir)
+        rescue SystemCallError => e
+          raise FileSystemError, "Failed to create backup directory: #{e.message}"
         end
 
-        FileUtils.cp(source_path, @backup_path)
+        begin
+          FileUtils.cp(source_path, @backup_path)
+        rescue SystemCallError => e
+          raise BackupError, "Failed to copy SQLite database: #{e.message}"
+        end
+
         true
       end
+      # rubocop:enable Metrics/MethodLength
 
       def memory_database?(path)
         path.to_s == ":memory:" || path.nil?

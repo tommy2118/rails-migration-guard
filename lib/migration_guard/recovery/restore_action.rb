@@ -66,14 +66,23 @@ module MigrationGuard
         migration.update!(status: "applied")
       end
 
+      # rubocop:disable Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
       def find_migration_commit(version)
         stdout, stderr, status = Open3.capture3(
           "git", "log", "--all", "--full-history", "--", "db/migrate/#{version}_*.rb"
         )
 
         unless status.success?
-          Rails.logger&.error "Git log failed: #{stderr}"
-          return nil
+          error_msg = "Failed to search git history for migration #{version}: #{stderr}"
+          Rails.logger&.error error_msg
+
+          if stderr.include?("not a git repository")
+            raise GitError, "Not in a git repository. Git integration is required for file restoration."
+          elsif stderr.include?("command not found")
+            raise GitError, "Git command not found. Please ensure git is installed."
+          else
+            raise GitError, error_msg
+          end
         end
 
         return nil if stdout.empty?
@@ -81,6 +90,7 @@ module MigrationGuard
         match = stdout.lines.first&.match(/commit (\w+)/)
         match&.[](1)
       end
+      # rubocop:enable Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
       def get_migration_file_path(commit_hash, version)
         stdout, _stderr, status = Open3.capture3(
