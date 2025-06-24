@@ -102,7 +102,7 @@ RSpec.describe MigrationGuard::Recovery::RestoreAction do
       before do
         allow(Open3).to receive(:capture3)
           .with("git", "log", "--all", "--full-history", "--", "db/migrate/20240116000001_*.rb")
-          .and_return(["", "", instance_double(Process::Status, success?: false)])
+          .and_return(["", "", instance_double(Process::Status, success?: true)])
       end
 
       it "returns false and logs error" do
@@ -189,13 +189,14 @@ RSpec.describe MigrationGuard::Recovery::RestoreAction do
         expect(result).to eq("abc123def456")
       end
 
-      it "returns nil when migration is not found" do
+      it "raises GitError when git command fails" do
         allow(Open3).to receive(:capture3)
           .with("git", "log", "--all", "--full-history", "--", "db/migrate/20240116000001_*.rb")
-          .and_return(["", "", instance_double(Process::Status, success?: false)])
+          .and_return(["", "error occurred", instance_double(Process::Status, success?: false)])
 
-        result = restore_action.send(:find_migration_commit, "20240116000001")
-        expect(result).to be_nil
+        expect do
+          restore_action.send(:find_migration_commit, "20240116000001")
+        end.to raise_error(MigrationGuard::GitError, /Failed to search git history/)
       end
 
       it "returns nil when output is empty" do
