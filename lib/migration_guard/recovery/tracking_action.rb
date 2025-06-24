@@ -59,13 +59,15 @@ module MigrationGuard
 
       def current_branch
         @git_integration.current_branch
-      rescue StandardError
+      rescue StandardError => e
+        Rails.logger&.warn "Failed to get current git branch: #{e.message}"
         "unknown"
       end
 
       def current_author
         @git_integration.current_author
-      rescue StandardError
+      rescue StandardError => e
+        Rails.logger&.warn "Failed to get current git author: #{e.message}"
         nil
       end
 

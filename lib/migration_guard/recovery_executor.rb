@@ -13,6 +13,7 @@ require "migration_guard/recovery/option_formatter"
 
 module MigrationGuard
   # RecoveryExecutor performs recovery actions for inconsistent migration states
+  # rubocop:disable Metrics/ClassLength
   class RecoveryExecutor
     def initialize(interactive: true)
       # Use centralized interactive mode detection
@@ -27,6 +28,10 @@ module MigrationGuard
 
     def execute_recovery(issue, option = nil)
       return false if executing_recovery?
+
+      # Check for concurrent recovery processes
+      check_concurrent_recovery!
+      create_recovery_lock
 
       @executing_recovery = true
 
@@ -44,6 +49,7 @@ module MigrationGuard
       execute_action(recovery_method, issue)
     ensure
       @executing_recovery = false
+      clear_recovery_lock
     end
 
     def executing_recovery?
@@ -172,8 +178,17 @@ module MigrationGuard
     end
 
     def get_user_choice(issue)
-      choice = gets.chomp.to_i
+      input = gets
+
+      raise RecoveryError, "No input available. If running in non-interactive mode, use AUTO=true" if input.nil?
+
+      choice = input.chomp.to_i
       process_user_choice(choice, issue)
+    rescue Interrupt
+      Rails.logger&.info "\nRecovery cancelled by user"
+      raise RecoveryError, "Recovery cancelled by user"
+    rescue SystemCallError => e
+      raise RecoveryError, "Failed to read user input: #{e.message}"
     end
 
     def process_user_choice(choice, issue)
@@ -187,5 +202,56 @@ module MigrationGuard
         nil
       end
     end
+
+    def recovery_lock_file
+      Rails.root.join("tmp/migration_guard_recovery.lock")
+    end
+
+    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+    def check_concurrent_recovery!
+      return unless File.exist?(recovery_lock_file)
+
+      begin
+        lock_content = File.read(recovery_lock_file)
+        lock_data = JSON.parse(lock_content)
+
+        # Check if lock is stale (older than 30 minutes)
+        lock_time = Time.zone.parse(lock_data["created_at"])
+        if Time.current - lock_time > 30.minutes
+          Rails.logger&.warn "Removing stale recovery lock file (older than 30 minutes)"
+          File.delete(recovery_lock_file)
+          return
+        end
+
+        raise ConcurrentAccessError, "Another recovery process is running (PID: #{lock_data['pid']}). " \
+                                     "Started at: #{lock_data['created_at']}. " \
+                                     "If this is incorrect, delete #{recovery_lock_file}"
+      rescue JSON::ParserError
+        # Invalid lock file, remove it
+        File.delete(recovery_lock_file)
+      end
+    end
+    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
+
+    def create_recovery_lock
+      FileUtils.mkdir_p(File.dirname(recovery_lock_file))
+
+      lock_data = {
+        pid: Process.pid,
+        created_at: Time.current.iso8601,
+        user: ENV["USER"] || "unknown"
+      }
+
+      File.write(recovery_lock_file, JSON.pretty_generate(lock_data))
+    rescue SystemCallError => e
+      Rails.logger&.warn "Failed to create recovery lock file: #{e.message}"
+    end
+
+    def clear_recovery_lock
+      FileUtils.rm_f(recovery_lock_file)
+    rescue SystemCallError => e
+      Rails.logger&.warn "Failed to remove recovery lock file: #{e.message}"
+    end
   end
+  # rubocop:enable Metrics/ClassLength
 end

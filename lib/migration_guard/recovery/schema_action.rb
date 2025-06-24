@@ -53,16 +53,34 @@ module MigrationGuard
       end
 
       def run_migration(migration_file, version)
-        require migration_file
+        begin
+          require migration_file
+        rescue LoadError => e
+          raise MigrationLoadError, "Failed to load migration file #{migration_file}: #{e.message}"
+        rescue SyntaxError => e
+          raise MigrationLoadError, "Syntax error in migration file #{migration_file}: #{e.message}"
+        end
+
         migration_class = load_migration_class(migration_file)
         migration_instance = migration_class.new
         migration_instance.version = version
-        migration_instance.migrate(:up)
+
+        begin
+          migration_instance.migrate(:up)
+        rescue StandardError => e
+          raise RecoveryError, "Failed to execute migration #{version}: #{e.message}"
+        end
       end
 
       def load_migration_class(migration_file)
         class_name = extract_migration_class_name(migration_file)
-        class_name.constantize
+
+        begin
+          class_name.constantize
+        rescue NameError
+          raise MigrationLoadError, "Migration class '#{class_name}' not found in #{migration_file}. " \
+                                    "Ensure the class name matches the file name."
+        end
       end
 
       def extract_migration_class_name(migration_file)

@@ -18,15 +18,31 @@ module MigrationGuard
       @checkers = initialize_checkers
     end
 
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
     def analyze
       @inconsistencies = []
+      database_available = true
 
       @checkers.each do |checker|
         @inconsistencies.concat(checker.check)
-      rescue ActiveRecord::ConnectionNotEstablished, ActiveRecord::StatementInvalid => e
-        Rails.logger&.error "Database error during recovery analysis: #{e.message}"
+      rescue ActiveRecord::ConnectionNotEstablished, ActiveRecord::NoDatabaseError => e
+        unless database_available
+          # Only warn once about database connection issues
+          database_available = false
+          Rails.logger&.error "Database connection error: #{e.message}"
+          Rails.logger&.warn "Continuing analysis with limited functionality..."
+        end
         # Continue with other checkers
+      rescue ActiveRecord::StatementInvalid, ActiveRecord::QueryAborted => e
+        Rails.logger&.error "Database query error during #{checker.class.name}: #{e.message}"
+        # Continue with other checkers
+      rescue StandardError => e
+        # Catch any other database-related errors
+        Rails.logger&.error "Unexpected error during #{checker.class.name}: #{e.class} - #{e.message}"
+        Rails.logger&.debug { e.backtrace.join("\n") }
+        # Continue with other checkers to gather as much info as possible
       end
+      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
       @inconsistencies
     end
