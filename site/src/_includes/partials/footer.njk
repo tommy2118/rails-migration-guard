@@ -14,8 +14,8 @@
                 <ul class="space-y-2">
                     {% for item in navigation.footer %}
                         <li>
-                            {% if "http" in item.url %}
-                                <a href="{{ item.url }}" class="text-gray-600 hover:text-brand-600">{{ item.label }}</a>
+                            {% if item.external %}
+                                <a href="{{ item.url }}" target="_blank" rel="noopener" class="text-gray-600 hover:text-brand-600">{{ item.label }}</a>
                             {% else %}
                                 <a href="{{ item.url | url }}" class="text-gray-600 hover:text-brand-600">{{ item.label }}</a>
                             {% endif %}

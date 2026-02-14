@@ -12,8 +12,8 @@
     { "label": "Quick Start", "url": "/quick-start/" },
     { "label": "Documentation", "url": "/docs/" },
     { "label": "Examples", "url": "/examples/" },
-    { "label": "GitHub", "url": "https://github.com/tommy2118/rails-migration-guard" },
-    { "label": "RubyGems", "url": "https://rubygems.org/gems/rails_migration_guard" }
+    { "label": "GitHub", "url": "https://github.com/tommy2118/rails-migration-guard", "external": true },
+    { "label": "RubyGems", "url": "https://rubygems.org/gems/rails_migration_guard", "external": true }
   ],
   "community": [
     { "label": "Issues", "url": "https://github.com/tommy2118/rails-migration-guard/issues" },
