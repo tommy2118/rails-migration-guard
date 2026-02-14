@@ -4,9 +4,9 @@ require_relative "colorizer"
 
 module MigrationGuard
   class BranchChangeDetector
-    def initialize
-      @git_integration = GitIntegration.new
-      @reporter = Reporter.new
+    def initialize(git_integration: GitIntegration.new, reporter: Reporter.new)
+      @git_integration = git_integration
+      @reporter = reporter
       MigrationGuard::Logger.debug("Initialized BranchChangeDetector")
     end
 

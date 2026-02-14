@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="{{ site.language }}" class="scroll-smooth">
+<head>
+    {% include "partials/head.njk" %}
+</head>
+<body class="font-sans text-gray-900 antialiased" data-controller="animate">
+    {% include "partials/nav.njk" %}
+
+    <main class="pt-16 min-h-screen">
+        {{ content | safe }}
+    </main>
+
+    {% include "partials/footer.njk" %}
+    {% include "partials/scripts.njk" %}
+</body>
+</html>

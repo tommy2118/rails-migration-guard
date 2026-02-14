@@ -74,6 +74,31 @@ module MigrationGuard
       def format_status_line(symbol, label, count, type)
         "#{symbol} #{label}: #{format_migration_count(count, type)}"
       end
+
+      def pluralize_migration(count)
+        count == 1 ? "migration" : "migrations"
+      end
+
+      def colorize_status(text, status)
+        case status
+        when MigrationGuardRecord::STATUS_APPLIED, MigrationGuardRecord::STATUS_SYNCED
+          success(text)
+        when MigrationGuardRecord::STATUS_ROLLED_BACK
+          warning(text)
+        when MigrationGuardRecord::STATUS_ORPHANED
+          error(text)
+        else
+          text
+        end
+      end
+
+      def colorize_direction(direction)
+        case direction
+        when "UP" then success("UP")
+        when "DOWN" then warning("DOWN")
+        else direction
+        end
+      end
     end
   end
 end

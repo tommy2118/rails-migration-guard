@@ -49,7 +49,7 @@ module MigrationGuard
           version: version,
           branch: current_branch,
           author: current_author,
-          status: "applied",
+          status: MigrationGuardRecord::STATUS_APPLIED,
           metadata: {
             "recovery_action" => "tracked_retrospectively",
             "tracked_at" => Time.current.iso8601
@@ -111,7 +111,7 @@ module MigrationGuard
       end
 
       def find_keeper_record(records)
-        records.find { |r| r.status == "applied" } ||
+        records.find { |r| r.status == MigrationGuardRecord::STATUS_APPLIED } ||
           records.order(updated_at: :desc).first
       end
     end

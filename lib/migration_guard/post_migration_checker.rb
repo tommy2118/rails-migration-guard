@@ -4,8 +4,8 @@ require_relative "colorizer"
 
 module MigrationGuard
   class PostMigrationChecker
-    def initialize
-      @reporter = Reporter.new
+    def initialize(reporter: Reporter.new)
+      @reporter = reporter
       @configuration = MigrationGuard.configuration
       MigrationGuard::Logger.debug("Initialized PostMigrationChecker")
     end

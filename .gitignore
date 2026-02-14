@@ -57,6 +57,9 @@ Gemfile.lock
 
 .claude/settings.local.json
 
+# Eleventy build output
+site/dist/
+
 # Log files
 log/
 *.log

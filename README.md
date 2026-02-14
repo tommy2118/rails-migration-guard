@@ -117,7 +117,7 @@ Run `rails db:migration:rollback_orphaned` to clean up
 $ rails db:migration:rollback_orphaned
 
 # Check for issues (useful in CI/CD)
-$ rails db:migration:check
+$ rails db:migration:ci
 
 # View migration history with filtering
 $ rails db:migration:history                    # All recent migrations
@@ -259,7 +259,7 @@ MigrationGuard.configure do |config|
   # Git integration level
   # :off - No git integration
   # :warning - Warn about orphaned migrations
-  # :auto_rollback - Automatically suggest rollback
+  # :auto_rollback - Reserved for future use (currently behaves like :warning)
   config.git_integration_level = :warning
 
   # Track additional information
@@ -269,7 +269,7 @@ MigrationGuard.configure do |config|
 
   # Behavior options
   config.warn_on_switch = true             # Warn when switching branches
-  config.block_deploy_with_orphans = false # Block deploys with orphaned migrations
+  config.block_deploy_with_orphans = false # Not yet functional - reserved for future use
 
   # Cleanup policies
   config.auto_cleanup = false              # Automatically clean up old records
@@ -283,11 +283,6 @@ MigrationGuard.configure do |config|
   # instead of just the main branch. Useful for teams with multiple
   # long-lived branches (e.g., develop, staging, production)
   # config.target_branches = %w[main develop staging]
-  
-  # Git integration settings (see TROUBLESHOOTING.md for edge cases)
-  # config.git_timeout = 5.seconds
-  # config.handle_git_errors = true  # Continue without git on errors
-  # config.sanitize_git_input = true  # Clean branch names automatically
   
   # Logging configuration
   # config.log_level = :info  # :debug, :info, :warn, :error, :fatal
@@ -364,7 +359,7 @@ See the [CI Integration guide](https://tommy2118.github.io/rails-migration-guard
 ```ruby
 # config/initializers/migration_guard.rb
 MigrationGuard.configure do |config|
-  config.block_deploy_with_orphans = true if Rails.env.staging?
+  config.block_deploy_with_orphans = true if Rails.env.staging? # Not yet functional - reserved for future use
 end
 ```
 

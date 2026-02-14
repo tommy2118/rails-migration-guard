@@ -32,6 +32,7 @@ RSpec.describe "Rollback rake tasks", type: :integration do
     allow(git_integration).to receive_messages(
       current_branch: "feature/test",
       main_branch: "main",
+      current_author: nil,
       migration_versions_in_trunk: []
     )
 

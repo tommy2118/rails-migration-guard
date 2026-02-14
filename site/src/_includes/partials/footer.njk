@@ -1,0 +1,44 @@
+<footer class="bg-gray-50 border-t border-gray-200">
+    <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+                <div class="flex items-center space-x-3 mb-4">
+                    <div class="text-2xl">🛡️</div>
+                    <span class="text-xl font-bold gradient-text">{{ site.name }}</span>
+                </div>
+                <p class="text-gray-600 max-w-xs">{{ site.description }}</p>
+            </div>
+
+            <div>
+                <h3 class="text-sm font-semibold text-gray-900 tracking-wider uppercase mb-4">Resources</h3>
+                <ul class="space-y-2">
+                    {% for item in navigation.footer %}
+                        <li>
+                            {% if "http" in item.url %}
+                                <a href="{{ item.url }}" class="text-gray-600 hover:text-brand-600">{{ item.label }}</a>
+                            {% else %}
+                                <a href="{{ item.url | url }}" class="text-gray-600 hover:text-brand-600">{{ item.label }}</a>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div>
+                <h3 class="text-sm font-semibold text-gray-900 tracking-wider uppercase mb-4">Community</h3>
+                <ul class="space-y-2">
+                    {% for item in navigation.community %}
+                        <li><a href="{{ item.url }}" class="text-gray-600 hover:text-brand-600">{{ item.label }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="mt-8 pt-8 border-t border-gray-200 text-center">
+            <p class="text-gray-500 text-sm">
+                &copy; {% year %} Rails Migration Guard.
+                Built with ❤️ for the Rails community.
+            </p>
+        </div>
+    </div>
+</footer>

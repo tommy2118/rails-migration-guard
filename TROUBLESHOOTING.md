@@ -79,37 +79,8 @@ sh: syntax error near unexpected token `new'
    git checkout -b feature/my_new_feature
    ```
 
-2. **Configure safe branch handling:**
-   ```ruby
-   # config/initializers/migration_guard.rb
-   MigrationGuard.configure do |config|
-     # Sanitize branch names automatically
-     config.before_track = lambda do |record|
-       record.branch = record.branch.gsub(/[^a-zA-Z0-9\-_\/]/, '-') if record.branch
-     end
-   end
-   ```
-
-3. **Escape branch names in Git commands:**
+2. **Escape branch names in Git commands:**
    The gem automatically quotes branch names in Git commands, but extreme cases may still fail.
-
-#### Unicode and Emoji in Branch Names
-
-**Problem:**
-```bash
-git checkout -b "feature/user-auth-🔐"
-$ rails db:migration:status
-# May fail on systems without proper UTF-8 support
-```
-
-**Solution:**
-```ruby
-# Force UTF-8 encoding
-MigrationGuard.configure do |config|
-  config.encoding = 'UTF-8'
-  config.handle_encoding_errors = true
-end
-```
 
 ### Git Configuration Edge Cases
 
@@ -129,26 +100,6 @@ MigrationGuard::GitError: Git user email not configured
    ```ruby
    MigrationGuard.configure do |config|
      config.track_author = false
-   end
-   ```
-
-2. **Provide fallback values:**
-   ```ruby
-   MigrationGuard.configure do |config|
-     config.author_fallback = ENV['USER'] || 'system'
-     config.branch_fallback = 'unknown'
-   end
-   ```
-
-3. **Custom resolvers:**
-   ```ruby
-   MigrationGuard.configure do |config|
-     # Use system username if git config fails
-     config.author_resolver = lambda do
-       `git config user.email`.strip.presence || 
-       `whoami`.strip.presence || 
-       'unknown'
-     end
    end
    ```
 
@@ -213,23 +164,9 @@ $ rails db:migration:status
 Current branch: HEAD
 ```
 
-**Solutions:**
+**Solution:**
 
-1. **Use commit SHA instead:**
-   ```ruby
-   MigrationGuard.configure do |config|
-     config.on_detached_head = lambda do
-       `git rev-parse --short HEAD`.strip
-     end
-   end
-   ```
-
-2. **Skip tracking in detached state:**
-   ```ruby
-   MigrationGuard.configure do |config|
-     config.track_in_detached_head = false
-   end
-   ```
+The gem records `HEAD` as the branch name in detached HEAD state. This is expected behavior and won't cause errors. If you need a more meaningful identifier, consider checking out a named branch instead.
 
 ### Repository State Issues
 
@@ -243,15 +180,19 @@ $ rails db:migration:status
 ```
 
 **Solution:**
-```ruby
-# Detect and handle shallow clones
-MigrationGuard.configure do |config|
-  config.before_check = lambda do
-    if `git rev-parse --is-shallow-repository`.strip == 'true'
-      system('git fetch --unshallow') rescue nil
-    end
-  end
-end
+
+Unshallow the clone before running migration checks:
+```bash
+git fetch --unshallow
+rails db:migration:status
+```
+
+Or configure your CI to use a full clone:
+```yaml
+# GitHub Actions example
+- uses: actions/checkout@v4
+  with:
+    fetch-depth: 0  # Full clone
 ```
 
 #### Submodules and Worktrees
@@ -266,13 +207,11 @@ $ rails db:migration:status
 ```
 
 **Solution:**
+
+Ensure you run migration commands from the correct working directory. If using worktrees, the gem should detect the git repository automatically. If it doesn't, consider disabling git integration in that environment:
 ```ruby
 MigrationGuard.configure do |config|
-  # Explicitly set the git directory
-  config.git_dir = Rails.root.join('.git').to_s
-  
-  # Or disable in worktrees
-  config.enabled = !ENV['GIT_WORKTREE_PATH']
+  config.git_integration_level = :off
 end
 ```
 
@@ -285,29 +224,23 @@ MigrationGuard::GitError: Git command timed out
 
 **Solutions:**
 
-1. **Increase timeout:**
+1. **Optimize your Git repository:**
+   ```bash
+   git gc --aggressive
+   git repack -a -d
+   ```
+
+2. **Disable git integration** if git operations are too slow:
    ```ruby
    MigrationGuard.configure do |config|
-     config.git_timeout = 30.seconds  # Default is 5 seconds
+     config.git_integration_level = :off
    end
    ```
 
-2. **Optimize Git operations:**
+3. **Limit branches checked:**
    ```ruby
    MigrationGuard.configure do |config|
-     # Only check specific paths
-     config.migration_paths = ['db/migrate']
-     
-     # Limit history depth
-     config.max_history_depth = 100
-   end
-   ```
-
-3. **Cache Git results:**
-   ```ruby
-   MigrationGuard.configure do |config|
-     config.enable_caching = true
-     config.cache_duration = 5.minutes
+     config.target_branches = ['main']  # Only check against main branch
    end
    ```
 
@@ -323,12 +256,14 @@ error: Your local changes to the following files would be overwritten by checkou
 ```
 
 **Solution:**
-```ruby
-# Auto-stash migrations during branch switch
-MigrationGuard.configure do |config|
-  config.auto_stash_migrations = true
-  config.stash_message = "MigrationGuard: Auto-stashed migrations"
-end
+
+Stash or commit your migration changes before switching branches:
+```bash
+git stash
+git checkout main
+# Later:
+git checkout feature-branch
+git stash pop
 ```
 
 #### Missing Remote Branches
@@ -342,17 +277,14 @@ Failed to list migrations in branch origin/main: fatal: ambiguous argument
 **Solutions:**
 
 1. **Fetch before checking:**
-   ```ruby
-   MigrationGuard.configure do |config|
-     config.auto_fetch = true
-     config.fetch_timeout = 10.seconds
-   end
+   ```bash
+   git fetch --all
+   rails db:migration:status
    ```
 
 2. **Use local branches only:**
    ```ruby
    MigrationGuard.configure do |config|
-     config.check_remote_branches = false
      config.target_branches = ['main']  # Local branches only
    end
    ```
@@ -369,12 +301,10 @@ upstream git@github.com:original/app.git (fetch)
 ```
 
 **Solution:**
+
+Use fully qualified branch names in your configuration:
 ```ruby
 MigrationGuard.configure do |config|
-  # Specify which remote to use
-  config.primary_remote = 'origin'
-  
-  # Or use fully qualified branch names
   config.main_branch_names = %w[origin/main upstream/main]
 end
 ```
@@ -384,50 +314,34 @@ end
 **Problem:** Existing git hooks may interfere with MigrationGuard operations
 
 **Solution:**
+
+If MigrationGuard's git hooks conflict with existing hooks, you can remove them:
+```bash
+rm .git/hooks/post-checkout  # Remove the post-checkout hook
+```
+
+Or disable git integration entirely:
 ```ruby
 MigrationGuard.configure do |config|
-  # Skip hooks during git operations
-  config.git_env = { 'GIT_HOOKS_SKIP' => '1' }
-  
-  # Or use specific git options
-  config.git_options = '--no-verify'
+  config.git_integration_level = :off
 end
 ```
 
 ### Best Practices for Git Integration
 
-1. **Sanitize inputs:**
-   ```ruby
-   MigrationGuard.configure do |config|
-     config.sanitize_git_input = true
-     config.max_branch_length = 255
-   end
-   ```
-
-2. **Handle errors gracefully:**
-   ```ruby
-   MigrationGuard.configure do |config|
-     config.on_git_error = lambda do |error|
-       Rails.logger.warn "MigrationGuard Git error: #{error.message}"
-       # Continue without git integration
-       nil
-     end
-   end
-   ```
-
-3. **Environment-specific configuration:**
+1. **Environment-specific configuration:**
    ```ruby
    MigrationGuard.configure do |config|
      case Rails.env
      when 'development'
-       config.git_integration_level = :full
-     when 'ci', 'test'
-       config.git_integration_level = :minimal
+       config.git_integration_level = :warning
      when 'production'
        config.git_integration_level = :off
      end
    end
    ```
+
+2. **Use sensible branch names** - avoid spaces, unicode, and special characters in branch names.
 
 ## Permission Issues
 
@@ -593,14 +507,9 @@ Status checks or rollback operations are slow with large migration histories.
 2. **Update the gem if needed:**
    ```ruby
    # Gemfile
-   gem 'rails_migration_guard', '~> 2.0'  # Check latest version
+   gem 'rails_migration_guard'
    ```
-
-3. **For older Rails versions:**
-   ```ruby
-   # Use an older version of the gem
-   gem 'rails_migration_guard', '~> 1.0'  # For Rails < 6.1
-   ```
+   Rails 6.1 is the minimum supported version.
 
 ## Common Error Messages
 

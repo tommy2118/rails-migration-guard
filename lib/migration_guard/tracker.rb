@@ -1,9 +1,14 @@
 # frozen_string_literal: true
 
 require_relative "migration_guard_record"
+require_relative "git_integration"
 
 module MigrationGuard
   class Tracker
+    def initialize(git_integration: GitIntegration.new)
+      @git_integration = git_integration
+    end
+
     def track_migration(version, direction, execution_time: nil)
       return unless MigrationGuard.enabled?
 
@@ -21,15 +26,16 @@ module MigrationGuard
     end
 
     def current_branch
-      output = `git rev-parse --abbrev-ref HEAD 2>/dev/null`.strip
-      branch = output.empty? ? "unknown" : output
+      branch = @git_integration.current_branch
       MigrationGuard::Logger.debug("Current branch detected", branch: branch)
       branch
+    rescue GitError
+      MigrationGuard::Logger.debug("Current branch detected", branch: "unknown")
+      "unknown"
     end
 
     def current_author
-      output = `git config user.email 2>/dev/null`.strip
-      author = output.empty? ? "unknown" : output
+      author = @git_integration.current_author || "unknown"
       MigrationGuard::Logger.debug("Current author detected", author: author)
       author
     end
@@ -41,7 +47,7 @@ module MigrationGuard
       MigrationGuard::Logger.debug("Starting cleanup of old records", days_ago: days_ago)
 
       count = MigrationGuardRecord
-              .where(status: "rolled_back")
+              .where(status: MigrationGuardRecord::STATUS_ROLLED_BACK)
               .where(created_at: ...days_ago.days.ago)
               .destroy_all
               .size
@@ -54,12 +60,12 @@ module MigrationGuard
     def track_up_migration(version, execution_time = nil)
       record = MigrationGuardRecord.find_or_initialize_by(version: version)
 
-      if record.persisted? && record.status == "applied"
+      if record.persisted? && record.status == MigrationGuardRecord::STATUS_APPLIED
         MigrationGuard::Logger.debug("Migration already tracked as applied", version: version)
         return
       end
 
-      attributes = build_migration_attributes("applied", "UP", execution_time)
+      attributes = build_migration_attributes(MigrationGuardRecord::STATUS_APPLIED, "UP", execution_time)
       update_migration_record(record, version, attributes)
       cleanup_old_records
       record
@@ -67,7 +73,7 @@ module MigrationGuard
 
     def track_down_migration(version, execution_time = nil)
       record = MigrationGuardRecord.find_or_initialize_by(version: version)
-      attributes = build_migration_attributes("rolled_back", "DOWN", execution_time)
+      attributes = build_migration_attributes(MigrationGuardRecord::STATUS_ROLLED_BACK, "DOWN", execution_time)
       update_migration_record(record, version, attributes)
       record
     end

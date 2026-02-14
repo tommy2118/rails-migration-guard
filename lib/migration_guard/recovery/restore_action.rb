@@ -63,7 +63,7 @@ module MigrationGuard
 
       def update_restore_status(migration)
         update_migration_metadata(migration, "restore_migration")
-        migration.update!(status: "applied")
+        migration.update!(status: MigrationGuardRecord::STATUS_APPLIED)
       end
 
       def find_migration_commit(version)

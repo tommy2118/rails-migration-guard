@@ -4,19 +4,27 @@ module MigrationGuard
   class MigrationGuardRecord < ActiveRecord::Base
     self.table_name = "migration_guard_records"
 
-    validates :version, presence: true, uniqueness: true
-    validates :status, presence: true
+    STATUS_APPLIED = "applied"
+    STATUS_ROLLED_BACK = "rolled_back"
+    STATUS_ORPHANED = "orphaned"
+    STATUS_SYNCED = "synced"
+    STATUS_ROLLING_BACK = "rolling_back"
 
-    scope :orphaned, -> { where(status: "orphaned") }
+    STATUSES = [STATUS_APPLIED, STATUS_ROLLED_BACK, STATUS_ORPHANED, STATUS_SYNCED, STATUS_ROLLING_BACK].freeze
+
+    validates :version, presence: true, uniqueness: true
+    validates :status, presence: true, inclusion: { in: STATUSES }
+
+    scope :orphaned, -> { where(status: STATUS_ORPHANED) }
     scope :recent, -> { where("created_at > ?", 7.days.ago) }
     scope :for_branch, ->(branch) { where(branch: branch) }
     scope :for_author, ->(author) { where("author LIKE ?", "%#{author}%") }
-    scope :applied, -> { where(status: "applied") }
-    scope :rolled_back, -> { where(status: "rolled_back") }
+    scope :applied, -> { where(status: STATUS_APPLIED) }
+    scope :rolled_back, -> { where(status: STATUS_ROLLED_BACK) }
     scope :history_ordered, -> { order(created_at: :desc) }
     scope :for_version, ->(version) { where(version: version) }
     scope :within_days, ->(days) { where("created_at > ?", days.days.ago) }
-    scope :stuck_in_rollback, ->(timeout) { where(status: "rolling_back").where(updated_at: ..timeout) }
+    scope :stuck_in_rollback, ->(timeout) { where(status: STATUS_ROLLING_BACK).where(updated_at: ..timeout) }
 
     def self.setup_serialization
       serialize :metadata, JSON if connection_pool.connected? && !connection.adapter_name.match?(/PostgreSQL|MySQL/)
@@ -25,11 +33,11 @@ module MigrationGuard
     end
 
     def orphaned?
-      status == "orphaned"
+      status == STATUS_ORPHANED
     end
 
     def rolled_back?
-      status == "rolled_back"
+      status == STATUS_ROLLED_BACK
     end
 
     def add_metadata(key, value)
@@ -65,10 +73,10 @@ module MigrationGuard
 
     def display_status
       case status
-      when "applied" then "✓ Applied"
-      when "rolled_back" then "⤺ Rolled Back"
-      when "orphaned" then "⚠ Orphaned"
-      when "synced" then "✓ Synced"
+      when STATUS_APPLIED then "✓ Applied"
+      when STATUS_ROLLED_BACK then "⤺ Rolled Back"
+      when STATUS_ORPHANED then "⚠ Orphaned"
+      when STATUS_SYNCED then "✓ Synced"
       else status.humanize
       end
     end

@@ -1,0 +1,62 @@
+<nav class="fixed top-0 w-full z-50 glass-effect" data-controller="mobile-nav">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+            <!-- Logo -->
+            <div class="flex items-center space-x-3">
+                <div class="text-2xl">🛡️</div>
+                <a href="{{ '/' | url }}" class="text-xl font-bold gradient-text">{{ site.name }}</a>
+            </div>
+
+            <!-- Desktop Navigation -->
+            <div class="hidden md:flex space-x-8">
+                {% for item in navigation.main %}
+                    {% if item.external %}
+                        <a href="{{ item.url }}"
+                           target="_blank"
+                           rel="noopener"
+                           class="text-gray-700 hover:text-brand-600 px-3 py-2 text-sm font-medium transition-colors duration-200">
+                            {{ item.label }}
+                        </a>
+                    {% else %}
+                        <a href="{{ item.url | url }}"
+                           class="text-gray-700 hover:text-brand-600 px-3 py-2 text-sm font-medium transition-colors duration-200 {% if page.url == item.url %}text-brand-600 font-semibold{% endif %}">
+                            {{ item.label }}
+                        </a>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <!-- Mobile menu button -->
+            <div class="md:hidden">
+                <button type="button"
+                        class="text-gray-700 hover:text-brand-600 p-2"
+                        data-action="mobile-nav#toggle">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Navigation -->
+    <div data-mobile-nav-target="menu" class="md:hidden hidden bg-white border-t border-gray-200">
+        <div class="px-2 pt-2 pb-3 space-y-1">
+            {% for item in navigation.main %}
+                {% if item.external %}
+                    <a href="{{ item.url }}"
+                       target="_blank"
+                       rel="noopener"
+                       class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-brand-600 hover:bg-gray-50">
+                        {{ item.label }}
+                    </a>
+                {% else %}
+                    <a href="{{ item.url | url }}"
+                       class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-brand-600 hover:bg-gray-50 {% if page.url == item.url %}text-brand-600 bg-brand-50{% endif %}">
+                        {{ item.label }}
+                    </a>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</nav>

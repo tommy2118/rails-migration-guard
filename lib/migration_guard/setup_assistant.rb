@@ -1,26 +1,32 @@
 # frozen_string_literal: true
 
 require_relative "colorizer"
+require_relative "check_printer"
+require_relative "schema_inspector"
 require_relative "reporter"
 require_relative "git_integration"
+require_relative "setup_presenter"
 
 module MigrationGuard
   # Helps new developers set up their environment and understand migration state
-  # rubocop:disable Metrics/ClassLength
   class SetupAssistant
-    def initialize
+    include CheckPrinter
+    include SchemaInspector
+
+    def initialize(reporter: Reporter.new, git_integration: GitIntegration.new)
       @colorizer = Colorizer
-      @reporter = Reporter.new
-      @git_integration = GitIntegration.new
+      @reporter = reporter
+      @git_integration = git_integration
       @issues = []
       @suggestions = []
+      @presenter = SetupPresenter.new(colorizer: @colorizer, output: self)
     end
 
     def run_setup
-      print_welcome_header
+      @presenter.print_welcome_header
       analyze_environment
       analyze_migration_state
-      print_summary
+      @presenter.print_summary(issues)
       offer_interactive_fixes
     end
 
@@ -28,18 +34,8 @@ module MigrationGuard
 
     attr_reader :colorizer, :reporter, :git_integration, :issues, :suggestions
 
-    def print_welcome_header
-      puts colorizer.bold("=" * 60) # rubocop:disable Rails/Output
-      puts colorizer.bold("🚀 Welcome to Rails Migration Guard Setup!") # rubocop:disable Rails/Output
-      puts colorizer.bold("=" * 60) # rubocop:disable Rails/Output
-      puts "" # rubocop:disable Rails/Output
-      puts "This assistant will help you set up your development environment" # rubocop:disable Rails/Output
-      puts "and ensure your migration state matches the team's configuration." # rubocop:disable Rails/Output
-      puts "" # rubocop:disable Rails/Output
-    end
-
     def analyze_environment
-      puts colorizer.info("🔍 Analyzing your environment...") # rubocop:disable Rails/Output
+      puts colorizer.info("\u{1F50D} Analyzing your environment...") # rubocop:disable Rails/Output
       puts "" # rubocop:disable Rails/Output
 
       check_migration_guard_installation
@@ -84,7 +80,7 @@ module MigrationGuard
         print_check("Branch status", :success, "on main branch")
       else
         print_check("Branch status", :info, "on feature branch: #{current_branch}")
-        puts colorizer.info("  💡 This is normal for feature development") # rubocop:disable Rails/Output
+        puts colorizer.info("  \u{1F4A1} This is normal for feature development") # rubocop:disable Rails/Output
       end
     rescue MigrationGuard::GitError
       # Already handled in check_git_repository
@@ -94,7 +90,7 @@ module MigrationGuard
       return unless MigrationGuard.enabled?
 
       puts "" # rubocop:disable Rails/Output
-      puts colorizer.info("🗃️  Analyzing migration state...") # rubocop:disable Rails/Output
+      puts colorizer.info("\u{1F5C3}\u{FE0F}  Analyzing migration state...") # rubocop:disable Rails/Output
       puts "" # rubocop:disable Rails/Output
 
       analyze_orphaned_migrations
@@ -120,45 +116,35 @@ module MigrationGuard
 
     def analyze_missing_migrations
       missing = reporter.missing_migrations
+      return report_missing_up_to_date(missing) if missing.empty?
 
-      case missing
-      when Array
-        analyze_simple_missing_migrations(missing)
-      when Hash
-        analyze_multi_branch_missing_migrations(missing)
-      end
+      report_missing_migrations(missing)
     end
 
-    def analyze_simple_missing_migrations(missing)
-      if missing.empty?
-        print_check("Missing migrations", :success, "up to date with main branch")
+    def report_missing_up_to_date(missing)
+      source = missing.is_a?(Hash) ? "target branches" : "main branch"
+      print_check("Missing migrations", :success, "up to date with #{source}")
+    end
+
+    def report_missing_migrations(missing)
+      if missing.is_a?(Hash)
+        count = missing.values.sum(&:size)
+        source = missing.keys.join(", ")
+        detail = "#{count} found in: #{source}"
+        add_issue("#{count} migration(s) missing from target branches",
+                  "Your database is missing migrations from: #{source}")
       else
         count = missing.size
+        detail = "#{count} found in main branch"
         add_issue("#{count} migration(s) missing from main branch",
                   "Your database is missing migrations that exist in the main branch")
-        add_suggestion("migrate",
-                       "Run missing migrations: rails db:migrate")
-        print_check("Missing migrations", :warning, "#{count} found in main branch")
-      end
-    end
-
-    def analyze_multi_branch_missing_migrations(missing_by_branch)
-      if missing_by_branch.empty?
-        print_check("Missing migrations", :success, "up to date with target branches")
-        return
       end
 
-      total_missing = missing_by_branch.values.sum(&:size)
-      branches = missing_by_branch.keys.join(", ")
-      add_issue("#{total_missing} migration(s) missing from target branches",
-                "Your database is missing migrations from: #{branches}")
-      add_suggestion("migrate",
-                     "Run missing migrations: rails db:migrate")
-      print_check("Missing migrations", :warning, "#{total_missing} found in: #{branches}")
+      add_suggestion("migrate", "Run missing migrations: rails db:migrate")
+      print_check("Missing migrations", :warning, detail)
     end
 
     def analyze_schema_consistency
-      # Check if schema_migrations table is in sync with migration guard records
       schema_versions = fetch_schema_migrations
       tracked_versions = MigrationGuard::MigrationGuardRecord.pluck(:version)
 
@@ -171,75 +157,27 @@ module MigrationGuard
         add_issue("#{count} migration(s) in schema but not tracked",
                   "Some migrations were run before Migration Guard was installed")
         print_check("Schema consistency", :info, "#{count} pre-existing migrations detected")
-        puts colorizer.info("  💡 This is normal if Migration Guard was added to an existing project") # rubocop:disable Rails/Output
+        puts colorizer.info("  \u{1F4A1} This is normal if Migration Guard was added to an existing project") # rubocop:disable Rails/Output
       end
     end
 
-    def fetch_schema_migrations
-      ActiveRecord::Base.connection.select_values("SELECT version FROM schema_migrations")
-    rescue StandardError
-      []
-    end
-
-    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
-    def print_summary
-      puts "" # rubocop:disable Rails/Output
-      puts colorizer.bold("📋 Summary") # rubocop:disable Rails/Output
-      puts "=" * 20 # rubocop:disable Rails/Output
-
-      if issues.empty?
-        puts colorizer.success("✅ Everything looks good! Your environment is properly set up.") # rubocop:disable Rails/Output
-        puts "" # rubocop:disable Rails/Output
-        puts "You can start developing with confidence. Migration Guard will help you:" # rubocop:disable Rails/Output
-        puts "• Track migrations across branches" # rubocop:disable Rails/Output
-        puts "• Detect orphaned migrations" # rubocop:disable Rails/Output
-        puts "• Coordinate with your team" # rubocop:disable Rails/Output
-      else
-        puts colorizer.warning("⚠️  #{issues.size} issue(s) found that need attention:") # rubocop:disable Rails/Output
-        puts "" # rubocop:disable Rails/Output
-
-        issues.each_with_index do |(title, description), index|
-          puts colorizer.warning("#{index + 1}. #{title}") # rubocop:disable Rails/Output
-          puts "   #{description}" # rubocop:disable Rails/Output
-          puts "" # rubocop:disable Rails/Output
-        end
-      end
-    end
-    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
-
-    # rubocop:disable Metrics/AbcSize
     def offer_interactive_fixes
       return if suggestions.empty?
 
-      puts colorizer.bold("🛠️  Recommended Actions") # rubocop:disable Rails/Output
-      puts "=" * 25 # rubocop:disable Rails/Output
-
-      suggestions.each_with_index do |(_action, description), index|
-        puts colorizer.info("#{index + 1}. #{description}") # rubocop:disable Rails/Output
-      end
-
-      puts "" # rubocop:disable Rails/Output
-      print "Would you like me to run these commands for you? (y/N): " # rubocop:disable Rails/Output
-      response = $stdin.gets.chomp.downcase
-
-      if %w[y yes].include?(response)
-        execute_suggestions
+      if @presenter.offer_interactive_fixes(suggestions)
+        execute_suggestions(suggestions)
       else
-        puts colorizer.info("💡 Run these commands manually when you're ready.") # rubocop:disable Rails/Output
+        puts colorizer.info("\u{1F4A1} Run these commands manually when you're ready.") # rubocop:disable Rails/Output
       end
 
-      print_helpful_commands
+      @presenter.print_helpful_commands
     end
-    # rubocop:enable Metrics/AbcSize
 
-    def execute_suggestions
+    def execute_suggestions(suggestions)
       suggestions.each do |action, description|
-        puts "" # rubocop:disable Rails/Output
-        puts colorizer.info("Running: #{description}") # rubocop:disable Rails/Output
-
+        puts colorizer.info("\nRunning: #{description}") # rubocop:disable Rails/Output
         case action
-        when "migrate"
-          system("rails db:migrate")
+        when "migrate" then system("rails db:migrate")
         when "rollback_orphaned"
           puts colorizer.warning("Rolling back orphaned migrations requires confirmation.") # rubocop:disable Rails/Output
           puts colorizer.info("Run: rails db:migration:rollback_orphaned") # rubocop:disable Rails/Output
@@ -247,38 +185,8 @@ module MigrationGuard
       end
     end
 
-    def print_helpful_commands
-      puts "" # rubocop:disable Rails/Output
-      puts colorizer.bold("📚 Helpful Commands") # rubocop:disable Rails/Output
-      puts "=" * 20 # rubocop:disable Rails/Output
-      puts "• rails db:migration:status     - Check migration status" # rubocop:disable Rails/Output
-      puts "• rails db:migration:doctor     - Run diagnostics" # rubocop:disable Rails/Output
-      puts "• rails db:migration:history    - View migration history" # rubocop:disable Rails/Output
-      puts "• rails db:migration:authors    - See team contributions" # rubocop:disable Rails/Output
-      puts "" # rubocop:disable Rails/Output
-      puts colorizer.success("🎉 Happy coding!") # rubocop:disable Rails/Output
-    end
+    def add_issue(title, description) = issues << [title, description]
 
-    def print_check(name, status, details = nil)
-      symbol = case status
-               when :success then colorizer.success("✓")
-               when :warning then colorizer.warning("⚠")
-               when :error then colorizer.error("✗")
-               when :info then colorizer.info("ℹ")
-               end
-
-      line = "#{symbol} #{name}"
-      line += ": #{details}" if details
-      puts line # rubocop:disable Rails/Output
-    end
-
-    def add_issue(title, description)
-      issues << [title, description]
-    end
-
-    def add_suggestion(action, description)
-      suggestions << [action, description]
-    end
+    def add_suggestion(action, description) = suggestions << [action, description]
   end
-  # rubocop:enable Metrics/ClassLength
 end

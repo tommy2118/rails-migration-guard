@@ -55,13 +55,13 @@ module MigrationGuard
       def show_rollback_commands(version)
         Rails.logger&.debug "-- To complete the rollback:"
         Rails.logger&.debug deletion_sql(version)
-        Rails.logger&.debug update_status_sql(version, "rolled_back")
+        Rails.logger&.debug update_status_sql(version, MigrationGuardRecord::STATUS_ROLLED_BACK)
       end
 
       def show_restore_commands(version)
         Rails.logger&.debug "-- To restore the migration:"
         Rails.logger&.debug insertion_sql(version)
-        Rails.logger&.debug update_status_sql(version, "applied")
+        Rails.logger&.debug update_status_sql(version, MigrationGuardRecord::STATUS_APPLIED)
       end
 
       def show_orphaned_schema_sql(issue)
@@ -79,7 +79,7 @@ module MigrationGuard
         Rails.logger&.debug insertion_sql(version)
         Rails.logger&.debug ""
         Rails.logger&.debug "-- To mark as rolled back:"
-        Rails.logger&.debug update_status_sql(version, "rolled_back")
+        Rails.logger&.debug update_status_sql(version, MigrationGuardRecord::STATUS_ROLLED_BACK)
       end
 
       def show_missing_file_sql(issue)
@@ -118,14 +118,14 @@ module MigrationGuard
         "INSERT INTO schema_migrations (version) VALUES ('#{version}');"
       end
 
-      def update_status_sql(version, status)
-        "UPDATE migration_guard_records SET status = '#{status}' WHERE version = '#{version}';"
+      def update_status_sql(version, new_status)
+        "UPDATE migration_guard_records SET status = '#{new_status}' WHERE version = '#{version}';"
       end
 
       def tracking_insert_sql(version)
         [
           "INSERT INTO migration_guard_records (version, status, branch, created_at, updated_at)",
-          "VALUES ('#{version}', 'applied', 'unknown', NOW(), NOW());"
+          "VALUES ('#{version}', '#{MigrationGuardRecord::STATUS_APPLIED}', 'unknown', NOW(), NOW());"
         ].join("\n")
       end
 

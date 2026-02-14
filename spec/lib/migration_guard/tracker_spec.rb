@@ -3,7 +3,12 @@
 require "rails_helper"
 
 RSpec.describe MigrationGuard::Tracker do
-  let(:tracker) { described_class.new }
+  let(:git_integration) { instance_double(MigrationGuard::GitIntegration) }
+  let(:tracker) { described_class.new(git_integration: git_integration) }
+
+  before do
+    allow(git_integration).to receive_messages(current_branch: "main", current_author: nil)
+  end
 
   describe "#track_migration" do
     subject(:track) { tracker.track_migration("20240115123456", direction) }
@@ -57,7 +62,7 @@ RSpec.describe MigrationGuard::Tracker do
         # rubocop:enable RSpec/NestedGroups
 
         it "records the current branch" do
-          allow(tracker).to receive(:current_branch).and_return("feature/new-stuff")
+          allow(git_integration).to receive(:current_branch).and_return("feature/new-stuff")
 
           track
 
@@ -67,7 +72,7 @@ RSpec.describe MigrationGuard::Tracker do
 
         it "records the author when configured" do
           allow(MigrationGuard.configuration).to receive(:track_author).and_return(true)
-          allow(tracker).to receive(:current_author).and_return("developer@example.com")
+          allow(git_integration).to receive(:current_author).and_return("developer@example.com")
 
           track
 
@@ -167,15 +172,13 @@ RSpec.describe MigrationGuard::Tracker do
 
   describe "#current_branch" do
     it "returns the current git branch" do
-      allow(tracker).to receive(:`)
-        .with("git rev-parse --abbrev-ref HEAD 2>/dev/null")
-        .and_return("feature/my-branch\n")
+      allow(git_integration).to receive(:current_branch).and_return("feature/my-branch")
 
       expect(tracker.current_branch).to eq("feature/my-branch")
     end
 
-    it "returns 'unknown' when git is not available" do
-      allow(tracker).to receive(:`).with("git rev-parse --abbrev-ref HEAD 2>/dev/null").and_return("")
+    it "returns 'unknown' when git raises an error" do
+      allow(git_integration).to receive(:current_branch).and_raise(MigrationGuard::GitError, "not a git repo")
 
       expect(tracker.current_branch).to eq("unknown")
     end
@@ -183,13 +186,13 @@ RSpec.describe MigrationGuard::Tracker do
 
   describe "#current_author" do
     it "returns the git user email" do
-      allow(tracker).to receive(:`).with("git config user.email 2>/dev/null").and_return("developer@example.com\n")
+      allow(git_integration).to receive(:current_author).and_return("developer@example.com")
 
       expect(tracker.current_author).to eq("developer@example.com")
     end
 
     it "returns 'unknown' when git user is not configured" do
-      allow(tracker).to receive(:`).with("git config user.email 2>/dev/null").and_return("")
+      allow(git_integration).to receive(:current_author).and_return(nil)
 
       expect(tracker.current_author).to eq("unknown")
     end

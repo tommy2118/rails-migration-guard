@@ -19,7 +19,7 @@ module MigrationGuard
       end
 
       def check_missing_from_schema
-        applied_records = MigrationGuardRecord.where(status: "applied")
+        applied_records = MigrationGuardRecord.where(status: MigrationGuardRecord::STATUS_APPLIED)
         missing_records = applied_records.reject do |record|
           schema_versions.include?(record.version)
         end

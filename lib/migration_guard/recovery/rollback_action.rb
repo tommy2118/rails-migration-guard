@@ -26,7 +26,7 @@ module MigrationGuard
           "marked_as_rolled_back",
           "warning" => "Status updated without verifying actual rollback"
         )
-        migration.update!(status: "rolled_back")
+        migration.update!(status: MigrationGuardRecord::STATUS_ROLLED_BACK)
 
         log_success("✓ Marked as rolled back: #{migration.version}")
         true
@@ -46,7 +46,7 @@ module MigrationGuard
 
       def update_rollback_status(migration)
         update_migration_metadata(migration, "complete_rollback")
-        migration.update!(status: "rolled_back")
+        migration.update!(status: MigrationGuardRecord::STATUS_ROLLED_BACK)
       end
     end
   end

@@ -16,10 +16,9 @@ RSpec.describe MigrationGuard::DiagnosticRunner do
   describe "#run_all_checks" do
     let(:git_integration) { instance_double(MigrationGuard::GitIntegration) }
     let(:reporter) { instance_double(MigrationGuard::Reporter) }
+    let(:runner) { described_class.new(git_integration: git_integration, reporter: reporter) }
 
     before do
-      allow(MigrationGuard::GitIntegration).to receive(:new).and_return(git_integration)
-      allow(MigrationGuard::Reporter).to receive(:new).and_return(reporter)
       allow(git_integration).to receive_messages(current_branch: "feature/test", main_branch: "main")
       allow(reporter).to receive_messages(orphaned_migrations: [], missing_migrations: {})
     end

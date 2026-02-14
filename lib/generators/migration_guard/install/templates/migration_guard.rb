@@ -7,7 +7,7 @@ MigrationGuard.configure do |config|
   # Git integration level:
   # - :off - No git integration
   # - :warning - Warn about orphaned migrations
-  # - :auto_rollback - Automatically suggest rollback
+  # - :auto_rollback - Reserved (currently behaves like :warning)
   config.git_integration_level = :warning
 
   # What information to track for each migration
@@ -19,7 +19,7 @@ MigrationGuard.configure do |config|
   config.sandbox_mode = false              # Run migrations in sandbox mode
   config.warn_on_switch = true             # Warn when switching branches
   config.warn_after_migration = true # Warn about orphaned migrations after running migrations
-  config.block_deploy_with_orphans = false # Block deploys with orphaned migrations
+  config.block_deploy_with_orphans = false # Not yet functional - reserved for future use
 
   # Warning frequency for migration batches
   # - :each    - Show warnings after each migration (default for backward compatibility)

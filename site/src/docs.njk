@@ -1,0 +1,910 @@
+---
+layout: layouts/base.njk
+title: Documentation
+---
+
+<div class="bg-gray-50 py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h1 class="text-4xl font-bold text-gray-900 mb-6">Documentation</h1>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                Complete guide to using Rails Migration Guard in your projects.
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <!-- Sidebar Navigation -->
+        <div class="lg:col-span-1">
+            <nav class="sticky top-20 space-y-8">
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Getting Started</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#installation" class="text-gray-600 hover:text-brand-600">Installation</a></li>
+                        <li><a href="#quick-start" class="text-gray-600 hover:text-brand-600">Quick Start</a></li>
+                        <li><a href="#configuration" class="text-gray-600 hover:text-brand-600">Configuration</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Usage</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#basic-commands" class="text-gray-600 hover:text-brand-600">Basic Commands</a></li>
+                        <li><a href="#migration-recovery" class="text-gray-600 hover:text-brand-600">Migration Recovery</a></li>
+                        <li><a href="#workflows" class="text-gray-600 hover:text-brand-600">Workflows</a></li>
+                        <li><a href="#git-integration" class="text-gray-600 hover:text-brand-600">Git Integration</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Advanced</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#customization" class="text-gray-600 hover:text-brand-600">Customization</a></li>
+                        <li><a href="#troubleshooting" class="text-gray-600 hover:text-brand-600">Troubleshooting</a></li>
+                        <li><a href="#api-reference" class="text-gray-600 hover:text-brand-600">API Reference</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="lg:col-span-3">
+            <div class="prose prose-lg max-w-none">
+
+                <!-- Installation -->
+                <section id="installation" class="mb-16">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-6">Installation</h2>
+
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Requirements</h3>
+                    <ul class="list-disc list-inside mb-6">
+                        <li>Rails 6.1+ through Rails 8.0 (tested with Rails 8.0.2)</li>
+                        <li>Ruby 3.0+ (Ruby 3.2+ required for Rails 8.0)</li>
+                        <li>Git (for branch tracking)</li>
+                    </ul>
+
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Add to Gemfile</h3>
+                    <div class="code-block rounded-lg p-6 mb-6">
+                        <pre><code class="language-ruby text-gray-100"># Add to your Gemfile
+group :development, :staging do
+  gem 'rails_migration_guard'
+end</code></pre>
+                    </div>
+
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Install and Setup</h3>
+                    <div class="code-block rounded-lg p-6 mb-6">
+                        <pre><code class="language-bash text-gray-100"># Install the gem
+$ bundle install
+
+# Generate the migration and configuration
+$ rails generate migration_guard:install
+
+# Run the migration to create the tracking table
+$ rails db:migrate</code></pre>
+                    </div>
+
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-blue-700">
+                                    <strong>Note:</strong> The gem only runs in development and staging environments by default. It won't affect your production performance.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Quick Start -->
+                <section id="quick-start" class="mb-16">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-6">Quick Start</h2>
+
+                    <p class="text-lg text-gray-600 mb-6">
+                        Once installed, Rails Migration Guard works automatically. See our <a href="{{ '/quick-start/' | url }}" class="text-brand-600 hover:text-brand-800 font-medium">comprehensive Quick Start Guide</a> for detailed workflow examples. Here's how to verify it's working:
+                    </p>
+
+                    <div class="code-block rounded-lg p-6 mb-6">
+                        <pre><code class="language-bash text-gray-100"># Check your current migration status
+$ rails db:migration:status
+
+# Run diagnostics to verify setup
+$ rails db:migration:doctor</code></pre>
+                    </div>
+
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Your First Migration</h3>
+                    <p class="text-gray-600 mb-4">Create and run a migration to see tracking in action:</p>
+
+                    <div class="code-block rounded-lg p-6 mb-6">
+                        <pre><code class="language-bash text-gray-100"># Create a new migration
+$ rails generate migration AddNameToUsers name:string
+
+# Run the migration (this will be tracked automatically)
+$ rails db:migrate
+
+# Check the status to see your tracked migration
+$ rails db:migration:status</code></pre>
+                    </div>
+                </section>
+
+                <!-- Configuration -->
+                <section id="configuration" class="mb-16">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-6">Configuration</h2>
+
+                    <p class="text-lg text-gray-600 mb-6">
+                        Rails Migration Guard works out of the box, but you can customize its behavior:
+                    </p>
+
+                    <div class="code-block rounded-lg p-6 mb-6">
+                        <pre><code class="language-ruby text-gray-100"># config/initializers/migration_guard.rb
+MigrationGuard.configure do |config|
+  # Environments where MigrationGuard is active
+  config.enabled_environments = [:development, :staging]
+
+  # Git integration level
+  config.git_integration_level = :warning  # :off, :warning, :auto_rollback
+
+  # Branch configuration
+  config.main_branch_names = %w[main master trunk]
+
+  # Behavior options
+  config.warn_on_switch = true
+  config.auto_cleanup = false
+  config.cleanup_after_days = 30
+
+  # Tracking options
+  config.track_author = true       # Capture git user.email with migrations
+  config.track_branch = true       # Track which branch created the migration
+  config.track_timestamp = true    # Record execution timestamps
+
+  # Logging
+  config.log_level = :info
+  config.colorize_output = true
+end</code></pre>
+                    </div>
+
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg mb-6">
+                        <p class="text-sm text-yellow-700"><strong>Note:</strong> The <code>:auto_rollback</code> level is reserved for future use and currently behaves the same as <code>:warning</code>.</p>
+                    </div>
+
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Configuration Options</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Option</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Default</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">enabled_environments</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">[:development, :staging]</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">Environments where the gem is active</td>
+                                </tr>
+                                <tr class="bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">git_integration_level</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">:warning</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">Level of git integration (:off, :warning, :auto_rollback). Note: <code>:auto_rollback</code> is reserved for future use (currently behaves like <code>:warning</code>).</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">main_branch_names</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">["main", "master", "trunk"]</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">Names to check for the main branch</td>
+                                </tr>
+                                <tr class="bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">warn_on_switch</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">true</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">Show warnings when switching branches</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">track_author</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">true</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">Capture git user.email when tracking migrations</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Basic Commands -->
+                <section id="basic-commands" class="mb-16">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-6">Basic Commands</h2>
+
+                    <div class="space-y-8">
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Check Migration Status</h3>
+                            <div class="code-block rounded-lg p-6 mb-4">
+                                <pre><code class="language-bash text-gray-100">$ rails db:migration:status</code></pre>
+                            </div>
+                            <p class="text-gray-600">Shows a comprehensive report of all migrations, their sync status with the main branch, and identifies orphaned migrations.</p>
+                        </div>
+
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Rollback Orphaned Migrations</h3>
+                            <div class="code-block rounded-lg p-6 mb-4">
+                                <pre><code class="language-bash text-gray-100">$ rails db:migration:rollback_orphaned</code></pre>
+                            </div>
+                            <p class="text-gray-600">Interactively rollback migrations that exist locally but not in the main branch. You'll be prompted to confirm each rollback.</p>
+                        </div>
+
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Recovery Tools</h3>
+                            <div class="code-block rounded-lg p-6 mb-4">
+                                <pre><code class="language-bash text-gray-100"># Analyze and recover from inconsistent migration states
+$ rails db:migration:recover
+
+# Run in automatic mode (for CI/CD)
+$ AUTO=true rails db:migration:recover</code></pre>
+                            </div>
+                            <p class="text-gray-600 mb-4">Comprehensive tools for recovering from failed rollbacks and inconsistent migration states. Detects and fixes:</p>
+                            <ul class="list-disc list-inside text-gray-600 space-y-1 mb-4">
+                                <li>Partial rollbacks stuck in "rolling_back" state</li>
+                                <li>Orphaned schema changes without tracking records</li>
+                                <li>Missing migration files for applied migrations</li>
+                                <li>Version conflicts and duplicate records</li>
+                            </ul>
+                            <p class="text-gray-600">Includes automatic database backup before recovery operations for safety.</p>
+                        </div>
+
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Run Diagnostics</h3>
+                            <div class="code-block rounded-lg p-6 mb-4">
+                                <pre><code class="language-bash text-gray-100">$ rails db:migration:doctor</code></pre>
+                            </div>
+                            <p class="text-gray-600">Runs comprehensive diagnostics to check your setup, git integration, and identify potential issues.</p>
+                        </div>
+
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Cleanup Old Records</h3>
+                            <div class="code-block rounded-lg p-6 mb-4">
+                                <pre><code class="language-bash text-gray-100">$ rails db:migration:cleanup FORCE=true</code></pre>
+                            </div>
+                            <p class="text-gray-600">Removes old tracking records based on your cleanup policy. Use FORCE=true to actually perform the cleanup.</p>
+                        </div>
+
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">View Migration History</h3>
+                            <div class="code-block rounded-lg p-6 mb-4">
+                                <pre><code class="language-bash text-gray-100">$ rails db:migration:history              # View recent history
+$ rails db:migration:history BRANCH=main  # Filter by branch
+$ rails db:migration:history DAYS=7       # Last 7 days
+$ rails db:migration:history AUTHOR=alice # Filter by author</code></pre>
+                            </div>
+                            <p class="text-gray-600">Shows detailed migration execution history with filtering options.</p>
+                        </div>
+
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">View Author Statistics</h3>
+                            <div class="code-block rounded-lg p-6 mb-4">
+                                <pre><code class="language-bash text-gray-100">$ rails db:migration:authors</code></pre>
+                            </div>
+                            <p class="text-gray-600">Displays comprehensive author statistics showing who created migrations and their contribution breakdown.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Migration Recovery -->
+                <section id="migration-recovery" class="mb-16">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-6">Migration Recovery</h2>
+
+                    <p class="text-gray-600 mb-6">Rails Migration Guard includes powerful recovery tools to help fix inconsistent migration states that can occur during development.</p>
+
+                    <div class="space-y-8">
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Analyze Migration Issues</h3>
+                            <div class="code-block rounded-lg p-6 mb-4">
+                                <pre><code class="language-bash text-gray-100">$ rails db:migration:recover</code></pre>
+                            </div>
+                            <p class="text-gray-600 mb-4">Detects and helps resolve various migration inconsistencies including:</p>
+                            <ul class="list-disc list-inside space-y-2 text-gray-600 ml-4">
+                                <li>Migrations stuck in <code class="text-sm bg-gray-100 px-2 py-1 rounded">rolling_back</code> state</li>
+                                <li>Schema entries without tracking records</li>
+                                <li>Missing migration files</li>
+                                <li>Duplicate tracking records</li>
+                                <li>Migrations applied but missing from schema</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Interactive Recovery Mode</h3>
+                            <div class="code-block rounded-lg p-6 mb-4">
+                                <pre><code class="language-bash text-gray-100"># Interactive mode (default)
+$ rails db:migration:recover
+
+&#x26a0;&#xfe0f;  Detected migration inconsistencies:
+
+1. Partial rollback
+   Version: 20240115123456
+   Migration appears to be stuck in rollback state
+   Severity: HIGH
+   Branch: feature/user-prefs
+   Last updated: 2024-01-15 14:30:45
+   Recovery options: complete_rollback, restore_migration, mark_as_rolled_back
+
+Select option (0-3): </code></pre>
+                            </div>
+                            <p class="text-gray-600">Prompts for action on each detected issue with multiple recovery strategies.</p>
+                        </div>
+
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Automatic Recovery Mode</h3>
+                            <div class="code-block rounded-lg p-6 mb-4">
+                                <pre><code class="language-bash text-gray-100"># Automatic mode for CI/CD
+$ AUTO=true rails db:migration:recover</code></pre>
+                            </div>
+                            <p class="text-gray-600">Automatically applies the first recovery option for each issue. Useful for CI/CD pipelines.</p>
+                        </div>
+
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Recovery Features</h3>
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                                <ul class="space-y-3 text-gray-700">
+                                    <li class="flex items-start">
+                                        <svg class="h-6 w-6 text-blue-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <div>
+                                            <span class="font-semibold">Automatic Database Backups:</span> Creates backups before any recovery operation (PostgreSQL, MySQL, SQLite)
+                                        </div>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <svg class="h-6 w-6 text-blue-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <div>
+                                            <span class="font-semibold">Multiple Recovery Strategies:</span> Different approaches for each type of inconsistency
+                                        </div>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <svg class="h-6 w-6 text-blue-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <div>
+                                            <span class="font-semibold">Git Integration:</span> Can restore missing migration files from git history
+                                        </div>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <svg class="h-6 w-6 text-blue-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <div>
+                                            <span class="font-semibold">Safe Operations:</span> All commands use parameterized queries and safe execution methods
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Common Recovery Scenarios</h3>
+                            <div class="space-y-4">
+                                <div class="bg-gray-50 rounded-lg p-4">
+                                    <h4 class="font-semibold text-gray-900 mb-2">Stuck Rollback</h4>
+                                    <p class="text-sm text-gray-600 mb-2">Migration started rolling back but didn't complete:</p>
+                                    <ul class="text-sm text-gray-600 list-disc list-inside ml-4">
+                                        <li><strong>Complete Rollback:</strong> Finish the rollback operation</li>
+                                        <li><strong>Restore Migration:</strong> Re-apply the migration</li>
+                                        <li><strong>Mark as Rolled Back:</strong> Update status without changes</li>
+                                    </ul>
+                                </div>
+
+                                <div class="bg-gray-50 rounded-lg p-4">
+                                    <h4 class="font-semibold text-gray-900 mb-2">Orphaned Schema</h4>
+                                    <p class="text-sm text-gray-600 mb-2">Migration in schema_migrations but not tracked:</p>
+                                    <ul class="text-sm text-gray-600 list-disc list-inside ml-4">
+                                        <li><strong>Track Migration:</strong> Create tracking record</li>
+                                        <li><strong>Remove from Schema:</strong> Delete the schema entry</li>
+                                    </ul>
+                                </div>
+
+                                <div class="bg-gray-50 rounded-lg p-4">
+                                    <h4 class="font-semibold text-gray-900 mb-2">Missing File</h4>
+                                    <p class="text-sm text-gray-600 mb-2">Tracking record exists but migration file is missing:</p>
+                                    <ul class="text-sm text-gray-600 list-disc list-inside ml-4">
+                                        <li><strong>Restore from Git:</strong> Recover file from git history</li>
+                                        <li><strong>Mark as Resolved:</strong> Acknowledge the missing file</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Workflows -->
+                <section id="workflows" class="mb-16">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-6">Common Workflows</h2>
+
+                    <div class="space-y-8">
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Switching Branches</h3>
+                            <div class="bg-gray-50 rounded-lg p-6 mb-4">
+                                <ol class="space-y-2 text-gray-700">
+                                    <li><span class="font-medium">1.</span> Check migration status before switching: <code class="text-sm bg-white px-2 py-1 rounded">rails db:migration:status</code></li>
+                                    <li><span class="font-medium">2.</span> Switch to your target branch: <code class="text-sm bg-white px-2 py-1 rounded">git checkout main</code></li>
+                                    <li><span class="font-medium">3.</span> Review any warnings about orphaned migrations</li>
+                                    <li><span class="font-medium">4.</span> Rollback orphaned migrations if needed: <code class="text-sm bg-white px-2 py-1 rounded">rails db:migration:rollback_orphaned</code></li>
+                                    <li><span class="font-medium">5.</span> Run any missing migrations: <code class="text-sm bg-white px-2 py-1 rounded">rails db:migrate</code></li>
+                                </ol>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Before Merging a PR</h3>
+                            <div class="bg-gray-50 rounded-lg p-6 mb-4">
+                                <ol class="space-y-2 text-gray-700">
+                                    <li><span class="font-medium">1.</span> Ensure you're on your feature branch</li>
+                                    <li><span class="font-medium">2.</span> Run status check: <code class="text-sm bg-white px-2 py-1 rounded">rails db:migration:status</code></li>
+                                    <li><span class="font-medium">3.</span> Verify no orphaned migrations exist</li>
+                                    <li><span class="font-medium">4.</span> Commit all migration files to your branch</li>
+                                    <li><span class="font-medium">5.</span> Push with confidence</li>
+                                </ol>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Handling Orphaned Migrations</h3>
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                                <p class="text-yellow-800 mb-2">
+                                    <strong>When you see orphaned migrations:</strong>
+                                </p>
+                                <ul class="space-y-1 text-yellow-700 text-sm">
+                                    <li>&#x2022; Review each migration to understand what it does</li>
+                                    <li>&#x2022; Check if the migration should be kept (move to main branch)</li>
+                                    <li>&#x2022; Or rollback if it was experimental or belongs to abandoned features</li>
+                                    <li>&#x2022; Use the interactive rollback to make informed decisions</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Git Integration -->
+                <section id="git-integration" class="mb-16">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-6">Git Integration</h2>
+
+                    <p class="text-lg text-gray-600 mb-6">
+                        Rails Migration Guard can integrate with Git to automatically detect branch changes and warn about migration conflicts.
+                    </p>
+
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Install Git Hooks</h3>
+                    <div class="code-block rounded-lg p-6 mb-6">
+                        <pre><code class="language-bash text-gray-100"># Install post-checkout hook (warns on branch switch)
+$ rails generate migration_guard:hooks
+
+# Install pre-push hook (prevents pushing with orphaned migrations)
+$ rails generate migration_guard:hooks --pre-push</code></pre>
+                    </div>
+
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-green-700">
+                                    <strong>Recommended:</strong> Install both hooks for the best experience. The post-checkout hook provides immediate feedback, while the pre-push hook prevents accidentally pushing orphaned migrations.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Integration Levels</h3>
+                    <div class="space-y-4">
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-gray-900 mb-2">:off</h4>
+                            <p class="text-gray-600 text-sm">No git integration. Manual checking only.</p>
+                        </div>
+
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-gray-900 mb-2">:warning (default)</h4>
+                            <p class="text-gray-600 text-sm">Shows warnings about orphaned migrations when switching branches or pushing.</p>
+                        </div>
+
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-gray-900 mb-2">:auto_rollback</h4>
+                            <p class="text-gray-600 text-sm">Reserved for future use (currently behaves like :warning).</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Troubleshooting -->
+                <section id="troubleshooting" class="mb-16">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-6">Troubleshooting</h2>
+
+                    <div class="space-y-8">
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Common Issues</h3>
+
+                            <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                                <h4 class="font-semibold text-red-800 mb-2">Git not found</h4>
+                                <p class="text-red-700 text-sm mb-2">Ensure Git is installed and available in your PATH.</p>
+                                <div class="code-block rounded p-2">
+                                    <code class="text-xs text-gray-100">$ which git</code>
+                                </div>
+                            </div>
+
+                            <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                                <h4 class="font-semibold text-red-800 mb-2">Migration tracking table not found</h4>
+                                <p class="text-red-700 text-sm mb-2">Run the installation generator to create the tracking table.</p>
+                                <div class="code-block rounded p-2">
+                                    <code class="text-xs text-gray-100">$ rails generate migration_guard:install && rails db:migrate</code>
+                                </div>
+                            </div>
+
+                            <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                                <h4 class="font-semibold text-red-800 mb-2">Hooks not working</h4>
+                                <p class="text-red-700 text-sm mb-2">Check that git hooks are executable and properly installed.</p>
+                                <div class="code-block rounded p-2">
+                                    <code class="text-xs text-gray-100">$ ls -la .git/hooks/ | grep migration</code>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Debug Mode</h3>
+                            <p class="text-gray-600 mb-4">Enable debug logging to troubleshoot issues:</p>
+                            <div class="code-block rounded-lg p-6 mb-4">
+                                <pre><code class="language-bash text-gray-100"># Enable debug logging
+$ MIGRATION_GUARD_DEBUG=true rails db:migration:status
+
+# Or set in your initializer
+MigrationGuard.configure do |config|
+  config.log_level = :debug
+end</code></pre>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Getting Help</h3>
+                            <p class="text-gray-600 mb-4">If you're still having issues:</p>
+                            <ul class="space-y-2 text-gray-600">
+                                <li>&#x2022; Run <code class="text-sm bg-gray-100 px-2 py-1 rounded">rails db:migration:doctor</code> for diagnostic information</li>
+                                <li>&#x2022; Check the <a href="https://github.com/tommy2118/rails-migration-guard/issues" class="text-brand-600 hover:text-brand-700">GitHub issues</a> for similar problems</li>
+                                <li>&#x2022; Open a new issue with your diagnostic output</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- API Reference -->
+                <section id="api-reference" class="mb-16">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-6">API Reference</h2>
+
+                    <p class="text-lg text-gray-600 mb-8">
+                        Complete reference for Rails Migration Guard's programmatic API and configuration options.
+                    </p>
+
+                    <div class="space-y-12">
+                        <!-- Configuration API -->
+                        <div>
+                            <h3 class="text-2xl font-semibold text-gray-900 mb-6">Configuration API</h3>
+
+                            <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+                                <h4 class="text-lg font-semibold text-gray-900 mb-3">MigrationGuard.configure</h4>
+                                <p class="text-gray-600 mb-4">Main configuration method for setting up Migration Guard behavior.</p>
+
+                                <div class="code-block rounded-lg p-6 mb-4">
+                                    <pre><code class="language-ruby text-gray-100">MigrationGuard.configure do |config|
+  # Configuration options here
+end</code></pre>
+                                </div>
+
+                                <div class="space-y-4">
+                                    <div>
+                                        <h5 class="font-semibold text-gray-900">config.enabled_environments</h5>
+                                        <p class="text-sm text-gray-600 mb-2">Array of environments where Migration Guard is active.</p>
+                                        <div class="code-block rounded p-3">
+                                            <code class="text-xs text-gray-100">config.enabled_environments = [:development, :staging]</code>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h5 class="font-semibold text-gray-900">config.git_integration_level</h5>
+                                        <p class="text-sm text-gray-600 mb-2">Level of Git integration. Options: <code>:off</code>, <code>:warning</code>, <code>:auto_rollback</code> (reserved &mdash; currently behaves like <code>:warning</code>)</p>
+                                        <div class="code-block rounded p-3">
+                                            <code class="text-xs text-gray-100">config.git_integration_level = :warning</code>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h5 class="font-semibold text-gray-900">config.main_branch_names</h5>
+                                        <p class="text-sm text-gray-600 mb-2">Array of branch names to consider as the main branch.</p>
+                                        <div class="code-block rounded p-3">
+                                            <code class="text-xs text-gray-100">config.main_branch_names = %w[main master trunk]</code>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rake Tasks API -->
+                        <div>
+                            <h3 class="text-2xl font-semibold text-gray-900 mb-6">Rake Tasks</h3>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="font-semibold text-gray-900 mb-2">db:migration:status</h4>
+                                    <p class="text-sm text-gray-600 mb-3">Shows comprehensive migration status report</p>
+                                    <div class="code-block rounded p-3">
+                                        <code class="text-xs text-gray-100">rails db:migration:status</code>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="font-semibold text-gray-900 mb-2">db:migration:rollback_orphaned</h4>
+                                    <p class="text-sm text-gray-600 mb-3">Interactively rollback orphaned migrations</p>
+                                    <div class="code-block rounded p-3">
+                                        <code class="text-xs text-gray-100">rails db:migration:rollback_orphaned</code>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="font-semibold text-gray-900 mb-2">db:migration:doctor</h4>
+                                    <p class="text-sm text-gray-600 mb-3">Run comprehensive diagnostics</p>
+                                    <div class="code-block rounded p-3">
+                                        <code class="text-xs text-gray-100">rails db:migration:doctor</code>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="font-semibold text-gray-900 mb-2">db:migration:cleanup</h4>
+                                    <p class="text-sm text-gray-600 mb-3">Clean up old tracking records</p>
+                                    <div class="code-block rounded p-3">
+                                        <code class="text-xs text-gray-100">rails db:migration:cleanup FORCE=true</code>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="font-semibold text-gray-900 mb-2">db:migration:history</h4>
+                                    <p class="text-sm text-gray-600 mb-3">View migration execution history</p>
+                                    <div class="code-block rounded p-3">
+                                        <code class="text-xs text-gray-100">rails db:migration:history AUTHOR=email</code>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="font-semibold text-gray-900 mb-2">db:migration:recover</h4>
+                                    <p class="text-sm text-gray-600 mb-3">Analyze and recover from inconsistent migration states</p>
+                                    <div class="code-block rounded p-3">
+                                        <code class="text-xs text-gray-100">rails db:migration:recover</code>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="font-semibold text-gray-900 mb-2">db:migration:authors</h4>
+                                    <p class="text-sm text-gray-600 mb-3">View author statistics and contributions</p>
+                                    <div class="code-block rounded p-3">
+                                        <code class="text-xs text-gray-100">rails db:migration:authors</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ruby API -->
+                        <div>
+                            <h3 class="text-2xl font-semibold text-gray-900 mb-6">Ruby API</h3>
+
+                            <div class="space-y-6">
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="text-lg font-semibold text-gray-900 mb-3">MigrationGuard::Reporter</h4>
+                                    <p class="text-gray-600 mb-4">Generate migration status reports programmatically.</p>
+
+                                    <div class="code-block rounded-lg p-6 mb-4">
+                                        <pre><code class="language-ruby text-gray-100"># Create a reporter instance
+reporter = MigrationGuard::Reporter.new
+
+# Get status report data
+report = reporter.status_report
+# Returns: { current_branch:, main_branch:, synced_count:, orphaned_count:, orphaned_migrations:, missing_migrations: }
+
+# Get formatted output
+output = reporter.format_status_output
+puts output</code></pre>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="text-lg font-semibold text-gray-900 mb-3">MigrationGuard::Tracker</h4>
+                                    <p class="text-gray-600 mb-4">Track migrations programmatically.</p>
+
+                                    <div class="code-block rounded-lg p-6 mb-4">
+                                        <pre><code class="language-ruby text-gray-100"># Create a tracker instance
+tracker = MigrationGuard::Tracker.new
+
+# Track a migration manually
+tracker.track_migration('20240116123456', :up)
+
+# Check if migration exists
+tracker.migration_tracked?('20240116123456')
+
+# Clean up old records
+tracker.cleanup_old_records
+# Returns: number of records cleaned</code></pre>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="text-lg font-semibold text-gray-900 mb-3">MigrationGuard::GitIntegration</h4>
+                                    <p class="text-gray-600 mb-4">Access Git information and branch details.</p>
+
+                                    <div class="code-block rounded-lg p-6 mb-4">
+                                        <pre><code class="language-ruby text-gray-100"># Create git integration instance
+git = MigrationGuard::GitIntegration.new
+
+# Get current branch
+current_branch = git.current_branch
+
+# Get main branch name
+main_branch = git.main_branch
+
+# Get migration versions in trunk
+trunk_migrations = git.migration_versions_in_trunk
+# Returns: Array of migration version strings</code></pre>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="text-lg font-semibold text-gray-900 mb-3">MigrationGuard::RecoveryAnalyzer</h4>
+                                    <p class="text-gray-600 mb-4">Detect inconsistent migration states that need recovery.</p>
+
+                                    <div class="code-block rounded-lg p-6 mb-4">
+                                        <pre><code class="language-ruby text-gray-100"># Create analyzer instance
+analyzer = MigrationGuard::RecoveryAnalyzer.new
+
+# Analyze migration inconsistencies
+issues = analyzer.analyze
+# Returns: Array of issue hashes with :type, :version, :severity, :recovery_options
+
+# Check if there are issues
+if analyzer.issues?
+  # Get formatted report
+  report = analyzer.format_analysis_report
+  Rails.logger.info report
+end
+
+# Issue types detected:
+# - :partial_rollback (stuck in rolling_back state)
+# - :orphaned_schema (in schema_migrations but not tracked)
+# - :missing_file (tracked but file missing)
+# - :version_conflict (duplicate tracking records)</code></pre>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="text-lg font-semibold text-gray-900 mb-3">MigrationGuard::RecoveryExecutor</h4>
+                                    <p class="text-gray-600 mb-4">Execute recovery actions for inconsistent migration states.</p>
+
+                                    <div class="code-block rounded-lg p-6 mb-4">
+                                        <pre><code class="language-ruby text-gray-100"># Create executor instance
+executor = MigrationGuard::RecoveryExecutor.new(interactive: false)
+
+# Execute recovery for an issue
+issue = analyzer.analyze.first
+success = executor.execute_recovery(issue, :complete_rollback)
+
+# Recovery options include:
+# - :complete_rollback - Finish incomplete rollback
+# - :restore_migration - Re-apply migration
+# - :mark_as_rolled_back - Update status only
+# - :track_migration - Create tracking record
+# - :remove_from_schema - Delete schema entry
+# - :consolidate_records - Merge duplicate records
+
+# Access backup path after recovery
+backup_path = executor.backup_path if executor.backup_path</code></pre>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="text-lg font-semibold text-gray-900 mb-3">MigrationGuard::Rollbacker</h4>
+                                    <p class="text-gray-600 mb-4">Safely rollback orphaned migrations.</p>
+
+                                    <div class="code-block rounded-lg p-6 mb-4">
+                                        <pre><code class="language-ruby text-gray-100"># Create rollbacker instance
+rollbacker = MigrationGuard::Rollbacker.new
+
+# Get orphaned migrations
+orphaned = rollbacker.orphaned_migrations
+
+# Rollback a specific migration
+success = rollbacker.rollback_migration('20240116123456')
+
+# Rollback all orphaned migrations
+rollbacker.rollback_all_orphaned(force: true)
+
+# Interactive rollback (prompts for each)
+rollbacker.rollback_orphaned_interactively</code></pre>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="text-lg font-semibold text-gray-900 mb-3">MigrationGuard::AuthorReporter</h4>
+                                    <p class="text-gray-600 mb-4">Generate author statistics and contribution reports.</p>
+
+                                    <div class="code-block rounded-lg p-6 mb-4">
+                                        <pre><code class="language-ruby text-gray-100"># Create author reporter instance
+author_reporter = MigrationGuard::AuthorReporter.new
+
+# Get author statistics
+stats = author_reporter.authors_summary
+# Returns: { total_authors:, total_migrations:, most_active:, average_per_author:, current_user: }
+
+# Get per-author breakdown
+authors = author_reporter.authors_report
+# Returns: Array of author data with counts by status
+
+# Get formatted report
+output = author_reporter.format_authors_report
+puts output</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Events and Hooks -->
+                        <div>
+                            <h3 class="text-2xl font-semibold text-gray-900 mb-6">Events and Hooks</h3>
+
+                            <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                <h4 class="text-lg font-semibold text-gray-900 mb-3">Migration Callbacks</h4>
+                                <p class="text-gray-600 mb-4">Hook into migration events for custom behavior.</p>
+
+                                <div class="code-block rounded-lg p-6 mb-4">
+                                    <pre><code class="language-ruby text-gray-100"># In an initializer or model
+MigrationGuard.configure do |config|
+  # Called after migration is tracked
+  config.on_migration_tracked = ->(migration_record) do
+    Rails.logger.info "Tracked migration: #{migration_record.version}"
+    # Send notification, update external systems, etc.
+  end
+
+  # Called when orphaned migrations are detected
+  config.on_orphans_detected = ->(orphaned_migrations) do
+    # Send alerts, notifications, etc.
+    SlackNotifier.notify("#{orphaned_migrations.count} orphaned migrations detected")
+  end
+end</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Error Classes -->
+                        <div>
+                            <h3 class="text-2xl font-semibold text-gray-900 mb-6">Error Classes</h3>
+
+                            <div class="space-y-4">
+                                <div class="bg-white border border-gray-200 rounded-lg p-4">
+                                    <h4 class="font-semibold text-gray-900">MigrationGuard::Error</h4>
+                                    <p class="text-sm text-gray-600">Base error class for all Migration Guard errors</p>
+                                </div>
+
+                                <div class="bg-white border border-gray-200 rounded-lg p-4">
+                                    <h4 class="font-semibold text-gray-900">MigrationGuard::GitError</h4>
+                                    <p class="text-sm text-gray-600">Raised when Git operations fail</p>
+                                </div>
+
+                                <div class="bg-white border border-gray-200 rounded-lg p-4">
+                                    <h4 class="font-semibold text-gray-900">MigrationGuard::MigrationNotFoundError</h4>
+                                    <p class="text-sm text-gray-600">Raised when trying to rollback a non-existent migration</p>
+                                </div>
+
+                                <div class="bg-white border border-gray-200 rounded-lg p-4">
+                                    <h4 class="font-semibold text-gray-900">MigrationGuard::RollbackError</h4>
+                                    <p class="text-sm text-gray-600">Raised when migration rollback fails</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+</div>

@@ -26,7 +26,7 @@ jobs:
           bundler-cache: true
       
       - name: Check for orphaned migrations
-        run: bundle exec rails db:migration:check
+        run: bundle exec rails db:migration:ci
         env:
           RAILS_ENV: staging
 ```
@@ -64,7 +64,7 @@ jobs:
       - id: check
         name: Check migration status
         run: |
-          if bundle exec rails db:migration:check; then
+          if bundle exec rails db:migration:ci; then
             echo "status=clean" >> $GITHUB_OUTPUT
           else
             echo "status=orphaned" >> $GITHUB_OUTPUT
@@ -93,7 +93,7 @@ stages:
 check_migrations:
   stage: test
   script:
-    - bundle exec rails db:migration:check
+    - bundle exec rails db:migration:ci
   environment:
     name: staging
   only:
@@ -136,7 +136,7 @@ jobs:
             - vendor/bundle
       - run:
           name: Check for orphaned migrations
-          command: bundle exec rails db:migration:check
+          command: bundle exec rails db:migration:ci
           environment:
             RAILS_ENV: staging
 
@@ -168,7 +168,7 @@ pipeline {
             steps {
                 script {
                     def migrationStatus = sh(
-                        script: 'bundle exec rails db:migration:check',
+                        script: 'bundle exec rails db:migration:ci',
                         returnStatus: true
                     )
                     
@@ -196,12 +196,9 @@ pipeline {
 Add this to your staging environment configuration:
 
 ```ruby
-# config/environments/staging.rb
-Rails.application.configure do
-  # ... other configuration ...
-  
-  # Block deployment if orphaned migrations are detected
-  config.migration_guard.block_deploy_with_orphans = true
+# config/initializers/migration_guard.rb
+MigrationGuard.configure do |config|
+  config.block_deploy_with_orphans = true  # Not yet functional - reserved for future use
 end
 ```
 
@@ -212,7 +209,7 @@ Or configure via initializer:
 MigrationGuard.configure do |config|
   if ENV['CI'] || ENV['GITHUB_ACTIONS']
     # Stricter settings for CI/CD
-    config.block_deploy_with_orphans = true
+    config.block_deploy_with_orphans = true  # Not yet functional - reserved for future use
     config.git_integration_level = :warning
   end
 end
@@ -224,7 +221,7 @@ end
 # GitHub Actions example with Slack notification
 - name: Check migrations and notify
   run: |
-    if ! bundle exec rails db:migration:check; then
+    if ! bundle exec rails db:migration:ci; then
       curl -X POST -H 'Content-type: application/json' \
         --data '{"text":"⚠️ Orphaned migrations detected in staging deployment!"}' \
         ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -241,7 +238,7 @@ FROM ruby:3.2
 # ... other setup ...
 
 # Run migration check as part of build
-RUN bundle exec rails db:migration:check || \
+RUN bundle exec rails db:migration:ci || \
     echo "Warning: Orphaned migrations detected"
 ```
 

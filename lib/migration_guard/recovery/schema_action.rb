@@ -74,7 +74,7 @@ module MigrationGuard
 
       def update_reapply_status(migration)
         update_migration_metadata(migration, "reapplied")
-        migration.update!(status: "applied")
+        migration.update!(status: MigrationGuardRecord::STATUS_APPLIED)
       end
     end
   end
