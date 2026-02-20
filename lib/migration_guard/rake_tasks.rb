@@ -109,8 +109,12 @@ module MigrationGuard
         end
       end
 
+      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
       def recover
         return unless check_enabled
+
+        check_environment_safety
+        return unless confirm_staging_recovery
 
         analyzer = MigrationGuard::RecoveryAnalyzer.new
         issues = analyzer.analyze
@@ -126,7 +130,16 @@ module MigrationGuard
         executor = create_recovery_executor
         process_recovery_issues(issues, executor)
         log_recovery_completion(executor)
+      rescue RecoveryError => e
+        puts Colorizer.error("❌ Recovery failed: #{e.message}") # rubocop:disable Rails/Output
+        raise SystemExit, 1
+      rescue StandardError => e
+        puts Colorizer.error("❌ Unexpected error during recovery: #{e.class} - #{e.message}") # rubocop:disable Rails/Output
+        puts Colorizer.error("   Please report this issue with the full backtrace") # rubocop:disable Rails/Output
+        Rails.logger&.error { e.backtrace.join("\n") }
+        raise SystemExit, 1
       end
+      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
       # rubocop:disable Metrics/MethodLength
       def ci(format: "text", strict: false, strictness: nil)
@@ -168,6 +181,34 @@ module MigrationGuard
       end
 
       private
+
+      def check_environment_safety
+        return unless Rails.env.production? && !ENV["ALLOW_PRODUCTION_RECOVERY"]
+
+        puts Colorizer.error("❌ Recovery operations are disabled in production environment") # rubocop:disable Rails/Output
+        puts Colorizer.warning("   If you really need to run recovery in production:") # rubocop:disable Rails/Output
+        puts Colorizer.warning("   1. Take a full database backup first") # rubocop:disable Rails/Output
+        puts Colorizer.warning("   2. Run with ALLOW_PRODUCTION_RECOVERY=true") # rubocop:disable Rails/Output
+        raise SystemExit, 0
+      end
+
+      def confirm_staging_recovery
+        return true unless staging_environment?
+        return true if InteractiveMode.forced_non_interactive?
+
+        puts Colorizer.warning("⚠️  Running recovery in staging environment") # rubocop:disable Rails/Output
+        puts Colorizer.warning("   A backup will be created before any changes") # rubocop:disable Rails/Output
+        print "Continue? (y/N): " # rubocop:disable Rails/Output
+        response = $stdin.gets&.chomp&.downcase
+        response == "y"
+      end
+
+      def staging_environment?
+        return false unless defined?(Rails) && Rails.respond_to?(:env)
+        return false unless Rails.env.respond_to?(:staging?)
+
+        Rails.env.staging? # rubocop:disable Rails/UnknownEnv
+      end
 
       def create_recovery_executor
         if InteractiveMode.forced_non_interactive?

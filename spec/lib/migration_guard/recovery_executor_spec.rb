@@ -29,6 +29,11 @@ RSpec.describe MigrationGuard::RecoveryExecutor do
     allow(test_logger).to receive(:debug)
     allow(test_logger).to receive(:info)
     allow(test_logger).to receive(:error)
+    allow(test_logger).to receive(:warn)
+
+    # Clean up any lock files
+    lock_file = executor.send(:recovery_lock_file)
+    FileUtils.rm_f(lock_file)
   end
 
   describe "#execute_recovery" do
@@ -306,6 +311,91 @@ RSpec.describe MigrationGuard::RecoveryExecutor do
       result = interactive_executor.execute_recovery(issue)
       # When skipping (option 0), the method returns false
       expect(result).to be false
+    end
+
+    it "handles nil input (non-interactive environment)" do
+      allow(interactive_executor).to receive(:gets).and_return(nil)
+
+      expect do
+        interactive_executor.execute_recovery(issue)
+      end.to raise_error(MigrationGuard::RecoveryError, /No input available/)
+    end
+
+    it "handles interrupt signal" do
+      allow(interactive_executor).to receive(:gets).and_raise(Interrupt)
+
+      expect do
+        interactive_executor.execute_recovery(issue)
+      end.to raise_error(MigrationGuard::RecoveryError, /Recovery cancelled by user/)
+    end
+  end
+
+  describe "concurrent recovery protection" do
+    let(:lock_file) { executor.send(:recovery_lock_file) }
+    let(:issue) do
+      {
+        type: :partial_rollback,
+        version: "20240101000001",
+        recovery_options: [:complete_rollback]
+      }
+    end
+
+    before do
+      FileUtils.mkdir_p(File.dirname(lock_file))
+    end
+
+    after do
+      FileUtils.rm_f(lock_file)
+    end
+
+    it "prevents concurrent recovery processes" do
+      # Create a lock file from another process
+      lock_data = {
+        pid: 12_345,
+        created_at: Time.current.iso8601,
+        user: "other_user"
+      }
+      File.write(lock_file, JSON.pretty_generate(lock_data))
+
+      expect do
+        executor.execute_recovery(issue)
+      end.to raise_error(MigrationGuard::ConcurrentAccessError, /Another recovery process is running/)
+    end
+
+    it "removes stale lock files" do
+      # Create a stale lock file (older than 30 minutes)
+      lock_data = {
+        pid: 12_345,
+        created_at: 31.minutes.ago.iso8601,
+        user: "old_user"
+      }
+      File.write(lock_file, JSON.pretty_generate(lock_data))
+
+      # Should not raise an error
+      expect do
+        # Mock the actual recovery action to return true
+        allow(executor).to receive_messages(determine_recovery_method: :complete_rollback, execute_action: true)
+
+        result = executor.execute_recovery(issue)
+        expect(result).to be true
+      end.not_to raise_error
+
+      # Lock file should be removed after execution
+      expect(File.exist?(lock_file)).to be false
+    end
+
+    it "creates and removes lock file during execution" do
+      # Mock the actual recovery action
+      allow(executor).to receive_messages(determine_recovery_method: :complete_rollback, execute_action: true)
+
+      # Lock should not exist before
+      expect(File.exist?(lock_file)).to be false
+
+      result = executor.execute_recovery(issue)
+      expect(result).to be true
+
+      # Lock should be cleaned up after
+      expect(File.exist?(lock_file)).to be false
     end
   end
 end
